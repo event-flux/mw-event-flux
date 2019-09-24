@@ -1,92 +1,74 @@
-import StoreBase, { StoreBaseConstructor } from "./StoreBase";
+import { 
+  StoreBaseConstructor, 
+  StoreDeclarerOptions, StoreDeclarer, 
+  StoreListDeclarerOptions, StoreListDeclarer,
+  StoreMapDeclarerOptions, StoreMapDeclarer
+} from "event-flux";
 
-interface StoreDeclarerOptions {
-  args?: [any];
-  storeKey?: string;
-  defaultFilter?: boolean;
+interface PerWinOptions {
+  isPerWin: boolean;
 }
 
-const IS_STORE = '@@__STORE_ITEM__@@';
-class StoreDeclarer {
-  Store: StoreBaseConstructor;
-  options: StoreDeclarerOptions | undefined;
+const IS_WIN_STORE = '@@__WIN_STORE_ITEM__@@';
+export class WinStoreDeclarer<T> extends StoreDeclarer<T> {
+  options: StoreDeclarerOptions & PerWinOptions | undefined;
 
-  constructor(Store: StoreBaseConstructor, options?: StoreDeclarerOptions) {
-    this.Store = Store;
-    this.options = options;
+  constructor(Store: StoreBaseConstructor<T>, depStoreNames?: string[] | StoreDeclarerOptions, options?: StoreDeclarerOptions) {
+    super(Store, depStoreNames, options);
+    this.options!.isPerWin = true;
   }
   
-  [IS_STORE] = true;
+  [IS_WIN_STORE] = true;
 
-  static isStore(maybeStore: any) {
-    return !!(maybeStore && maybeStore[IS_STORE]);
+  static isWinStore(maybeStore: any) {
+    return !!(maybeStore && maybeStore[IS_WIN_STORE]);
   }
 }
 
 
-function declareStore(Store: StoreBaseConstructor, options?: StoreDeclarerOptions) {
-  return new StoreDeclarer(Store, options);
+export function declareWinStore<T>(Store: StoreBaseConstructor<T>, depStoreNames?: string[] | StoreDeclarerOptions, options?: StoreDeclarerOptions) {
+  return new WinStoreDeclarer(Store, depStoreNames, options);
 }
 
-interface StoreListDeclarerOptions {
-  args?: [any];
-  storeKey?: string;
-  size?: number;
-}
-const IS_STORE_LIST = '@@__STORE_LIST__@@';
+const IS_WIN_STORE_LIST = '@@__WIN_STORE_LIST__@@';
 
-class StoreListDeclarer {
-  Store: StoreBaseConstructor;
-  options: StoreListDeclarerOptions | undefined;
+export class WinStoreListDeclarer<T> extends StoreListDeclarer<T> {
+  options: StoreListDeclarerOptions & PerWinOptions | undefined;
 
-  constructor(Store: StoreBaseConstructor, options?: StoreListDeclarerOptions) {
-    this.Store = Store;
-    this.options = options;
+  constructor(Store: StoreBaseConstructor<T>, depStoreNames?: string[] | StoreListDeclarerOptions, options?: StoreListDeclarerOptions) {
+    super(Store, depStoreNames, options);
+    this.options!.isPerWin = true;
   }
 
-  [IS_STORE_LIST] = true;
+  [IS_WIN_STORE_LIST] = true;
 
-  static isStoreList(maybeList: any) {
-    return !!(maybeList && maybeList[IS_STORE_LIST]);
+  static isWinStoreList(maybeList: any) {
+    return !!(maybeList && maybeList[IS_WIN_STORE_LIST]);
   }
 }
 
-function declareStoreList(Store: StoreBaseConstructor, options?: StoreListDeclarerOptions) {
-  return new StoreListDeclarer(Store, options);
+export function declareWinStoreList<T>(Store: StoreBaseConstructor<T>, depStoreNames?: string[] | StoreListDeclarerOptions, options?: StoreListDeclarerOptions) {
+  return new WinStoreListDeclarer(Store, depStoreNames, options);
 }
 
-// when directInsert is true, then the child state will set into the store directly.
-interface StoreMapDeclarerOptions {
-  args?: [any];
-  storeKey?: string;
-  keys?: [string];
-  directInsert?: boolean;
-  defaultFilter?: boolean;
-  storeDefaultFilter?: boolean;
-}
-const IS_STORE_MAP = '@@__STORE_MAP__@@';
 
-class StoreMapDeclarer {
-  Store: StoreBaseConstructor;
-  options: StoreMapDeclarerOptions | undefined;
+const IS_WIN_STORE_MAP = '@@__WIN_STORE_MAP__@@';
 
-  constructor(Store: StoreBaseConstructor, options?: StoreMapDeclarerOptions) {
-    this.Store = Store;
-    this.options = options;
+export class WinStoreMapDeclarer<T> extends StoreMapDeclarer<T> {
+  options: StoreMapDeclarerOptions & PerWinOptions | undefined;
+
+  constructor(Store: StoreBaseConstructor<T>, depStoreNames?: string[] | StoreMapDeclarerOptions, options?: StoreMapDeclarerOptions) {
+    super(Store, depStoreNames, options);
+    this.options!.isPerWin = true;
   }
 
-  [IS_STORE_MAP] = true;
+  [IS_WIN_STORE_MAP] = true;
  
-  static isStoreMap(maybeMap: any) {
-    return !!(maybeMap && maybeMap[IS_STORE_MAP]);
+  static isWinStoreMap(maybeMap: any) {
+    return !!(maybeMap && maybeMap[IS_WIN_STORE_MAP]);
   }
 }
 
-function declareStoreMap(Store: StoreBaseConstructor, options?: StoreMapDeclarerOptions) {
-  return new StoreMapDeclarer(Store, options);
+export function declareWinStoreMap<T>(Store: StoreBaseConstructor<T>, depStoreNames?: string[] | StoreMapDeclarerOptions, options?: StoreMapDeclarerOptions) {
+  return new WinStoreMapDeclarer(Store, depStoreNames, options);
 }
-
-export { 
-  StoreDeclarer, StoreListDeclarer, StoreMapDeclarer, 
-  declareStore, declareStoreList, declareStoreMap 
-};

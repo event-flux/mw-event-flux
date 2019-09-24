@@ -1,0 +1,19 @@
+{
+  "include": [
+    "src/**/*.ts", "src/withState.tsx", "src/Provider.tsx"
+  ],
+  "compilerOptions": {
+    "module": "commonjs",
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "target": "es5",
+    "jsx": "react",
+    "moduleResolution": "node",
+    "lib": ["es2015", "dom"],
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "declaration": true
+  }
+}

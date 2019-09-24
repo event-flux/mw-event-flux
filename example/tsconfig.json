@@ -1,0 +1,14 @@
+{
+  "include": [
+    "../src/**/*.ts", "../src/**/*.tsx", "src/**/*.ts", "src/**/*.tsx"
+  ],
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": false,
+    "target": "es5",
+    "jsx": "react",
+    "moduleResolution": "node",
+    "lib": ["es2015", "dom"],
+    "downlevelIteration": true
+  }
+}

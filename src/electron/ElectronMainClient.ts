@@ -6,27 +6,40 @@ import {
 } from '../constants';
 import { ipcMain, WebContents, BrowserWindow, Event } from 'electron';
 import findIndex from '../utils/findIndex';
-import IMainClient from '../IMainClient';
-import MultiWinSaver from "../MultiWinSaver";
+import MultiWinSaver, { IWinInfo } from "../MultiWinSaver";
 
-interface IClientInfo {
+interface IElectronWinInfo {
   webContents: WebContents;
   window: BrowserWindow;
-  clientId: string;
+  winId: string;
 };
 
-interface IMainClientCallback {
+interface IMainClient {
+  sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void;
+}
 
+interface IMainClientCallback {
+  handleRendererDispatch(winId: string, invokeId: string, stringifiedAction: string): void;
+
+  handleWinMessage(senderId: string, targetId: string, data: any): void;
+
+  getStoreDeclarers(): string;
+
+  getInitStates(clientId: string): any;
+}
+
+function encodeUrl(obj: any) {
+  let compList: string[] = [];
+  for (let key in obj) {
+    compList.push(`${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}}`);
+  }
+  return compList.join('&');
 }
 
 export default class ElectronMainClient implements IMainClient {
-  clientInfos: IClientInfo[] = [];
-  clientMap: { [key: string]: IClientInfo } = {};
-
   multiWinSaver: MultiWinSaver;
   mainClientCallback: IMainClientCallback;
   log: Log;
-
 
   constructor(multiWinSaver: MultiWinSaver, callback: IMainClientCallback, log: Log) {
     this.multiWinSaver = multiWinSaver;
@@ -50,119 +63,89 @@ export default class ElectronMainClient implements IMainClient {
   // When renderer process dispatch an action to main process, the handleRendererDispatch will invoke
   // The main process will invoke handleRendererMessage to handle the message and send the result back to renderer process
   private handleRendererDispatch = (event: Event, clientId: string, invokeId: string, stringifiedAction: string) => {
-    if (!this.clientMap[clientId]) return;
-    let webContents = this.clientMap[clientId].webContents;
-
-    this.mainClientCallbacks.handleRendererMessage(stringifiedAction).then(result => {
-      this._sendForWebContents(webContents, mainReturnName, invokeId, undefined, result);
-    }, (err) => {
-      let errObj: IErrorObj | null = null;
-
-      if (err) {
-        errObj = { name: err.name, message: err.message } as IErrorObj;
-        if (errObj) {
-          Object.keys(err).forEach(key => errObj![key] = err[key]);
-        }
-      }
-      
-      this._sendForWebContents(webContents, mainReturnName, invokeId, errObj, undefined);
-    });
+    this.mainClientCallback.handleRendererDispatch(clientId, invokeId, stringifiedAction);
   };
 
   handleWinMessage = (event: Event, clientId: string, data: any) => {
-    if (!this.clientMap[clientId]) return;
-    let webContents = this.clientMap[clientId].webContents;
-    let existIndex = findIndex(this.clientInfos, (item: IClientInfo) => item.webContents === event.sender);
-    if (existIndex !== -1) {
-      this._sendForWebContents(webContents, winMessageName, this.clientInfos[existIndex].clientId, data);
+    let sourceWinInfo = this.multiWinSaver.findWinInfo((item: IWinInfo) => item.webContents === event.sender);
+    if (sourceWinInfo) {
+      let senderId = sourceWinInfo.winId;
+      this.mainClientCallback.handleWinMessage(senderId, clientId, data);
     }
   };
-
-  private checkWebContents(webContents: WebContents) {
-    return !webContents.isDestroyed() && !webContents.isCrashed();
-  }
+ 
 
   private _sendForWebContents(webContents: WebContents, channel: string, ...args: any[]) {
-    if (this.checkWebContents(webContents)) {
+    if (!webContents.isDestroyed() && !webContents.isCrashed()) {
       webContents.send(channel, ...args);
     }
   }
-
-  getForwardClients(): IClientInfo[] {
-    return this.clientInfos;
-  }
-
-  dispatchToRenderer(client: IClientInfo, payload: any) {
-    let webContents = client.webContents;
-    // if (webContents.isDestroyed() || webContents.isCrashed()) {
-    //   return this.unregisterRenderer(client.clientId);
-    // }
-    if (this.checkWebContents(webContents)) {
-      webContents.send(mainDispatchName, payload);
-    }
-  }
+ 
+  // dispatchToRenderer(clientId: string, payload: any) {
+  //   let winInfo: IElectronWinInfo = this.multiWinSaver.getWinInfo(clientId) as IElectronWinInfo;
+  //   if (!winInfo) return;
+  //   let webContents = winInfo.webContents;
+ 
+  //   // if (webContents.isDestroyed() || webContents.isCrashed()) {
+  //   //   return this.unregisterRenderer(client.clientId);
+  //   // }
+  //   this._sendForWebContents(webContents, mainDispatchName, payload);
+  // }
   
-  sendWinMsg(clientId: string, message: any) {
-    if (!this.clientMap[clientId]) return;
-    let webContents = this.clientMap[clientId].webContents;
-    if (this.checkWebContents(webContents)) {
-      webContents.send(messageName, message);
+  // sendWinMsg(clientId: string, message: any) {
+  //   let winInfo: IElectronWinInfo = this.multiWinSaver.getWinInfo(clientId) as IElectronWinInfo;
+  //   if (!winInfo) return;
+  //   let webContents = winInfo.webContents;
+  //   this.multiWinSaver.whenRegister(clientId, () => {
+  //     this._sendForWebContents(webContents, messageName, message);
+  //   })
+  // }
+
+  sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void {
+    this._sendForWebContents(winInfo.webContents, msgName, ...args);
+  }
+
+  activeWin(winInfo: IWinInfo) {
+    let win = (winInfo as IElectronWinInfo).window;
+    if (win) {
+      win.moveTop();
+      // win && win.minimize();
+      win.focus();
     }
   }
 
-  // 通过clientId获取BrowserWindow
-  getWindow(clientId: string): BrowserWindow | undefined {
-    if (!this.clientMap[clientId]) return undefined;
-    return this.clientMap[clientId].window;
-  }
+  createWin(winId: string, url: string, parentId: string | undefined, params: any) {
+    let storeDeclarers = this.mainClientCallback.getStoreDeclarers();
+    let initStates = this.mainClientCallback.getInitStates(winId);
+    const window = new BrowserWindow({
+      ...params,
+      show: false,
+      x: Math.floor(params.x || 0), y: Math.floor(params.y || 0),
+    });
 
-  // 通过clientId获取WebContents
-  getWebContents(clientId: string): WebContents | undefined {
-    if (!this.clientMap[clientId]) return undefined;
-    return this.clientMap[clientId].webContents;
-  }
-
-  changeClientAction(clientId: string, params: any) {
-    if (this.clientMap[clientId]) {
-
-      let webContents = this.clientMap[clientId].webContents;
-      // this.sendMessage(win, { action: 'change-props', url });
-      // win.webContents.send("__INIT_WINDOW__", params);
-      this._sendForWebContents(webContents, "__INIT_WINDOW__", params);
-      this.log((logger) => logger("ElectronMainClient", "init Window", params));
-
+    let query = { url: url, winId: winId, parentId, storeDeclarers, state: initStates };
+    if (process.env.NODE_ENV === "development") {
+      window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?${encodeUrl(query)}`);
+      // window.webContents.openDevTools();
     } else {
-
-      const onRegister = (event: Event, { clientId: nowClientId }: { clientId: string }) => {
-        if (nowClientId === clientId) {
-          this.changeClientAction(clientId, params);
-          ipcMain.removeListener(renderRegisterName, onRegister);
-        }
-      };
-      // 还没有初始化，则监听注册事件，当初始化之后 开始初始化
-      ipcMain.on(renderRegisterName, onRegister);
+      window.loadURL(require('url').format({
+        pathname: require('path').join(__dirname, 'index.html'),
+        protocol: 'file',
+        slashes: true,
+        query: query,
+      }));
     }
-  }
 
-  isRegister(clientId: string): boolean {
-    return !!this.clientMap[clientId];
-  }
-
-  whenRegister(clientId: string, callback: () => void): void {
-    if (this.isRegister(clientId)) {
-      return callback();
+    if (params.show) {
+      window.on('ready-to-show', function() {
+        window.show();
+      });
     }
-    const onRegister = (event: Event, { clientId: nowClientId }: { clientId: string }) => {
-      if (nowClientId === clientId) {
-        callback();
-        ipcMain.removeListener(renderRegisterName, onRegister);
-      }
-    };
-
-    ipcMain.on(renderRegisterName, onRegister);
+    
+    return window;
   }
 
-  isClose(clientId: string): boolean {
-    return !this.clientMap[clientId];
+  changeWin(winId: string, url: string, parentId: string | undefined, params: any): void {
+    
   }
 }

@@ -1,6 +1,6 @@
 import { Emitter, Disposable } from 'event-kit';
 
-interface IWinInfo {
+export interface IWinInfo {
   winId: string;
   [key: string]: any;
 };
@@ -28,6 +28,10 @@ export default class MultiWinSaver {
 
   getWinInfo(winId: string) {
     return this.winIdMap[winId];
+  }
+
+  findWinInfo(callback: (winInfo: IWinInfo) => boolean): IWinInfo | undefined {
+    return this.winInfos.find(callback);
   }
 
   registerWin(winId: string) {

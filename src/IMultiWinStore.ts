@@ -14,9 +14,9 @@ export interface IWinParams {
 }
 
 export interface IWinProps {
-  path?: string;   // The path of the window
+  path?: string; // The path of the window
   name?: string; // The name of this window
-  groups?: string[];  // The groups that the window belongs to
+  groups?: string[]; // The groups that the window belongs to
 }
 
 export default interface IMultiWinStore {

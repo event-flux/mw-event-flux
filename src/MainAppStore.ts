@@ -1,10 +1,24 @@
-import { AppStore, DispatchItem, AnyStoreDeclarer, StoreDeclarer, StoreListDeclarer, StoreMapDeclarer } from 'event-flux';
-import { 
-  mainInitName, mainDispatchName, mainReturnName, renderDispatchName, renderRegisterName, messageName, winMessageName, initMessageName
-} from './constants';
+import {
+  AppStore,
+  DispatchItem,
+  AnyStoreDeclarer,
+  StoreDeclarer,
+  StoreListDeclarer,
+  StoreMapDeclarer,
+} from "event-flux";
+import {
+  mainInitName,
+  mainDispatchName,
+  mainReturnName,
+  renderDispatchName,
+  renderRegisterName,
+  messageName,
+  winMessageName,
+  initMessageName,
+} from "./constants";
 import IErrorObj from "./IErrorObj";
-import MultiWinSaver, { IWinInfo } from "./MultiWinSaver";
-import { IMainClientCallback, IWinProps } from "./mainClientTypes";
+import MultiWinSaver from "./MultiWinSaver";
+import { IMainClientCallback, IWinProps, IWinInfo } from "./mainClientTypes";
 
 interface IMainClient {
   sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void;
@@ -43,43 +57,50 @@ export default class MainWinProcessor implements IMainClientCallback {
       let storeDeclarer = appStore._storeRegisterMap[key];
       let { isPerWin, storeKey, stateKey } = storeDeclarer.options!;
       declarers.push({
-        isPerWin, storeKey: storeKey!, stateKey: stateKey!,
+        isPerWin,
+        storeKey: storeKey!,
+        stateKey: stateKey!,
         storeType: getStoreType(storeDeclarer),
       });
     }
     this.outStoreDeclarers = JSON.stringify(declarers);
   }
 
-  async _handleRendererPayload(payload: string): Promise<any> {
-    
-  }
+  async _handleRendererPayload(payload: string): Promise<any> {}
 
   handleRendererDispatch(winId: string, invokeId: string, stringifiedAction: string) {
     let winInfo = this.multiWinSaver.getWinInfo(winId);
-    if (!winInfo) return;
-    this._handleRendererPayload(stringifiedAction).then(result => {
-      this.mainClient.sendWinMsg(winInfo, mainReturnName, invokeId, undefined, result);
-    }, err => {
-      let errObj: IErrorObj | null = null;
+    if (!winInfo) {
+      return;
+    }
+    this._handleRendererPayload(stringifiedAction).then(
+      result => {
+        this.mainClient.sendWinMsg(winInfo, mainReturnName, invokeId, undefined, result);
+      },
+      err => {
+        let errObj: IErrorObj | null = null;
 
-      if (err) {
-        errObj = { name: err.name, message: err.message } as IErrorObj;
-        if (errObj) {
-          Object.keys(err).forEach(key => errObj![key] = err[key]);
+        if (err) {
+          errObj = { name: err.name, message: err.message } as IErrorObj;
+          if (errObj) {
+            Object.keys(err).forEach(key => (errObj![key] = err[key]));
+          }
+        }
+
+        this.mainClient.sendWinMsg(winInfo, mainReturnName, invokeId, errObj, undefined);
+
+        if (process.env.NODE_ENV !== "production") {
+          throw err;
         }
       }
-      
-      this.mainClient.sendWinMsg(winInfo, mainReturnName, invokeId, errObj, undefined);
-
-      if (process.env.NODE_ENV !== "production") {
-        throw err;
-      }
-    });
+    );
   }
 
   handleWinMessage(senderId: string, targetId: string, data: any) {
     let winInfo = this.multiWinSaver.getWinInfo(targetId);
-    if (!winInfo) return;
+    if (!winInfo) {
+      return;
+    }
     this.multiWinSaver.whenRegister(winInfo.winId, () => {
       this.mainClient.sendWinMsg(winInfo, winMessageName, senderId, data);
     });
@@ -87,7 +108,9 @@ export default class MainWinProcessor implements IMainClientCallback {
 
   initWin(winId: string, params: IWinProps) {
     let winInfo = this.multiWinSaver.getWinInfo(winId);
-    if (!winInfo) return;
+    if (!winInfo) {
+      return;
+    }
     this.multiWinSaver.whenRegister(winInfo.winId, () => {
       this.mainClient.sendWinMsg(winInfo, initMessageName, params);
     });
@@ -117,13 +140,13 @@ export default class MainWinProcessor implements IMainClientCallback {
 
     // Transform the win specific state that remove the window suffix
     for (let stateKey in finalState) {
-      let [realKey, id] = stateKey.split('&');
+      let [realKey, id] = stateKey.split("&");
       if (id) {
         delete finalState[stateKey];
         finalState[realKey] = finalState[stateKey];
       }
     }
-    
+
     return finalState;
   }
 }
@@ -131,7 +154,7 @@ export default class MainWinProcessor implements IMainClientCallback {
 class MainAppStore extends AppStore {
   winSpecStores: { [winId: string]: Set<string> } = {};
   multiWinSaver: MultiWinSaver = new MultiWinSaver();
-  winFilters: { [winId: string]: (string | [string, string[]])[] } = {};
+  winFilters: { [winId: string]: Array<string | [string, string[]]> } = {};
 
   init() {
     super.init();
@@ -143,7 +166,7 @@ class MainAppStore extends AppStore {
       let storeKeys = this.winSpecStores[winId];
       // Dispose all win specific stores.
       for (let storeKey of storeKeys) {
-        let winStoreKey = storeKey + '@' + winId;
+        let winStoreKey = storeKey + "@" + winId;
         while (this.stores[winStoreKey] && this.stores[winStoreKey].getRefCount() > 0) {
           this.releaseStore(storeKey, winId);
         }
@@ -168,7 +191,7 @@ class MainAppStore extends AppStore {
       if (!winId) {
         throw new Error("The winId parameter is necessary when creating isPerWin store ");
       }
-      storeKey = storeKey + '@' + winId;
+      storeKey = storeKey + "@" + winId;
     }
     return storeKey;
   }
@@ -184,7 +207,7 @@ class MainAppStore extends AppStore {
       if (!winId) {
         throw new Error("The winId parameter is necessary when creating isPerWin store ");
       }
-      stateKey = stateKey + '@' + winId;
+      stateKey = stateKey + "@" + winId;
     }
     return stateKey;
   }
@@ -192,11 +215,15 @@ class MainAppStore extends AppStore {
   _requestStoreMapFilter(storeKey: string, keys: string[], winId: string) {
     let { isPerWin, stateKey } = this._storeRegisterMap[storeKey].options! as any;
     // If the storeMap exists per window, then the filter is not necessary.
-    if (isPerWin) return;
+    if (isPerWin) {
+      return;
+    }
     // let filters = this.winFilters[winId];
     let filterIndex = this.winFilters[winId].findIndex(item => {
-      if (Array.isArray(item)) item = item[0];
-      return item === stateKey
+      if (Array.isArray(item)) {
+        item = item[0];
+      }
+      return item === stateKey;
     });
     if (filterIndex !== -1) {
       this.winFilters[winId][filterIndex] = [stateKey, keys];
@@ -219,10 +246,10 @@ class MainAppStore extends AppStore {
       }
       winStores.add(storeKey);
 
-      stateKey = stateKey + '@' + winId;
-      storeKey = storeKey + '@' + winId;
+      stateKey = stateKey + "@" + winId;
+      storeKey = storeKey + "@" + winId;
     }
-     // Add the win specific stateKey into the winFilter
+    // Add the win specific stateKey into the winFilter
     this.winFilters[winId].push(stateKey);
 
     this.stores[storeKey] = store;
@@ -235,12 +262,12 @@ class MainAppStore extends AppStore {
         throw new Error("The winId parameter is necessary when delete isPerWin store ");
       }
 
-      // Delete the storeKey from the win specific stores. 
+      // Delete the storeKey from the win specific stores.
       let winStores = this.winSpecStores[winId];
       winStores.delete(storeKey);
 
-      stateKey = stateKey + '@' + winId;
-      storeKey = storeKey + '@' + winId;
+      stateKey = stateKey + "@" + winId;
+      storeKey = storeKey + "@" + winId;
     }
     // Delete the stateKey from winFilter
     let filterIndex = this.winFilters[winId].indexOf(stateKey);

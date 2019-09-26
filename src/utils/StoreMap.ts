@@ -1,13 +1,16 @@
-import { initStore, disposeStore } from './storeBuilder';
-import { Emitter } from 'event-kit';
-import IExtendStoreBase from '../IExtendStoreBase';
+import { initStore, disposeStore } from "./storeBuilder";
+import { Emitter } from "event-kit";
+import IExtendStoreBase from "../IExtendStoreBase";
 
 type StoreBuilder = () => IExtendStoreBase | undefined;
 type StoreMapObserver = (store: IExtendStoreBase, index: string) => void;
 
-export interface StoreMapConstructor {
-  new (keys: string[] | null, builder: StoreBuilder, observer: StoreMapObserver, options: any): StoreMap;
-}
+export type StoreMapConstructor = new (
+  keys: string[] | null,
+  builder: StoreBuilder,
+  observer: StoreMapObserver,
+  options: any
+) => StoreMap;
 
 export default class StoreMap {
   storeMap: Map<string, any> = new Map();
@@ -23,7 +26,9 @@ export default class StoreMap {
     this.builder = builder;
     this.observer = observer;
     this.options = options;
-    if (Array.isArray(keys)) keys.forEach(key => this.add(key));
+    if (Array.isArray(keys)) {
+      keys.forEach(key => this.add(key));
+    }
   }
 
   _initWrap() {
@@ -31,12 +36,14 @@ export default class StoreMap {
   }
 
   add(key: string, prevInit?: (store: IExtendStoreBase) => void): IExtendStoreBase | undefined {
-    if (this.storeMap.has(key)) return;
+    if (this.storeMap.has(key)) {
+      return;
+    }
     let newStore = this.builder();
     if (newStore) {
       (newStore as any).mapStoreKey = key;
       prevInit && prevInit(newStore);
-  
+
       // if (this._isInit) initStore(newStore);
       initStore(newStore, this.parentStore);
       this.storeMap.set(key, newStore);
@@ -71,17 +78,27 @@ export default class StoreMap {
     this.clear();
   }
 
-  forEach(callback: (value: any, key: string, map: Map<string, any>) => void) { 
-    return this.storeMap.forEach(callback); 
+  forEach(callback: (value: any, key: string, map: Map<string, any>) => void) {
+    return this.storeMap.forEach(callback);
   }
 
-  get(key: string) { return this.storeMap.get(key); }
+  get(key: string) {
+    return this.storeMap.get(key);
+  }
 
-  has(key: string) { return this.storeMap.has(key); }
+  has(key: string) {
+    return this.storeMap.has(key);
+  }
 
-  keys() { return this.storeMap.keys(); }
+  keys() {
+    return this.storeMap.keys();
+  }
 
-  values() { return this.storeMap.values(); }
+  values() {
+    return this.storeMap.values();
+  }
 
-  entries() { return this.storeMap.entries(); }
+  entries() {
+    return this.storeMap.entries();
+  }
 }

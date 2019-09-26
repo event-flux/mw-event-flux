@@ -27,7 +27,7 @@
   ) would return
     { a: { d: 1 } }
 */
-import { isObject } from './objUtils';
+import { isObject } from "./objUtils";
 
 interface IFilterObject {
   [key: string]: any;
@@ -35,12 +35,12 @@ interface IFilterObject {
 
 export default function filterApply(origin: IFilterObject, updated: IFilterObject, deleted: IFilterObject | null) {
   let merged: IFilterObject = {};
-  if (updated['*']) {
+  if (updated["*"]) {
     if (Array.isArray(origin)) {
       return origin;
     }
-    let excludes = updated['*@exclude'];
-    for(let key in origin) {
+    let excludes = updated["*@exclude"];
+    for (let key in origin) {
       if (!excludes || excludes.indexOf(key) === -1) {
         merged[key] = origin[key];
       }
@@ -52,7 +52,9 @@ export default function filterApply(origin: IFilterObject, updated: IFilterObjec
 
   if (isObject(updated)) {
     Object.keys(updated).forEach(key => {
-      if (key === '*' || key === '*@exclude') return;
+      if (key === "*" || key === "*@exclude") {
+        return;
+      }
       if (origin[key] != null && updated[key]) {
         merged[key] = filterApply(origin[key], updated[key], deleted && deleted[key]);
       }
@@ -64,4 +66,4 @@ export default function filterApply(origin: IFilterObject, updated: IFilterObjec
     });
   }
   return merged;
-};
+}

@@ -1,3 +1,3 @@
-export default (window as any)['process'] ? 
-  require('./ElectronRendererClient').default : 
-  require('./BrowserRendererClient').default;
+export default (window as any).process
+  ? require("./ElectronRendererClient").default
+  : require("./BrowserRendererClient").default;

@@ -1,5 +1,5 @@
-import { CompositeDisposable, DisposableLike } from 'event-kit';
-import StoreBase from './StoreBase';
+import { CompositeDisposable, DisposableLike } from "event-kit";
+import StoreBase from "./StoreBase";
 
 export default class StoreRecycleBase extends StoreBase {
   disposables = new CompositeDisposable();

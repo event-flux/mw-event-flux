@@ -1,4 +1,4 @@
-type IFindIndexCallback<T>  = (value: T, index: number, obj: T[]) => boolean;
+type IFindIndexCallback<T> = (value: T, index: number, obj: T[]) => boolean;
 
 export default function findIndex<T>(array: T[], callback: IFindIndexCallback<T>): number {
   if (array.findIndex) {

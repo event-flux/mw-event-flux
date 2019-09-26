@@ -1,15 +1,15 @@
-'use strict';
+"use strict";
 
 import { BrowserWindow, Rectangle } from "electron";
 
-var electron = require('electron');
-var deepEqual = require('deep-equal');
+let electron = require("electron");
+let deepEqual = require("deep-equal");
 
 const isInteger = (Number as any).isInteger;
 const eventHandlingDelay = 100;
 
 function isNumber(num: any) {
-  return typeof typeof(num) === 'number' && !isNaN(num);
+  return typeof typeof num === "number" && !isNaN(num);
 }
 
 type OnSave = (state: any) => void;
@@ -50,11 +50,14 @@ export default class ElectronWindowState {
     // Check state validity
     this.validateState();
     // Set state fallback values
-    this.state = (Object as any).assign({
-      width: config.defaultWidth || 800,
-      height: config.defaultHeight || 600,
-      useContentSize: config.useContentSize || false,
-    }, this.state);
+    this.state = (Object as any).assign(
+      {
+        width: config.defaultWidth || 800,
+        height: config.defaultHeight || 600,
+        useContentSize: config.useContentSize || false,
+      },
+      this.state
+    );
   }
 
   normState(state: IWinState) {
@@ -79,21 +82,27 @@ export default class ElectronWindowState {
 
   hasBounds() {
     let state = this.state;
-    return state &&
+    return (
+      state &&
       isInteger(state.x) &&
       isInteger(state.y) &&
-      isInteger(state.width) && (state.width as number) > 0 &&
-      isInteger(state.height) && (state.height as number) > 0;
+      isInteger(state.width) &&
+      (state.width as number) > 0 &&
+      isInteger(state.height) &&
+      (state.height as number) > 0
+    );
   }
 
   validateState() {
     let state = this.state;
-    if (state && (state.isMaximized || state.isFullScreen)) return;
+    if (state && (state.isMaximized || state.isFullScreen)) {
+      return;
+    }
 
     if (this.hasBounds() && state.displayBounds) {
       // Check if the display where the window was last open is still available
-      var displayBounds = electron.screen.getDisplayMatching(state as Rectangle).bounds;
-      var sameBounds = deepEqual(state.displayBounds, displayBounds, {strict: true});
+      let displayBounds = electron.screen.getDisplayMatching(state as Rectangle).bounds;
+      let sameBounds = deepEqual(state.displayBounds, displayBounds, { strict: true });
       if (!sameBounds) {
         if (displayBounds.width < state.displayBounds.width) {
           if ((state.x as number) > displayBounds.width) {
@@ -126,7 +135,7 @@ export default class ElectronWindowState {
     }
     // don't throw an error when window was closed
     try {
-      var winBounds = state.useContentSize ? win.getContentBounds() : win.getBounds();
+      let winBounds = state.useContentSize ? win.getContentBounds() : win.getBounds();
       if (this.isNormal(win)) {
         state.x = winBounds.x;
         state.y = winBounds.y;
@@ -166,23 +175,22 @@ export default class ElectronWindowState {
     if (state.isFullScreen) {
       win.setFullScreen(true);
     }
-    win.on('resize', this.stateChangeHandler);
-    win.on('move', this.stateChangeHandler);
-    win.on('close', this.closeHandler);
-    win.on('closed', this.closedHandler);
+    win.on("resize", this.stateChangeHandler);
+    win.on("move", this.stateChangeHandler);
+    win.on("close", this.closeHandler);
+    win.on("closed", this.closedHandler);
     this.winRef = win;
   }
 
   unmanage() {
     let winRef = this.winRef;
     if (winRef) {
-      winRef.removeListener('resize', this.stateChangeHandler);
-      winRef.removeListener('move', this.stateChangeHandler);
+      winRef.removeListener("resize", this.stateChangeHandler);
+      winRef.removeListener("move", this.stateChangeHandler);
       clearTimeout(this.stateChangeTimer);
-      winRef.removeListener('close', this.closeHandler);
-      winRef.removeListener('closed', this.closedHandler);
+      winRef.removeListener("close", this.closeHandler);
+      winRef.removeListener("closed", this.closedHandler);
       this.winRef = null;
     }
   }
 }
- 

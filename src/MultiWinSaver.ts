@@ -1,4 +1,4 @@
-import { Emitter, Disposable } from 'event-kit';
+import { Emitter, Disposable } from "event-kit";
 import { IWinInfo } from "./mainClientTypes";
 
 export default class MultiWinSaver {

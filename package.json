@@ -4,10 +4,12 @@
   "description": "Redux store which synchronizes between instances in multiple process",
   "main": "lib/index.js",
   "scripts": {
-    "lint": "eslint src/",
     "start": "electron tests",
     "test": "jest",
-    "prepublish": "gulp"
+    "prepublish": "gulp",
+    "lint": "tslint src/**/*.{ts,tsx}",
+    "lint:fix": "tslint --fix ./src/**/*.{ts,tsx}",
+    "prettier": "prettier --write ./src/**/*.{ts,tsx}"
   },
   "repository": {
     "type": "git",
@@ -21,7 +23,19 @@
     "electron",
     "atom"
   ],
-  "author": "Shiranka Miskin",
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "tslint --fix",
+      "git add"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "author": "liuxiong",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/samiskin/redux-electron-store/issues"
@@ -58,11 +72,18 @@
     "gulp-babel": "^7.0.1",
     "gulp-sequence": "^1.0.0",
     "gulp-typescript": "^5.0.0-alpha.3",
+    "husky": "^3.0.5",
     "jest": "^23.6.0",
+    "lint-staged": "^9.3.0",
     "merge2": "^1.2.3",
+    "prettier": "^1.18.2",
     "redux": "^3.6.0",
     "tape": "^4.2.2",
     "ts-jest": "^23.10.5",
+    "tslint": "^5.20.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.0.1",
+    "tslint-react": "^4.1.0",
     "typescript": "^3.5.3"
   },
   "peerDependencies": {

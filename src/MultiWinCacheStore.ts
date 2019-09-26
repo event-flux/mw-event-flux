@@ -1,15 +1,15 @@
-import MultiWinStore from './MultiWinStore';
-import ElectronWindowState, { IWinState } from './ElectronWindowState';
-import { format as formatUrl } from 'url';
-import * as path from 'path';
-import { app, BrowserWindow, screen } from 'electron';
-import IStorage from './storage/IStorage';
-import { IWinProps, IWinParams } from './IMultiWinStore';
+import MultiWinStore from "./MultiWinStore";
+import ElectronWindowState, { IWinState } from "./ElectronWindowState";
+import { format as formatUrl } from "url";
+import * as path from "path";
+import { app, BrowserWindow, screen } from "electron";
+import IStorage from "./storage/IStorage";
+import { IWinProps, IWinParams } from "./IMultiWinStore";
 
-const isDevelopment = process.env.NODE_ENV !== 'production'
+const isDevelopment = process.env.NODE_ENV !== "production";
 
 export class WindowManager {
-  windows: { clientId: string, window: BrowserWindow }[] = [];
+  windows: Array<{ clientId: string; window: BrowserWindow }> = [];
   winHandler: any;
   winSize = 1;
 
@@ -21,24 +21,28 @@ export class WindowManager {
   }
 
   genClientId() {
-    let clientId = 'win' + Math.floor(Math.random() * 10000);
+    let clientId = "win" + Math.floor(Math.random() * 10000);
     return clientId;
   }
-  
+
   createWin(clientId: string) {
     return this.winHandler.createNativeWindow(clientId);
   }
 
   ensureWindows() {
-    if (!this.windows) return;
+    if (!this.windows) {
+      return;
+    }
     while (this.windows.length < this.winSize) {
       let clientId = this.genClientId();
       this.windows.push({ clientId, window: this.createWin(clientId) });
     }
   }
 
-  getWin(): { clientId: string, window: BrowserWindow } | undefined {
-    if (!this.windows) return undefined;
+  getWin(): { clientId: string; window: BrowserWindow } | undefined {
+    if (!this.windows) {
+      return undefined;
+    }
     let winInfo = this.windows.shift();
     this.ensureWindows();
     return winInfo;
@@ -47,7 +51,7 @@ export class WindowManager {
   dispose() {
     this.windows.forEach(({ window }) => {
       if (!window.isDestroyed()) {
-        window.close()
+        window.close();
       }
     });
     this.windows = [];
@@ -74,10 +78,10 @@ class MultiWinCacheStore extends MultiWinStore {
 
   loadClients() {
     this.willQuit = false;
-    let clients = this.getStorage()!.get('clients');
+    let clients = this.getStorage()!.get("clients");
     if (!clients || clients.length === 0) {
       clients = this.getDefaultClients();
-    } 
+    }
 
     if (!this.windowManager) {
       this.windowManager = new WindowManager(this);
@@ -85,24 +89,32 @@ class MultiWinCacheStore extends MultiWinStore {
 
     app.whenReady().then(() => {
       clients.forEach((item: IClientCacheInfo) => {
-        this.createWinForClientId({ path: item.url, groups: item.groups, name: item.name }, item.clientId, item.parentId, item.winState!)
+        this.createWinForClientId(
+          { path: item.url, groups: item.groups, name: item.name },
+          item.clientId,
+          item.parentId,
+          item.winState!
+        );
       });
     });
   }
 
   saveClients() {
-    let clients = this.clientIds.map(id => ({ 
-      clientId: id, ...this.clientInfoMap[id], name: this.clientIdNameMap[id], groups: this.groupsMap[id],
+    let clients = this.clientIds.map(id => ({
+      clientId: id,
+      ...this.clientInfoMap[id],
+      name: this.clientIdNameMap[id],
+      groups: this.groupsMap[id],
     }));
-    this.getStorage()!.set('clients', clients);
+    this.getStorage()!.set("clients", clients);
   }
 
   getDefaultClients(): IClientCacheInfo[] {
-    return [{ clientId: 'mainClient', url: '/', winState: { isMaximized: true } }];
+    return [{ clientId: "mainClient", url: "/", winState: { isMaximized: true } }];
   }
 
   getStorage(): IStorage | null {
-    console.error('You need inherit MultiWinCacheStore and implement getStorage');
+    console.error("You need inherit MultiWinCacheStore and implement getStorage");
     return null;
   }
 
@@ -112,12 +124,14 @@ class MultiWinCacheStore extends MultiWinStore {
   }
 
   onDidWinClose(clientId: string) {
-    (this._appStore as any).mainClient.sendWinMsg(clientId, { action: 'did-close' });
+    (this._appStore as any).mainClient.sendWinMsg(clientId, { action: "did-close" });
   }
 
   closeWin(clientId: string) {
     let win = this.clientWins[clientId] as BrowserWindow;
-    if (win && !win.isDestroyed()) win.close();
+    if (win && !win.isDestroyed()) {
+      win.close();
+    }
   }
 
   saveWinState(clientId: string, winState: IWinState) {
@@ -126,7 +140,12 @@ class MultiWinCacheStore extends MultiWinStore {
   }
 
   // 当要创建的窗口有clientId时
-  createWinForClientId(winProps: IWinProps, clientId: string, parentClientId: string | undefined, params: IWinParams): string | null {
+  createWinForClientId(
+    winProps: IWinProps,
+    clientId: string,
+    parentClientId: string | undefined,
+    params: IWinParams
+  ): string | null {
     return this._createElectronWin(winProps, clientId, parentClientId, params);
   }
 
@@ -155,13 +174,18 @@ class MultiWinCacheStore extends MultiWinStore {
     let clientId = null;
     try {
       clientId = this._createElectronWin(winProps, null, parentClientId, params);
-    } catch(err) {
+    } catch (err) {
       console.error(err, err.stack);
     }
     return clientId;
   }
 
-  _createElectronWin(url: string | IWinProps, clientId: string | null, parentId: string | undefined, params: IWinState): string | null {
+  _createElectronWin(
+    url: string | IWinProps,
+    clientId: string | null,
+    parentId: string | undefined,
+    params: IWinState
+  ): string | null {
     if (clientId && this.clientIds.indexOf(clientId) !== -1) {
       return null;
     }
@@ -169,23 +193,25 @@ class MultiWinCacheStore extends MultiWinStore {
     let winState = new ElectronWindowState(null, params, null);
 
     let winInfo = this._getElectronWinFromCache(winProps.path!, clientId, parentId, winState.state);
-    if (!clientId) clientId = winInfo.clientId; 
+    if (!clientId) {
+      clientId = winInfo.clientId;
+    }
 
     let win = winInfo.win;
     this._addWinProps(clientId, win, winProps);
-    
+
     this.clientInfoMap[clientId] = { url: winProps.path!, clientId, parentId, winState: winState.state };
 
-    winState.onSave = (state) => {
+    winState.onSave = state => {
       this.saveWinState(clientId!, state);
     };
     // this.clientStateMap[clientId] = winState.state;
 
     winState.manage(win);
 
-    this.saveClients();   // Save clients into Storage
-  
-    win.on('closed', this.onCloseWin.bind(this, clientId));
+    this.saveClients(); // Save clients into Storage
+
+    win.on("closed", this.onCloseWin.bind(this, clientId));
     return clientId;
   }
 
@@ -202,15 +228,16 @@ class MultiWinCacheStore extends MultiWinStore {
       } else {
         clientId = winInfo.clientId;
         win = winInfo.window;
-        
+
         // this._appStore.mainClient.sendMessage(win, { action: 'change-props', url, parentId });
         (this._appStore as any).mainClient.changeClientAction(clientId, { url, parentId });
-    
-        let setBoundsFunc: 'setContentBounds' | 'setBounds' = params.useContentSize ? 'setContentBounds' : 'setBounds';
+
+        let setBoundsFunc: "setContentBounds" | "setBounds" = params.useContentSize ? "setContentBounds" : "setBounds";
 
         let x = Math.floor(params.x || 0);
         let y = Math.floor(params.y || 0);
-        let width = Math.floor(params.width || 800), height = Math.floor(params.height || 600);
+        let width = Math.floor(params.width || 800),
+          height = Math.floor(params.height || 600);
         if (params.minWidth && params.minHeight) {
           win.setMinimumSize(Math.floor(params.minWidth), Math.floor(params.minHeight));
         }
@@ -221,15 +248,21 @@ class MultiWinCacheStore extends MultiWinStore {
           win.setTitle(params.title);
         }
         win[setBoundsFunc]({
-          x, y, width, height,
+          x,
+          y,
+          width,
+          height,
         });
-    
-        win[setBoundsFunc]({ 
-          x, y, width, height,
+
+        win[setBoundsFunc]({
+          x,
+          y,
+          width,
+          height,
         });
-    
+
         setTimeout(() => {
-          win[setBoundsFunc]({x, y, width, height})
+          win[setBoundsFunc]({ x, y, width, height });
           win.show();
         }, 0);
       }
@@ -237,39 +270,48 @@ class MultiWinCacheStore extends MultiWinStore {
     return { clientId, win };
   }
 
-  createNativeWindow(clientId: string, url = 'empty', parentId = '', params: IWinParams) {
+  createNativeWindow(clientId: string, url = "empty", parentId = "", params: IWinParams) {
     if (params == null) {
       params = {
-        x: 0, y: 0,
-        width: 1280, height: 800, 
+        x: 0,
+        y: 0,
+        width: 1280,
+        height: 800,
         useContentSize: true,
       };
     }
     const window = new BrowserWindow({
       show: false,
-      x: Math.floor(params.x || 0), y: Math.floor(params.y || 0),
-      width: params.width, height: params.height, 
-      minWidth: params.minWidth || params.width, minHeight: params.minHeight || params.height,
-      maxWidth: params.maxWidth, maxHeight: params.maxHeight,
+      x: Math.floor(params.x || 0),
+      y: Math.floor(params.y || 0),
+      width: params.width,
+      height: params.height,
+      minWidth: params.minWidth || params.width,
+      minHeight: params.minHeight || params.height,
+      maxWidth: params.maxWidth,
+      maxHeight: params.maxHeight,
       title: params.title,
       useContentSize: params.useContentSize,
     });
 
     if (isDevelopment) {
-      window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?url=${url}&clientId=${clientId}&parentId=${parentId}`);
+      window.loadURL(
+        `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?url=${url}&clientId=${clientId}&parentId=${parentId}`
+      );
       // window.webContents.openDevTools();
-    }
-    else {
-      window.loadURL(formatUrl({
-        pathname: path.join(__dirname, 'index.html'),
-        protocol: 'file',
-        slashes: true,
-        query: { url: url, clientId, parentId },
-      }));
+    } else {
+      window.loadURL(
+        formatUrl({
+          pathname: path.join(__dirname, "index.html"),
+          protocol: "file",
+          slashes: true,
+          query: { url, clientId, parentId },
+        })
+      );
     }
 
     // window.webContents.openDevTools();
-    window.webContents.on('devtools-opened', () => {
+    window.webContents.on("devtools-opened", () => {
       window.focus();
       setImmediate(() => {
         window.focus();
@@ -281,7 +323,7 @@ class MultiWinCacheStore extends MultiWinStore {
 
   createMainWindow(url: string, clientId: string, parentId: string | undefined, params: any = {}) {
     let window = this.createNativeWindow(clientId, url, parentId, params);
-    window.on('ready-to-show', function() {
+    window.on("ready-to-show", () => {
       window.show();
     });
     return window;
@@ -300,7 +342,7 @@ class MultiWinCacheStore extends MultiWinStore {
   }
 
   onCloseWin(clientId: string) {
-    if (clientId === 'mainClient') {
+    if (clientId === "mainClient") {
       this.onCloseMainClient();
     }
     this.onDidWinClose && this.onDidWinClose(clientId!);
@@ -308,7 +350,9 @@ class MultiWinCacheStore extends MultiWinStore {
     if (index !== -1) {
       this.clientIds.splice(index, 1);
     }
-    if (!this.willQuit) this.saveClients();
+    if (!this.willQuit) {
+      this.saveClients();
+    }
     this._removeClientId(clientId!);
   }
 

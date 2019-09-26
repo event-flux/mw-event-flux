@@ -1,16 +1,16 @@
-import { Emitter, Disposable } from 'event-kit';
-import { StoreBaseConstructor } from '../StoreBase';
-import IStoresDeclarer from '../IStoresDeclarer';
-import IExtendStoreBase, { IExtendStoreBaseConstructor } from '../IExtendStoreBase';
-import { StoreMapConstructor } from './StoreMap';
-const omit = require('lodash/omit');
+import { Emitter, Disposable } from "event-kit";
+import { StoreBaseConstructor } from "../StoreBase";
+import IStoresDeclarer from "../IStoresDeclarer";
+import IExtendStoreBase, { IExtendStoreBaseConstructor } from "../IExtendStoreBase";
+import { StoreMapConstructor } from "./StoreMap";
+const omit = require("lodash/omit");
 
 type KeyType = string | string[];
 
 export interface IFilterStoreMap {
   listenForKeys(clientId: string, key: KeyType): void;
   unlistenForKeys(clientId: string, key: KeyType): void;
-  add(key: string, prevInit?: Function): any;
+  add(key: string, prevInit?: any): any;
   delete(key: string): void;
   clear(): void;
   dispose(): void;
@@ -21,25 +21,27 @@ export default function addStateFilterForMap(StoreClass: StoreMapConstructor) {
     _stateListeners: { [clientIdKey: string]: number } = {};
     _stateFilters: { [clientId: string]: any } = {};
     _filterDisposables: { [key: string]: Disposable } = {};
-    _stateFiltersInit = false;  // Check if or not the stateFilters has init
+    _stateFiltersInit = false; // Check if or not the stateFilters has init
 
     getDefaultFilter(): { [key: string]: any } {
       // defaultFilter=true 表示默认的*为true，并且将observe所有key
-      if (this.options && this.options.defaultFilter) return { '*': true };
-      return { '*': false };
+      if (this.options && this.options.defaultFilter) {
+        return { "*": true };
+      }
+      return { "*": false };
     }
 
     _initForClientId = (clientId: string) => {
       let defaultFilter = this.options && this.options.defaultFilter;
       let clientFilters = this.getDefaultFilter();
       if (defaultFilter) {
-        let entries = this.storeMap.entries(); 
+        let entries = this.storeMap.entries();
 
         for (let [key, store] of entries) {
-          clientFilters[key] = store._stateFilters && store._stateFilters[clientId] || { '*': true };
+          clientFilters[key] = (store._stateFilters && store._stateFilters[clientId]) || { "*": true };
         }
       }
-      this._stateFilters[clientId] = clientFilters; 
+      this._stateFilters[clientId] = clientFilters;
     };
 
     _initStateFilters() {
@@ -53,10 +55,14 @@ export default function addStateFilterForMap(StoreClass: StoreMapConstructor) {
 
       if (defaultFilter) {
         for (let [key, store] of this.storeMap.entries()) {
-          // clientFilters[key] = defaultFilter ? store._stateFilters && store._stateFilters[clientId] || { '*': true } : { '*': false };
-          this._filterDisposables[key] = store.emitter.on('did-filter-update', ({ clientId, filters }: { clientId: string, filters: any }) => {
-            this._setFilter(clientId, { [key]: filters })
-          });
+          // clientFilters[key] = defaultFilter ?
+          // store._stateFilters && store._stateFilters[clientId] || { '*': true } : { '*': false };
+          this._filterDisposables[key] = store.emitter.on(
+            "did-filter-update",
+            ({ clientId, filters }: { clientId: string; filters: any }) => {
+              this._setFilter(clientId, { [key]: filters });
+            }
+          );
         }
       }
     }
@@ -68,14 +74,14 @@ export default function addStateFilterForMap(StoreClass: StoreMapConstructor) {
 
     _setFilter(clientId: string, newFilter: any) {
       let oldFilters = this._stateFilters[clientId] || this.getDefaultFilter();
-      let nextFilters = { ...oldFilters, ...newFilter }; 
+      let nextFilters = { ...oldFilters, ...newFilter };
       this._stateFilters[clientId] = nextFilters;
-      this.emitter.emit('did-filter-update', { clientId, filters: nextFilters});
+      this.emitter.emit("did-filter-update", { clientId, filters: nextFilters });
     }
 
     _handleAddWin(clientId: string) {
       if (this._stateFiltersInit) {
-        let entries = this.storeMap.entries(); 
+        let entries = this.storeMap.entries();
 
         for (let [key, store] of entries) {
           store._handleAddWin && store._handleAddWin(clientId);
@@ -87,7 +93,7 @@ export default function addStateFilterForMap(StoreClass: StoreMapConstructor) {
     _handleRemoveWin(clientId: string) {
       if (this._stateFiltersInit) {
         this._stateFilters[clientId] = null;
-        let entries = this.storeMap.entries(); 
+        let entries = this.storeMap.entries();
 
         for (let [key, store] of entries) {
           this._stateListeners[clientId + key] = 0;
@@ -97,36 +103,47 @@ export default function addStateFilterForMap(StoreClass: StoreMapConstructor) {
     }
 
     listenForKeys = function(this: MainStoreBase, clientId: string, key: KeyType) {
-      if (!clientId) return console.error('The clientId is not specify');
+      if (!clientId) {
+        return console.error("The clientId is not specify");
+      }
       let keys = Array.isArray(key) ? key : [key];
       let _stateListeners = this._stateListeners;
-      keys.forEach(key => {
-        let saveKey = clientId + key;
-        if (_stateListeners[saveKey] == null) _stateListeners[saveKey] = 0;
+      keys.forEach(thisKey => {
+        let saveKey = clientId + thisKey;
+        if (_stateListeners[saveKey] == null) {
+          _stateListeners[saveKey] = 0;
+        }
         _stateListeners[saveKey] += 1;
         if (_stateListeners[saveKey] === 1) {
-          let store = this.storeMap.get(key);
-          let storeFilter = store._stateFilters && store._stateFilters[clientId] || { '*': true };
-          this._setFilter(clientId, { [key]: storeFilter });
+          let store = this.storeMap.get(thisKey);
+          let storeFilter = (store._stateFilters && store._stateFilters[clientId]) || { "*": true };
+          this._setFilter(clientId, { [thisKey]: storeFilter });
           if (this._filterDisposables[saveKey]) {
             console.error(`The ${key} for ${clientId} has listened, This May be Bugs`);
           }
-          this._filterDisposables[saveKey] = store.emitter.on('did-filter-update', ({ clientId: nowId, filters }: { clientId: string, filters: any }) => {
-            if (nowId === clientId) this._setFilter(clientId, { [key]: filters });
-          });
+          this._filterDisposables[saveKey] = store.emitter.on(
+            "did-filter-update",
+            ({ clientId: nowId, filters }: { clientId: string; filters: any }) => {
+              if (nowId === clientId) {
+                this._setFilter(clientId, { [thisKey]: filters });
+              }
+            }
+          );
         }
       });
-    }
-  
+    };
+
     unlistenForKeys = function(this: MainStoreBase, clientId: string, key: KeyType) {
-      if (!clientId) return console.error('The clientId is not specify');
+      if (!clientId) {
+        return console.error("The clientId is not specify");
+      }
       let keys = Array.isArray(key) ? key : [key];
       let _stateListeners = this._stateListeners;
-      keys.forEach(key => {
-        let saveKey = clientId + key;
+      keys.forEach(thisKey => {
+        let saveKey = clientId + thisKey;
         _stateListeners[saveKey] -= 1;
         if (_stateListeners[saveKey] === 0) {
-          this._setFilter(clientId, { [key]: false });
+          this._setFilter(clientId, { [thisKey]: false });
           this._filterDisposables[saveKey].dispose();
           delete this._filterDisposables[saveKey];
         }
@@ -139,13 +156,18 @@ export default function addStateFilterForMap(StoreClass: StoreMapConstructor) {
         let defaultFilter = this.options && this.options.defaultFilter;
         if (defaultFilter) {
           Object.keys(this._stateFilters).forEach(clientId => {
-            let filters = newStore!._stateFilters && newStore._stateFilters[clientId] || { '*': true };
+            let filters = (newStore!._stateFilters && newStore._stateFilters[clientId]) || { "*": true };
             this._setFilter(clientId, { [key]: filters });
           });
-          if (this._filterDisposables[key]) console.error(`The key ${key} should NOT add twice`);
-          this._filterDisposables[key] = newStore.emitter.on('did-filter-update', ({ clientId, filters }: { clientId: string, filters: any }) => {
-            this._setFilter(clientId, { [key]: filters });
-          });
+          if (this._filterDisposables[key]) {
+            console.error(`The key ${key} should NOT add twice`);
+          }
+          this._filterDisposables[key] = newStore.emitter.on(
+            "did-filter-update",
+            ({ clientId, filters }: { clientId: string; filters: any }) => {
+              this._setFilter(clientId, { [key]: filters });
+            }
+          );
         }
       }
       return newStore;
@@ -163,7 +185,7 @@ export default function addStateFilterForMap(StoreClass: StoreMapConstructor) {
     }
 
     delete(key: string) {
-      this.deleteFilter(key);  
+      this.deleteFilter(key);
       super.delete(key);
     }
 
@@ -182,5 +204,5 @@ export default function addStateFilterForMap(StoreClass: StoreMapConstructor) {
         disposable && disposable.dispose();
       }
     }
-  }
+  };
 }

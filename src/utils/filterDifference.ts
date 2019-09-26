@@ -12,7 +12,7 @@
     {updated: {*: false, '*@exclude': ['b'] }}
 */
 
-import { isObject, isEmpty } from './objUtils';
+import { isObject, isEmpty } from "./objUtils";
 
 const isShallow = (val: any) => Array.isArray(val) || !isObject(val);
 
@@ -20,17 +20,23 @@ interface IFilterObject {
   [key: string]: any;
 }
 
-function checkUpdateVal(key: string, old: IFilterObject, curr: IFilterObject, updated: IFilterObject, deleted: IFilterObject) {
+function checkUpdateVal(
+  key: string,
+  old: IFilterObject,
+  curr: IFilterObject,
+  updated: IFilterObject,
+  deleted: IFilterObject
+) {
   let oldVal = old[key];
   let currVal = curr[key];
-  if (currVal === oldVal) return;
-  
-  if (key === '*') {
-    updated[key] = currVal;
-    if (process.env.NODE_ENV === 'development') {
+  if (currVal === oldVal) {
+    return;
+  }
 
-    }
-    updated['*@exclude'] = Object.keys(curr).filter(k => k !== '*');
+  if (key === "*") {
+    updated[key] = currVal;
+
+    updated["*@exclude"] = Object.keys(curr).filter(k => k !== "*");
     return;
   }
   if (isShallow(currVal) || isShallow(oldVal)) {
@@ -43,16 +49,20 @@ function checkUpdateVal(key: string, old: IFilterObject, curr: IFilterObject, up
 }
 
 function filterDifference(old: IFilterObject, curr: IFilterObject) {
-  if (old == null || curr == null) return { updated: curr, deleted: {} };
+  if (old == null || curr == null) {
+    return { updated: curr, deleted: {} };
+  }
 
   const updated: IFilterObject = {};
   const deleted: IFilterObject = {};
 
   Object.keys(curr).forEach(key => checkUpdateVal(key, old, curr, updated, deleted));
   Object.keys(old).forEach(key => {
-    if (curr[key] === undefined) deleted[key] = true;
+    if (curr[key] === undefined) {
+      deleted[key] = true;
+    }
   });
   return { updated, deleted };
-};
+}
 
 export default filterDifference;

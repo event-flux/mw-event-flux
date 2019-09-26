@@ -5,6 +5,6 @@ export default function getLog(logger: (...args: any[]) => void): Log {
   if (!logger) {
     return () => {};
   } else {
-    return (callback) => callback(logger);
+    return callback => callback(logger);
   }
 }

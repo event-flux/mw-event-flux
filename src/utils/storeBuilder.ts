@@ -16,9 +16,9 @@ export const initStore = function(store: IExtendStoreBase, parentStore: IExtendS
   store.initStores && store.initStores(store);
   store._initWrap();
   store.startObserve && store.startObserve();
-}
+};
 
 export const disposeStore = function(store: IExtendStoreBase) {
   store.disposeStores && store.disposeStores();
   store.dispose();
-}
+};

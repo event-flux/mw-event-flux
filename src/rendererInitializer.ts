@@ -1,15 +1,18 @@
-import buildRendererAppStore, { RendererAppStore } from './RendererAppStore';
-import { Emitter } from 'event-kit';
-import IExtendStoreBase from './IExtendStoreBase';
-import IStoresDeclarer, { IStoresObjDeclarer } from './IStoresDeclarer';
-import { Logger } from './utils/loggerApply';
+import buildRendererAppStore, { RendererAppStore } from "./RendererAppStore2";
+import { Emitter } from "event-kit";
+import IExtendStoreBase from "./IExtendStoreBase";
+import IStoresDeclarer, { IStoresObjDeclarer } from "./IStoresDeclarer";
+import { Logger } from "./utils/loggerApply";
 
 function getQuery() {
   let query: { [key: string]: string } = {};
-  window.location.search.slice(1).split('&').forEach(item => {
-    let [key, val] = item.split('=');
-    query[key] = decodeURIComponent(val);
-  });
+  window.location.search
+    .slice(1)
+    .split("&")
+    .forEach(item => {
+      let [key, val] = item.split("=");
+      query[key] = decodeURIComponent(val);
+    });
   return query;
 }
 
@@ -25,7 +28,7 @@ class ChildWindowProxy {
     this.messages = [];
     createPromise.then(childId => {
       this.childId = childId;
-      this.messages.forEach((message) => {
+      this.messages.forEach(message => {
         this.send(message);
       });
     });
@@ -40,14 +43,14 @@ class ChildWindowProxy {
     }
   }
 
-  handleWinMessage({ senderId, message }: { senderId: string, message: string }) {
+  handleWinMessage({ senderId, message }: { senderId: string; message: string }) {
     if (senderId === this.childId) {
-      this.emitter.emit('message', message);
+      this.emitter.emit("message", message);
     }
   }
 
   onDidReceiveMsg(callback: (message: any) => void) {
-    return this.emitter.on('message', callback);
+    return this.emitter.on("message", callback);
   }
 }
 
@@ -68,72 +71,76 @@ class ParentWindowProxy {
     this.store.sendWindowMessage(this.parentId, message);
   }
 
-  handleWinMessage({ senderId, message }: { senderId: string, message: any }) {
+  handleWinMessage({ senderId, message }: { senderId: string; message: any }) {
     if (senderId === this.parentId) {
-      this.emitter.emit('message', message);
+      this.emitter.emit("message", message);
     }
   }
 
   onDidReceiveMsg(callback: (message: any) => void) {
-    return this.emitter.on('message', callback);
+    return this.emitter.on("message", callback);
   }
 }
 
 interface RenderOptions {
   renderHandler?: any;
   actionHandler?: any;
-};
+}
 
 export default function rendererInit(rendererStores: IStoresObjDeclarer, options: RenderOptions = {}, logger: Logger) {
   let query = getQuery();
-  (window as any)['clientId'] = query['clientId'] || 'mainClient';
-  (window as any)['parentId'] = query['parentId'];
+  (window as any).clientId = query.clientId || "mainClient";
+  (window as any).parentId = query.parentId;
 
   // if (!window['clientId']) {  // Not a renderer window
   //   return;
   // }
   function getAction() {
-    if ((window as any)['process']) return query['url'] || '/';
+    if ((window as any).process) {
+      return query.url || "/";
+    }
     return window.location.pathname + window.location.search + window.location.hash;
   }
-  (window as any)['action'] = getAction();
+  (window as any).action = getAction();
 
   const store = buildRendererAppStore(rendererStores, options.renderHandler, logger);
 
-  const genProxy = (store: RendererAppStore, multiWinStore: IExtendStoreBase) => {
+  const genProxy = (appStore: RendererAppStore, multiWinStore: IExtendStoreBase) => {
     return new Proxy(multiWinStore, {
-      get: function(target: any, propName: string) {
-        if (!propName) return;
-        if (propName === 'createWin') {
-          return function(url: string, params: any) {
-            return new ChildWindowProxy(store, target[propName](url, (window as any)['clientId'], params));
-          }
+      get(target: any, propName: string) {
+        if (!propName) {
+          return;
+        }
+        if (propName === "createWin") {
+          return (url: string, params: any) => {
+            return new ChildWindowProxy(appStore, target[propName](url, (window as any).clientId, params));
+          };
         } else {
           return target[propName];
         }
-      }
-    })
-  }
+      },
+    });
+  };
 
   logger("rendererInitializer", "start async init", query);
-  return store.asyncInit().then((state) => {
-    store.stores['multiWinStore'] = genProxy(store, store.stores['multiWinStore']);
-    if ((window as any)['parentId']) {
-      (window as any)['parentWin'] = new ParentWindowProxy(store, (window as any)['parentId']);
+  return store.asyncInit().then(state => {
+    store.stores.multiWinStore = genProxy(store, store.stores.multiWinStore);
+    if ((window as any).parentId) {
+      (window as any).parentWin = new ParentWindowProxy(store, (window as any).parentId);
     }
-    store.observeInitWindow((message) => {
+    store.observeInitWindow(message => {
       // console.log('message', message);
       let { url, parentId } = message;
       // change-props
-      (window as any)['action'] = url;
-      (window as any)['parentId'] = parentId;
-      if (!(window as any)['parentWin']) {
-        (window as any)['parentWin'] = new ParentWindowProxy(store, (window as any)['parentId']);
+      (window as any).action = url;
+      (window as any).parentId = parentId;
+      if (!(window as any).parentWin) {
+        (window as any).parentWin = new ParentWindowProxy(store, (window as any).parentId);
       } else {
-        (window as any)['parentWin']['parentId'] = parentId;
+        (window as any).parentWin.parentId = parentId;
       }
-      options.actionHandler && options.actionHandler((window as any)['action'], (window as any)['parentWin']);
-     });
+      options.actionHandler && options.actionHandler((window as any).action, (window as any).parentWin);
+    });
     return store;
   });
 }

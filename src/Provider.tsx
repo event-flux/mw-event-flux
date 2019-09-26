@@ -1,9 +1,9 @@
-import * as React from 'react';
+import * as React from "react";
 
 interface ContextValue {
   _appStore: any;
   stores: object;
-  state: object; 
+  state: object;
 }
 
 interface ProviderProps {
@@ -20,22 +20,18 @@ export default class Provider extends React.PureComponent<ProviderProps, Context
     super(props);
     this.appStore = props.appStore;
     this.appStore.onDidChange(this.handleStateChange);
-    this.state = { 
-      _appStore: this.appStore, 
-      stores: this.appStore.stores, 
-      state: this.appStore.state, 
+    this.state = {
+      _appStore: this.appStore,
+      stores: this.appStore.stores,
+      state: this.appStore.state,
     };
   }
-  
+
   handleStateChange = (state: any) => {
     this.setState({ state });
   };
 
   render() {
-    return (
-      <ContextProvider value={this.state}>
-        {React.Children.only(this.props.children)}
-      </ContextProvider>
-    );
+    return <ContextProvider value={this.state}>{React.Children.only(this.props.children)}</ContextProvider>;
   }
 }

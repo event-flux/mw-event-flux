@@ -3,12 +3,11 @@ import IStoresDeclarer from "./IStoresDeclarer";
 import StoreList from "./utils/StoreList";
 import StoreMap from "./utils/StoreMap";
 
-export type ISubStoreInfo = ['Item' | 'List' | 'Map', IExtendStoreBaseConstructor, string, string | null, any];
+export type ISubStoreInfo = ["Item" | "List" | "Map", IExtendStoreBaseConstructor, string, string | null, any];
 
 export interface IExtendStoreBaseConstructor {
-  new (...args: any[]): IExtendStoreBase;
-
   innerStores: IStoresDeclarer;
+  new (...args: any[]): IExtendStoreBase;
 }
 
 export default interface IExtendStoreBase extends StoreBase {

@@ -1,5 +1,5 @@
-import StoreBase from './MainStoreBase';
+import StoreBase from "./MainStoreBase";
 
 export default class WinSpecStoreBase extends StoreBase {
-  clientId: string = 'mainClient';
+  clientId: string = "mainClient";
 }

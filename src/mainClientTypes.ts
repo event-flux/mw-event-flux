@@ -1,10 +1,10 @@
 export interface IWinInfo {
   winId: string;
   [key: string]: any;
-};
+}
 
 export interface IWinProps {
-  path: string; 
+  path: string;
   parentId: string | undefined;
   name: string | undefined;
   groups: string[] | undefined;
@@ -23,6 +23,7 @@ export interface IWinParams {
   maxHeight?: number;
   title?: string;
   useContentSize?: boolean;
+  [key: string]: any;
 }
 
 export interface IMainClient {

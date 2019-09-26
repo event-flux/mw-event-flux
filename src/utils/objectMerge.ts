@@ -1,7 +1,7 @@
-import { List, Map } from 'immutable';
-const isObject = require('lodash/isObject');
-const keys = require('lodash/keys');
-const union = require('lodash/union');
+import { List, Map } from "immutable";
+const isObject = require("lodash/isObject");
+const keys = require("lodash/keys");
+const union = require("lodash/union");
 
 const isShallow = (val: any) => Array.isArray(val) || !isObject(val) || List.isList(val);
 
@@ -15,12 +15,13 @@ export default function objectMerge(origin: any, updated: any, deleted: any) {
   }
 
   if (Map.isMap(origin)) {
-    let merged, deleteKeys: string[] = [];
+    let merged,
+      deleteKeys: string[] = [];
     // deleted = isObject(deleted) ? deleted : {};
     merged = origin.withMutations((map: Map<any, any>) => {
       keys(deleted).forEach((key: string) => {
         if (deleted[key] === true) {
-          map.delete(JSON.parse(key))
+          map.delete(JSON.parse(key));
         } else {
           deleteKeys.push(key);
         }
@@ -37,15 +38,17 @@ export default function objectMerge(origin: any, updated: any, deleted: any) {
     if (isObject(deleted)) {
       merged = {};
       keys(origin).forEach((key: string) => {
-        if (deleted[key] !== true) merged![key] = origin[key];
+        if (deleted[key] !== true) {
+          merged![key] = origin[key];
+        }
       });
-      deleteKeys = keys(deleted).filter((d: string) => deleted[d] !== true)
+      deleteKeys = keys(deleted).filter((d: string) => deleted[d] !== true);
     } else {
       merged = { ...origin };
     }
     union(keys(updated), deleteKeys).forEach((key: string) => {
-      merged![key] = objectMerge(origin[key], updated && updated[key], deleted && deleted[key])
+      merged![key] = objectMerge(origin[key], updated && updated[key], deleted && deleted[key]);
     });
     return merged;
   }
-};
+}

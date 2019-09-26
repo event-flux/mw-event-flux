@@ -17,12 +17,6 @@ export class WinStoreDeclarer<T> extends StoreDeclarer<T> {
     super(Store, depStoreNames, options);
     this.options!.isPerWin = true;
   }
-  
-  [IS_WIN_STORE] = true;
-
-  static isWinStore(maybeStore: any) {
-    return !!(maybeStore && maybeStore[IS_WIN_STORE]);
-  }
 }
 
 
@@ -39,12 +33,6 @@ export class WinStoreListDeclarer<T> extends StoreListDeclarer<T> {
     super(Store, depStoreNames, options);
     this.options!.isPerWin = true;
   }
-
-  [IS_WIN_STORE_LIST] = true;
-
-  static isWinStoreList(maybeList: any) {
-    return !!(maybeList && maybeList[IS_WIN_STORE_LIST]);
-  }
 }
 
 export function declareWinStoreList<T>(Store: StoreBaseConstructor<T>, depStoreNames?: string[] | StoreListDeclarerOptions, options?: StoreListDeclarerOptions) {
@@ -60,12 +48,6 @@ export class WinStoreMapDeclarer<T> extends StoreMapDeclarer<T> {
   constructor(Store: StoreBaseConstructor<T>, depStoreNames?: string[] | StoreMapDeclarerOptions, options?: StoreMapDeclarerOptions) {
     super(Store, depStoreNames, options);
     this.options!.isPerWin = true;
-  }
-
-  [IS_WIN_STORE_MAP] = true;
- 
-  static isWinStoreMap(maybeMap: any) {
-    return !!(maybeMap && maybeMap[IS_WIN_STORE_MAP]);
   }
 }
 

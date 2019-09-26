@@ -33,7 +33,7 @@
   "homepage": "https://github.com/samiskin/redux-electron-store#readme",
   "dependencies": {
     "electron-store": "^4.0.0",
-    "event-flux": "^1.0.4",
+    "event-flux": "^1.0.10",
     "event-kit": "^2.5.3",
     "immutable": "^3.8.2",
     "json-immutable-bn": "^0.4.4",

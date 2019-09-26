@@ -1,16 +1,53 @@
-import { AppStore } from 'event-flux';
+import { AppStore, DispatchItem, AnyStoreDeclarer, StoreDeclarer, StoreListDeclarer, StoreMapDeclarer } from 'event-flux';
 import { 
   mainInitName, mainDispatchName, mainReturnName, renderDispatchName, renderRegisterName, messageName, winMessageName, initMessageName
 } from './constants';
 import IErrorObj from "./IErrorObj";
 import MultiWinSaver, { IWinInfo } from "./MultiWinSaver";
+import { IMainClientCallback } from "./mainClientTypes";
 
 interface IMainClient {
   sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void;
 }
 
-class MainWinProcessor {
-  constructor(private multiWinSaver: MultiWinSaver, private mainClient: IMainClient) {
+interface IOutStoreDeclarer {
+  storeType: "Item" | "List" | "Map";
+  isPerWin: boolean;
+  storeKey: string;
+  stateKey: string;
+}
+
+function getStoreType(storeDeclarer: AnyStoreDeclarer) {
+  if (StoreDeclarer.isStore(storeDeclarer)) {
+    return "Item";
+  } else if (StoreListDeclarer.isStoreList(storeDeclarer)) {
+    return "List";
+  } else if (StoreMapDeclarer.isStoreMap(storeDeclarer)) {
+    return "Map";
+  } else {
+    throw new Error("Not valid store declarer");
+  }
+}
+
+export default class MainWinProcessor implements IMainClientCallback {
+  outStoreDeclarers: string = "";
+
+  constructor(private appStore: MainAppStore, private multiWinSaver: MultiWinSaver, private mainClient: IMainClient) {
+    this.genOutStoreDeclarers();
+  }
+
+  genOutStoreDeclarers() {
+    let declarers: IOutStoreDeclarer[] = [];
+    let appStore = this.appStore;
+    for (let key in appStore._storeRegisterMap) {
+      let storeDeclarer = appStore._storeRegisterMap[key];
+      let { isPerWin, storeKey, stateKey } = storeDeclarer.options!;
+      declarers.push({
+        isPerWin, storeKey: storeKey!, stateKey: stateKey!,
+        storeType: getStoreType(storeDeclarer),
+      });
+    }
+    this.outStoreDeclarers = JSON.stringify(declarers);
   }
 
   async _handleRendererPayload(payload: string): Promise<any> {
@@ -55,8 +92,119 @@ class MainWinProcessor {
       this.mainClient.sendWinMsg(winInfo, initMessageName, params);
     });
   }
+
+  getStoreDeclarers(): string {
+    return this.outStoreDeclarers;
+  }
+
+  getInitStates(clientId: string): any {
+  }
 }
 
 class MainAppStore extends AppStore {
-  
+  winSpecStores: { [winId: string]: Set<string> } = {};
+  multiWinSaver: MultiWinSaver = new MultiWinSaver();
+  winFilters: { [winId: string]: (string | [string, string])[] } = {};
+
+  init() {
+    super.init();
+    this.multiWinSaver.onDidAddWin((winId: string) => {
+      this.winSpecStores[winId] = new Set<string>();
+      this.winFilters[winId] = [];
+    });
+    this.multiWinSaver.onDidDeleteWin((winId: string) => {
+      let storeKeys = this.winSpecStores[winId];
+      // Dispose all win specific stores.
+      for (let storeKey of storeKeys) {
+        let winStoreKey = storeKey + '@' + winId;
+        while (this.stores[winStoreKey] && this.stores[winStoreKey].getRefCount() > 0) {
+          this.releaseStore(storeKey, winId);
+        }
+      }
+      delete this.winSpecStores[winId];
+      delete this.winFilters[winId];
+    });
+    return this;
+  }
+
+  requestStore(storeKey: string, winId: string): DispatchItem {
+    return super.requestStore(storeKey, winId);
+  }
+
+  releaseStore(storeKey: string, winId: string): void {
+    return super.releaseStore(storeKey, winId);
+  }
+
+  _getStoreKey(storeKey: string, winId: string) {
+    let isPerWin = (this._storeRegisterMap[storeKey].options! as any).isPerWin;
+    if (isPerWin) {
+      if (!winId) {
+        throw new Error("The winId parameter is necessary when creating isPerWin store ");
+      }
+      storeKey = storeKey + '@' + winId;
+    }
+    return storeKey;
+  }
+
+  _parseStoreKey(finalStoreKey: string): [string, string] {
+    let [storeKey, winId] = finalStoreKey.split("@");
+    return [storeKey, winId];
+  }
+
+  _getStateKey(storeKey: string, stateKey: string, winId?: any) {
+    let isPerWin = (this._storeRegisterMap[storeKey].options! as any).isPerWin;
+    if (isPerWin) {
+      if (!winId) {
+        throw new Error("The winId parameter is necessary when creating isPerWin store ");
+      }
+      stateKey = stateKey + '@' + winId;
+    }
+    return stateKey;
+  }
+
+  _createStore(storeKey: string, store: DispatchItem, winId: string) {
+    let { isPerWin, stateKey } = this._storeRegisterMap[storeKey].options! as any;
+    if (isPerWin) {
+      if (!winId) {
+        throw new Error("The winId parameter is necessary when creating isPerWin store ");
+      }
+
+      // Add storeKey into the win specific store container.
+      let winStores = this.winSpecStores[winId];
+      if (!winStores) {
+        winStores = this.winSpecStores[winId] = new Set<string>();
+      }
+      winStores.add(storeKey);
+
+      stateKey = stateKey + '@' + winId;
+      storeKey = storeKey + '@' + winId;
+    }
+     // Add the win specific stateKey into the winFilter
+    this.winFilters[winId].push(stateKey);
+
+    this.stores[storeKey] = store;
+  }
+
+  _deleteStore(storeKey: string, winId: string) {
+    let { isPerWin, stateKey } = this._storeRegisterMap[storeKey].options! as any;
+    if (isPerWin) {
+      if (!winId) {
+        throw new Error("The winId parameter is necessary when delete isPerWin store ");
+      }
+
+      // Delete the storeKey from the win specific stores. 
+      let winStores = this.winSpecStores[winId];
+      winStores.delete(storeKey);
+
+      stateKey = stateKey + '@' + winId;
+      storeKey = storeKey + '@' + winId;
+    }
+    // Delete the stateKey from winFilter
+    let filterIndex = this.winFilters[winId].indexOf(stateKey);
+    if (filterIndex !== -1) {
+      this.winFilters[winId].splice(filterIndex);
+    }
+
+    delete this.stores[storeKey];
+  }
 }

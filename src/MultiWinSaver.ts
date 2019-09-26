@@ -17,6 +17,10 @@ export default class MultiWinSaver {
     this.emitter.emit("did-add-win", winInfo.winId);
   }
 
+  onDidAddWin(callback: (winId: string) => any) {
+    return this.emitter.on("did-add-win", callback);
+  }
+
   deleteWin(winId: string): void {
     let winInfo = this.winIdMap[winId];
     let index = this.winInfos.indexOf(winInfo);
@@ -24,6 +28,10 @@ export default class MultiWinSaver {
       this.winInfos.splice(index, 1);
     }
     this.emitter.emit("did-delete-win", winId);
+  }
+
+  onDidDeleteWin(callback: (winId: string) => any) {
+    return this.emitter.on("did-delete-win", callback);
   }
 
   getWinInfo(winId: string) {

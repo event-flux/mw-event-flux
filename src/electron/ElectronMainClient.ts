@@ -1,5 +1,4 @@
 import { Log, Logger } from "../utils/loggerApply";
-import IMainClientCallbacks from "../IMainClientCallbacks";
 import IErrorObj from "../IErrorObj";
 import { 
   mainInitName, mainDispatchName, mainReturnName, renderDispatchName, renderRegisterName, messageName, winMessageName
@@ -146,6 +145,6 @@ export default class ElectronMainClient implements IMainClient {
   }
 
   changeWin(winId: string, url: string, parentId: string | undefined, params: any): void {
-    
+
   }
 }

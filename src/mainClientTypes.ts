@@ -26,6 +26,13 @@ export interface IWinParams {
   [key: string]: any;
 }
 
+export interface IOutStoreDeclarer {
+  storeType: "Item" | "List" | "Map";
+  isPerWin: boolean;
+  storeKey: string;
+  stateKey: string;
+}
+
 export interface IMainClient {
   sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void;
 

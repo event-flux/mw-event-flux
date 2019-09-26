@@ -18,17 +18,10 @@ import {
 } from "./constants";
 import IErrorObj from "./IErrorObj";
 import MultiWinSaver from "./MultiWinSaver";
-import { IMainClientCallback, IWinProps, IWinInfo } from "./mainClientTypes";
+import { IMainClientCallback, IWinProps, IWinInfo, IOutStoreDeclarer } from "./mainClientTypes";
 
 interface IMainClient {
   sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void;
-}
-
-interface IOutStoreDeclarer {
-  storeType: "Item" | "List" | "Map";
-  isPerWin: boolean;
-  storeKey: string;
-  stateKey: string;
 }
 
 function getStoreType(storeDeclarer: AnyStoreDeclarer) {

@@ -4,7 +4,7 @@ import {
 } from './constants';
 import IErrorObj from "./IErrorObj";
 import MultiWinSaver, { IWinInfo } from "./MultiWinSaver";
-import { IMainClientCallback } from "./mainClientTypes";
+import { IMainClientCallback, IWinProps } from "./mainClientTypes";
 
 interface IMainClient {
   sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void;
@@ -85,7 +85,7 @@ export default class MainWinProcessor implements IMainClientCallback {
     });
   }
 
-  initWin(winId: string, params: any) {
+  initWin(winId: string, params: IWinProps) {
     let winInfo = this.multiWinSaver.getWinInfo(winId);
     if (!winInfo) return;
     this.multiWinSaver.whenRegister(winInfo.winId, () => {
@@ -97,14 +97,41 @@ export default class MainWinProcessor implements IMainClientCallback {
     return this.outStoreDeclarers;
   }
 
-  getInitStates(clientId: string): any {
+  getInitStates(winId: string): any {
+    let winFilter = this.appStore.winFilters[winId];
+    let state = this.appStore.state;
+    let finalState: any = {};
+
+    // Generate the new final state by the win filter
+    for (let iFilter of winFilter) {
+      if (Array.isArray(iFilter)) {
+        let [stateKey, keys] = iFilter;
+        finalState[stateKey] = {};
+        for (let key of keys) {
+          finalState[stateKey][key] = state[stateKey][key];
+        }
+      } else {
+        finalState[iFilter] = state[iFilter];
+      }
+    }
+
+    // Transform the win specific state that remove the window suffix
+    for (let stateKey in finalState) {
+      let [realKey, id] = stateKey.split('&');
+      if (id) {
+        delete finalState[stateKey];
+        finalState[realKey] = finalState[stateKey];
+      }
+    }
+    
+    return finalState;
   }
 }
 
 class MainAppStore extends AppStore {
   winSpecStores: { [winId: string]: Set<string> } = {};
   multiWinSaver: MultiWinSaver = new MultiWinSaver();
-  winFilters: { [winId: string]: (string | [string, string])[] } = {};
+  winFilters: { [winId: string]: (string | [string, string[]])[] } = {};
 
   init() {
     super.init();
@@ -160,6 +187,22 @@ class MainAppStore extends AppStore {
       stateKey = stateKey + '@' + winId;
     }
     return stateKey;
+  }
+
+  _requestStoreMapFilter(storeKey: string, keys: string[], winId: string) {
+    let { isPerWin, stateKey } = this._storeRegisterMap[storeKey].options! as any;
+    // If the storeMap exists per window, then the filter is not necessary.
+    if (isPerWin) return;
+    // let filters = this.winFilters[winId];
+    let filterIndex = this.winFilters[winId].findIndex(item => {
+      if (Array.isArray(item)) item = item[0];
+      return item === stateKey
+    });
+    if (filterIndex !== -1) {
+      this.winFilters[winId][filterIndex] = [stateKey, keys];
+    } else {
+      this.winFilters[winId].push([stateKey, keys]);
+    }
   }
 
   _createStore(storeKey: string, store: DispatchItem, winId: string) {

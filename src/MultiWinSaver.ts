@@ -1,9 +1,5 @@
 import { Emitter, Disposable } from 'event-kit';
-
-export interface IWinInfo {
-  winId: string;
-  [key: string]: any;
-};
+import { IWinInfo } from "./mainClientTypes";
 
 export default class MultiWinSaver {
   winInfos: IWinInfo[] = [];

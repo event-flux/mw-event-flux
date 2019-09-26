@@ -1,32 +1,17 @@
 import { Log, Logger } from "../utils/loggerApply";
-import IErrorObj from "../IErrorObj";
 import { 
-  mainInitName, mainDispatchName, mainReturnName, renderDispatchName, renderRegisterName, messageName, winMessageName
+  renderDispatchName, renderRegisterName, messageName, winMessageName
 } from '../constants';
 import { ipcMain, WebContents, BrowserWindow, Event } from 'electron';
-import findIndex from '../utils/findIndex';
-import MultiWinSaver, { IWinInfo } from "../MultiWinSaver";
+import MultiWinSaver from "../MultiWinSaver";
+import { IWinInfo, IMainClientCallback, IMainClient, IWinParams, IWinProps } from "../mainClientTypes";
 
 interface IElectronWinInfo {
   webContents: WebContents;
   window: BrowserWindow;
   winId: string;
 };
-
-interface IMainClient {
-  sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void;
-}
-
-interface IMainClientCallback {
-  handleRendererDispatch(winId: string, invokeId: string, stringifiedAction: string): void;
-
-  handleWinMessage(senderId: string, targetId: string, data: any): void;
-
-  getStoreDeclarers(): string;
-
-  getInitStates(clientId: string): any;
-}
-
+ 
 function encodeUrl(obj: any) {
   let compList: string[] = [];
   for (let key in obj) {
@@ -113,16 +98,16 @@ export default class ElectronMainClient implements IMainClient {
     }
   }
 
-  createWin(winId: string, url: string, parentId: string | undefined, params: any) {
+  createWin(winId: string, winProps: IWinProps, winParams: IWinParams) {
     let storeDeclarers = this.mainClientCallback.getStoreDeclarers();
     let initStates = this.mainClientCallback.getInitStates(winId);
     const window = new BrowserWindow({
-      ...params,
+      ...winParams,
       show: false,
-      x: Math.floor(params.x || 0), y: Math.floor(params.y || 0),
+      x: Math.floor(winParams.x || 0), y: Math.floor(winParams.y || 0),
     });
 
-    let query = { url: url, winId: winId, parentId, storeDeclarers, state: initStates };
+    let query = { winId: winId, storeDeclarers, state: initStates, ...winProps };
     if (process.env.NODE_ENV === "development") {
       window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?${encodeUrl(query)}`);
       // window.webContents.openDevTools();
@@ -135,7 +120,7 @@ export default class ElectronMainClient implements IMainClient {
       }));
     }
 
-    if (params.show) {
+    if (winParams.show) {
       window.on('ready-to-show', function() {
         window.show();
       });
@@ -144,7 +129,38 @@ export default class ElectronMainClient implements IMainClient {
     return window;
   }
 
-  changeWin(winId: string, url: string, parentId: string | undefined, params: any): void {
+  changeWin(winInfo: IWinInfo, winProps: IWinProps, winParams: IWinParams): void {
+    this.mainClientCallback.initWin(winInfo.winId, winProps);
 
+    let setBoundsFunc: 'setContentBounds' | 'setBounds' = winParams.useContentSize ? 'setContentBounds' : 'setBounds';
+
+    let win = winInfo.window as BrowserWindow;
+    let x = Math.floor(winParams.x || 0);
+    let y = Math.floor(winParams.y || 0);
+    let width = Math.floor(winParams.width || 800), height = Math.floor(winParams.height || 600);
+    if (winParams.minWidth && winParams.minHeight) {
+      win.setMinimumSize(Math.floor(winParams.minWidth), Math.floor(winParams.minHeight));
+    }
+    if (winParams.maxWidth && winParams.maxHeight) {
+      win.setMaximumSize(Math.floor(winParams.maxWidth), Math.floor(winParams.maxHeight));
+    }
+    if (winParams.title) {
+      win.setTitle(winParams.title);
+    }
+    win[setBoundsFunc]({
+      x, y, width, height,
+    });
+
+    win[setBoundsFunc]({ 
+      x, y, width, height,
+    });
+
+    setTimeout(() => {
+      win[setBoundsFunc]({x, y, width, height});
+      
+      if (winParams.show) {
+        win.show();
+      }
+    }, 0);
   }
 }

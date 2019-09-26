@@ -32,13 +32,15 @@ export interface IMainClient {
 
   createWin(winId: string, winProps: IWinProps, winParams: IWinParams): void;
 
-  changeWin(winId: string, winProps: IWinProps, winParams: IWinParams): void;
+  changeWin(winInfo: IWinInfo, winProps: IWinProps, winParams: IWinParams): void;
 }
 
 export interface IMainClientCallback {
   handleRendererDispatch(winId: string, invokeId: string, stringifiedAction: string): void;
 
   handleWinMessage(senderId: string, targetId: string, data: any): void;
+
+  initWin(winId: string, params: IWinProps): void;
 
   getStoreDeclarers(): string;
 

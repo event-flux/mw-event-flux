@@ -1,7 +1,7 @@
 import { AppStore, AnyStoreDeclarer, DispatchItem, StoreBaseConstructor, declareStore, StoreBase } from "event-flux";
 import { IRendererClientCallback, IRendererClient } from "./rendererClientTypes";
 import { IWinProps, IOutStoreDeclarer } from "./mainClientTypes";
-import { renderRegisterName } from "./constants";
+import { renderRegisterName, renderRequestStoreName, renderReleaseStoreName } from "./constants";
 import BrowserRendererClient from "./browser/BrowserRendererClient";
 
 class IDGenerator {
@@ -110,6 +110,14 @@ export default class RendererAppStore extends AppStore implements IRendererClien
 
   handleWinMessage(senderId: string, data: any): void {}
 
+  handleMainRequestStores(storeNames: string[]) {
+    this.rendererClient.sendMainMsg(renderRequestStoreName, storeNames);
+  }
+
+  handleMainReleaseStores(storeNames: string[]) {
+    this.rendererClient.sendMainMsg(renderReleaseStoreName, storeNames);
+  }
+
   /**
    * Find the storeKey's dependencies that will need create in main process.
    * @param storeKey
@@ -135,11 +143,15 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     return mainDepList;
   }
 
-  requestStore(storeKey: string): DispatchItem {
-    let store = this.stores[storeKey];
-    if (!store) {
-      let mainDepList = this.findMainDepList(storeKey);
-    }
-    return super.requestStore(storeKey);
+  _createStoreAndInject(storeKey: string) {
+    let mainDepList = this.findMainDepList(storeKey);
+    this.handleMainRequestStores(mainDepList);
+    return super._createStoreAndInject(storeKey);
+  }
+
+  _disposeStoreAndDeps(storeKey: string, store: DispatchItem) {
+    let mainDepList = this.findMainDepList(storeKey);
+    this.handleMainReleaseStores(mainDepList);
+    return super._disposeStoreAndDeps(storeKey, store);
   }
 }

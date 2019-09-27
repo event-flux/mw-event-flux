@@ -49,6 +49,10 @@ export interface IMainClientCallback {
 
   handleWinMessage(senderId: string, targetId: string, data: any): void;
 
+  handleRequestStores(winId: string, storeKeys: string[]): void;
+
+  handleReleaseStores(winId: string, storeKeys: string[]): void;
+
   initWin(winId: string, params: IWinProps): void;
 
   getStoreDeclarers(): string;

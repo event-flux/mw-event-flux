@@ -7,6 +7,8 @@ import {
   mainReturnName,
   winMessageName,
   messageName,
+  renderRequestStoreName,
+  renderReleaseStoreName,
 } from "../constants";
 import { IWinInfo, IMainClient, IMainClientCallback, IWinProps, IWinParams } from "../mainClientTypes";
 import MultiWinSaver from "../MultiWinSaver";
@@ -70,6 +72,12 @@ export default class BrowserMainClient implements IMainClient {
     } else if (action === winMessageName) {
       let [senderId, clientId, data] = payload;
       this.mainClientCallback.handleWinMessage(senderId, clientId, data);
+    } else if (action === renderRequestStoreName) {
+      let [clientId, storeKeys] = payload;
+      this.mainClientCallback.handleRequestStores(clientId, storeKeys);
+    } else if (action === renderReleaseStoreName) {
+      let [clientId, storeKeys] = payload;
+      this.mainClientCallback.handleReleaseStores(clientId, storeKeys);
     } else if (action === "close") {
       // Child window has closed
       let [clientId] = payload;

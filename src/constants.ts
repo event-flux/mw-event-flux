@@ -6,8 +6,8 @@ export const mainReturnName = "__MAIN_RETURN__";
 export const winManagerStoreName = "winManagerStore";
 export const winManagerKey = "winManager";
 
-export const renderRequestStore = "__RENDERER_REQUEST__";
-export const renderReleaseStore = "__RENDERER_RELEASE__";
+export const renderRequestStoreName = "__RENDERER_REQUEST__";
+export const renderReleaseStoreName = "__RENDERER_RELEASE__";
 
 export const messageName = "__MESSAGE__";
 export const winMessageName = "__WIN_MESSAGE__";

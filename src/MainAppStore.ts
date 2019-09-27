@@ -42,6 +42,7 @@ function getStoreType(storeDeclarer: AnyStoreDeclarer) {
 
 export default class MainWinProcessor implements IMainClientCallback {
   outStoreDeclarers: string = "";
+  winHoldStores: { [winId: string]: string[] } = {};
 
   constructor(private appStore: MainAppStore, private multiWinSaver: MultiWinSaver, private mainClient: IMainClient) {
     this.genOutStoreDeclarers();
@@ -111,6 +112,30 @@ export default class MainWinProcessor implements IMainClientCallback {
     this.multiWinSaver.whenRegister(winInfo.winId, () => {
       this.mainClient.sendWinMsg(winInfo, initMessageName, params);
     });
+  }
+
+  handleRequestStores(winId: string, storeKeys: string[]) {
+    let winStores = this.winHoldStores[winId];
+    if (!winStores) {
+      winStores = this.winHoldStores[winId] = [];
+    }
+    winStores.splice(winStores.length, 0, ...storeKeys);
+
+    for (let storeKey of storeKeys) {
+      this.appStore.requestStore(storeKey, winId);
+    }
+  }
+
+  handleReleaseStores(winId: string, storeKeys: string[]) {
+    let winStores = this.winHoldStores[winId];
+    for (let storeKey of storeKeys) {
+      this.appStore.releaseStore(storeKey, winId);
+
+      let index = winStores.indexOf(storeKey);
+      if (index !== -1) {
+        winStores.splice(index, 1);
+      }
+    }
   }
 
   getStoreDeclarers(): string {

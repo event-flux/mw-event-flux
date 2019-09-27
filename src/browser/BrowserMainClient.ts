@@ -16,9 +16,9 @@ import MultiWinSaver from "../MultiWinSaver";
 export default class BrowserMainClient implements IMainClient {
   multiWinSaver: MultiWinSaver;
   mainClientCallback: IMainClientCallback;
-  log: Log;
+  log: Log | undefined;
 
-  constructor(multiWinSaver: MultiWinSaver, callback: IMainClientCallback, log: Log) {
+  constructor(multiWinSaver: MultiWinSaver, callback: IMainClientCallback, log?: Log) {
     this.multiWinSaver = multiWinSaver;
     this.mainClientCallback = callback;
     this.log = log;

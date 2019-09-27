@@ -19,11 +19,14 @@ export default class MultiWinSaver {
 
   deleteWin(winId: string): void {
     let winInfo = this.winIdMap[winId];
-    let index = this.winInfos.indexOf(winInfo);
-    if (index !== -1) {
-      this.winInfos.splice(index, 1);
+    if (winInfo) {
+      let index = this.winInfos.indexOf(winInfo);
+      if (index !== -1) {
+        this.winInfos.splice(index, 1);
+      }
+      delete this.winIdMap[winId];
+      this.emitter.emit("did-delete-win", winId);
     }
-    this.emitter.emit("did-delete-win", winId);
   }
 
   onDidDeleteWin(callback: (winId: string) => any) {

@@ -19,6 +19,10 @@ import {
 import IErrorObj from "./IErrorObj";
 import MultiWinSaver from "./MultiWinSaver";
 import { IMainClientCallback, IWinProps, IWinInfo, IOutStoreDeclarer } from "./mainClientTypes";
+import { serialize, deserialize } from "json-immutable-bn";
+import objectDifference from "./utils/objectDifference";
+import { isEmpty, isObject } from "./utils/objUtils";
+import filterApply from "./utils/filterApply";
 
 interface IMainClient {
   sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void;
@@ -48,12 +52,12 @@ export default class MainWinProcessor implements IMainClientCallback {
     let appStore = this.appStore;
     for (let key in appStore._storeRegisterMap) {
       let storeDeclarer = appStore._storeRegisterMap[key];
-      let { isPerWin, storeKey, stateKey } = storeDeclarer.options!;
+      let { storeKey, stateKey } = storeDeclarer.options!;
       declarers.push({
-        isPerWin,
         storeKey: storeKey!,
         stateKey: stateKey!,
         storeType: getStoreType(storeDeclarer),
+        depStoreNames: storeDeclarer.depStoreNames,
       });
     }
     this.outStoreDeclarers = JSON.stringify(declarers);
@@ -113,7 +117,18 @@ export default class MainWinProcessor implements IMainClientCallback {
     return this.outStoreDeclarers;
   }
 
-  getInitStates(winId: string): any {
+  _transformWinState(finalState: any) {
+    // Transform the win specific state that remove the window suffix
+    for (let stateKey in finalState) {
+      let [realKey, id] = stateKey.split("&");
+      if (id) {
+        delete finalState[stateKey];
+        finalState[realKey] = finalState[stateKey];
+      }
+    }
+  }
+
+  getInitStates(winId: string): string {
     let winFilter = this.appStore.winFilters[winId];
     let state = this.appStore.state;
     let finalState: any = {};
@@ -131,16 +146,37 @@ export default class MainWinProcessor implements IMainClientCallback {
       }
     }
 
-    // Transform the win specific state that remove the window suffix
-    for (let stateKey in finalState) {
-      let [realKey, id] = stateKey.split("&");
-      if (id) {
-        delete finalState[stateKey];
-        finalState[realKey] = finalState[stateKey];
-      }
+    this._transformWinState(finalState);
+
+    return serialize(finalState);
+  }
+
+  forwardState(prevState: any, state: any) {
+    const delta = objectDifference(prevState, state);
+    if (isEmpty(delta.updated) && isEmpty(delta.deleted)) {
+      return;
     }
 
-    return finalState;
+    let winFilters = this.appStore.winFilters;
+
+    this.multiWinSaver.winInfos.forEach((client: IWinInfo) => {
+      let { winId } = client;
+
+      let filterUpdated = filterApply(delta.updated, winFilters[winId], null);
+      let filterDeleted = filterApply(delta.deleted, winFilters[winId], null);
+
+      this._transformWinState(filterUpdated);
+      this._transformWinState(filterDeleted);
+
+      // let [updated, deleted] = filterWindowDelta(filterUpdated, filterDeleted, winManagerKey, clientId);
+      if (isEmpty(filterUpdated) && isEmpty(filterDeleted)) {
+        return;
+      }
+
+      const action = { payload: { filterUpdated, filterDeleted } };
+
+      this.mainClient.sendWinMsg(client, mainDispatchName, serialize(action));
+    });
   }
 }
 
@@ -168,6 +204,10 @@ class MainAppStore extends AppStore {
       delete this.winFilters[winId];
     });
     return this;
+  }
+
+  _sendUpdate() {
+    super._sendUpdate();
   }
 
   requestStore(storeKey: string, winId: string): DispatchItem {

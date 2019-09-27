@@ -49,6 +49,7 @@
       "object-literal-sort-keys": false,
       "one-variable-per-declaration": false,
       "only-arrow-functions": false,
+      "prefer-for-of": false,
       "variable-name": [
         true,
         "ban-keywords",

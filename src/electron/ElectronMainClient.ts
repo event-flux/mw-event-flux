@@ -3,19 +3,12 @@ import { renderDispatchName, renderRegisterName, messageName, winMessageName } f
 import { ipcMain, WebContents, BrowserWindow, Event } from "electron";
 import MultiWinSaver from "../MultiWinSaver";
 import { IWinInfo, IMainClientCallback, IMainClient, IWinParams, IWinProps } from "../mainClientTypes";
+import { encodeQuery } from "../utils/queryHandler";
 
 interface IElectronWinInfo {
   webContents: WebContents;
   window: BrowserWindow;
   winId: string;
-}
-
-function encodeUrl(obj: any) {
-  let compList: string[] = [];
-  for (let key in obj) {
-    compList.push(`${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}}`);
-  }
-  return compList.join("&");
 }
 
 export default class ElectronMainClient implements IMainClient {
@@ -90,7 +83,7 @@ export default class ElectronMainClient implements IMainClient {
 
     let query = { winId, storeDeclarers, state: initStates, ...winProps };
     if (process.env.NODE_ENV === "development") {
-      window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?${encodeUrl(query)}`);
+      window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?${encodeQuery(query)}`);
       // window.webContents.openDevTools();
     } else {
       window.loadURL(

@@ -28,9 +28,10 @@ export interface IWinParams {
 
 export interface IOutStoreDeclarer {
   storeType: "Item" | "List" | "Map";
-  isPerWin: boolean;
   storeKey: string;
   stateKey: string;
+  depStoreNames: string[] | undefined;
+  [key: string]: any;
 }
 
 export interface IMainClient {

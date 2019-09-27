@@ -2,6 +2,8 @@ import {
   mainInitName,
   renderRegisterName,
   renderDispatchName,
+  renderRequestStore,
+  renderReleaseStore,
   mainDispatchName,
   mainReturnName,
   winMessageName,
@@ -67,6 +69,14 @@ export default class ElectronRendererClient {
   // Forward update to the main process so that it can forward the update to all other renderers
   forward(invokeId: string, action: any) {
     ipcRenderer.send(renderDispatchName, this.clientId, invokeId, action);
+  }
+
+  requestStores(storeNames: string[]) {
+    ipcRenderer.send(renderRequestStore, storeNames);
+  }
+
+  releaseStores(storeNames: string[]) {
+    ipcRenderer.send(renderReleaseStore, storeNames);
   }
 
   sendMessage(args: any) {

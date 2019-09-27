@@ -14,39 +14,39 @@ import {
   IMessageCallback,
   IWinMessageCallback,
 } from "../IRendererClient";
+import { IRendererClient, IRendererClientCallback } from "../rendererClientTypes";
+import { decodeQuery } from "../utils/queryHandler";
 
-export default class BrowserRendererClient {
-  clientId: any;
+export default class BrowserRendererClient implements IRendererClient {
+  query: any;
+  winId: any;
 
-  constructor(
-    callback: IStoreCallback,
-    onGetAction: IActionCallback,
-    onGetResult: IResultCallback,
-    onGetMessage: IMessageCallback,
-    onGetWinMessage: IWinMessageCallback
-  ) {
-    let clientId = (window as any).clientId || "mainClient";
-    this.clientId = clientId;
+  constructor(rendererCallback: IRendererClientCallback) {
+    this.query = decodeQuery(window.location.search.slice(1));
+    this.winId = this.query.winId || "mainClient";
 
-    let mainWin = (window as any).isMainClient ? window : window.opener;
-    mainWin.postMessage({ action: renderRegisterName, clientId, data: {} }, "*");
     window.addEventListener("message", event => {
-      let { action, error, data, senderId, invokeId } = event.data || ({} as any);
-      if (action === mainInitName) {
-        callback(data[0], data[1]);
-      } else if (action === mainDispatchName) {
-        onGetAction(data);
+      let { action, data } = event.data || ({} as any);
+
+      if (action === mainDispatchName) {
+        rendererCallback.handleDispatchReturn(data[0]);
       } else if (action === mainReturnName) {
-        onGetResult(invokeId, error, data);
+        let [invokeId, error, result] = data;
+        rendererCallback.handleInvokeReturn(invokeId, error, data);
       } else if (action === messageName) {
-        onGetMessage(data);
+        rendererCallback.handleMessage(data[0]);
       } else if (action === winMessageName) {
-        onGetWinMessage(senderId, data);
+        let [senderId, payload] = data;
+        rendererCallback.handleWinMessage(senderId, payload);
       }
     });
-    window.addEventListener("unload", () => {
-      mainWin.postMessage({ action: "close", clientId });
-    });
+    // window.addEventListener("unload", () => {
+    //   mainWin.postMessage({ action: "close", clientId });
+    // });
+  }
+
+  getQuery(): any {
+    return this.query;
   }
 
   // Forward update to the main process so that it can forward the update to all other renderers
@@ -54,6 +54,14 @@ export default class BrowserRendererClient {
     let clientId = this.clientId;
     let mainWin = (window as any).isMainClient ? window : window.opener;
     mainWin.postMessage({ action: renderDispatchName, data: action, invokeId, clientId }, "*");
+  }
+
+  requestStores(storeNames: string[]) {
+    ipcRenderer.send(renderRequestStore, storeNames);
+  }
+
+  releaseStores(storeNames: string[]) {
+    ipcRenderer.send(renderReleaseStore, storeNames);
   }
 
   sendMessage(args: any) {
@@ -65,5 +73,10 @@ export default class BrowserRendererClient {
     let mainWin = (window as any).isMainClient ? window : window.opener;
     let senderId = this.clientId;
     mainWin.postMessage({ action: winMessageName, senderId, clientId, data: args }, "*");
+  }
+
+  sendMainMsg(msgName: string, ...params: any[]) {
+    let mainWin = (window as any).isMainClient ? window : window.opener;
+    mainWin.postMessage({ action: msgName, data: [this.winId] }, "*");
   }
 }

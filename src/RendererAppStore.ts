@@ -10,6 +10,7 @@ import {
   renderDispatchName,
 } from "./constants";
 import RendererClient from "./RendererClient";
+import { StoreProxy } from "./StoreProxy";
 
 class IDGenerator {
   count = 0;
@@ -24,42 +25,6 @@ declare global {
     eventFluxWin: IWinProps;
     winId: string;
   }
-}
-
-export class StoreProxy implements DispatchItem {
-  _refCount = 0;
-  _stateKey: string | undefined;
-
-  constructor(appStore: RendererAppStore, storeKey: string) {
-    return new Proxy(this, {
-      get(target: StoreProxy, property: string, receiver) {
-        if (target[property]) {
-          return target[property];
-        }
-        return (...args: any[]) => appStore.handleDispatch(storeKey, property, args);
-      },
-    });
-  }
-
-  _init() {}
-
-  _inject(): void {}
-
-  dispose(): void {}
-
-  _addRef(): void {
-    this._refCount += 1;
-  }
-
-  _decreaseRef() {
-    this._refCount -= 1;
-  }
-
-  getRefCount(): number {
-    return this._refCount;
-  }
-
-  [property: string]: any;
 }
 
 export default class RendererAppStore extends AppStore implements IRendererClientCallback {
@@ -144,9 +109,9 @@ export default class RendererAppStore extends AppStore implements IRendererClien
    * Find the storeKey's dependencies that will need create in main process.
    * @param storeKey
    */
-  findMainDepList(storeKey: string) {
+  findMainDepList(storeKey: string): string[] {
     let depList = [storeKey];
-    let mainDepList = [];
+    let mainDepList = new Set<string>();
 
     for (let i = 0; i < depList.length; i += 1) {
       let curStoreKey = depList[i];
@@ -155,14 +120,14 @@ export default class RendererAppStore extends AppStore implements IRendererClien
         console.error(`The request store ${curStoreKey} is not registered!`);
         continue;
       }
-      if (storeInfo.options!.forMain) {
-        mainDepList.push(curStoreKey);
+      if (storeInfo.options!.forMain && !mainDepList.has(curStoreKey)) {
+        mainDepList.add(curStoreKey);
         continue;
       }
       let depNames = storeInfo.depStoreNames || [];
       depList.splice(depList.length, 0, ...depNames);
     }
-    return mainDepList;
+    return Array.from(mainDepList);
   }
 
   _createStoreAndInject(storeKey: string) {

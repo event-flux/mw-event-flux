@@ -18,16 +18,12 @@ import {
 } from "./constants";
 import IErrorObj from "./IErrorObj";
 import MultiWinSaver from "./MultiWinSaver";
-import { IMainClientCallback, IWinProps, IWinInfo, IOutStoreDeclarer } from "./mainClientTypes";
+import { IMainClient, IMainClientCallback, IWinProps, IWinInfo, IOutStoreDeclarer } from "./mainClientTypes";
 import { serialize, deserialize } from "json-immutable-bn";
 import objectDifference from "./utils/objectDifference";
 import { isEmpty, isObject } from "./utils/objUtils";
 import filterApply from "./utils/filterApply";
 import BrowserMainClient from "./browser/BrowserMainClient";
-
-interface IMainClient {
-  sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void;
-}
 
 function getStoreType(storeDeclarer: AnyStoreDeclarer) {
   if (StoreDeclarer.isStore(storeDeclarer)) {
@@ -57,7 +53,6 @@ function genOutStoreDeclarers(appStore: AppStore) {
 }
 
 export default class MainAppStore extends AppStore implements IMainClientCallback {
-  winSpecStores: { [winId: string]: Set<string> } = {};
   multiWinSaver: MultiWinSaver = new MultiWinSaver();
   winFilters: { [winId: string]: Array<string | [string, string[]]> } = {};
 
@@ -72,7 +67,6 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     this.outStoreDeclarers = genOutStoreDeclarers(this);
 
     this.multiWinSaver.onDidAddWin((winId: string) => {
-      this.winSpecStores[winId] = new Set<string>();
       this.winFilters[winId] = [];
     });
     this.multiWinSaver.onDidDeleteWin((winId: string) => {
@@ -80,17 +74,6 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       for (let storeKey of winStoreKeys) {
         this.releaseStore(storeKey, winId);
       }
-
-      let storeKeys = this.winSpecStores[winId];
-      // Dispose all win specific stores.
-      for (let storeKey of storeKeys) {
-        let winStoreKey = storeKey + "@" + winId;
-        while (this.stores[winStoreKey] && this.stores[winStoreKey].getRefCount() > 0) {
-          this.releaseStore(storeKey, winId);
-        }
-      }
-
-      delete this.winSpecStores[winId];
       delete this.winFilters[winId];
     });
     return this;
@@ -162,13 +145,6 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
         throw new Error("The winId parameter is necessary when creating isPerWin store ");
       }
 
-      // Add storeKey into the win specific store container.
-      let winStores = this.winSpecStores[winId];
-      if (!winStores) {
-        winStores = this.winSpecStores[winId] = new Set<string>();
-      }
-      winStores.add(storeKey);
-
       stateKey = stateKey + "@" + winId;
       storeKey = storeKey + "@" + winId;
     }
@@ -184,10 +160,6 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       if (!winId) {
         throw new Error("The winId parameter is necessary when delete isPerWin store ");
       }
-
-      // Delete the storeKey from the win specific stores.
-      let winStores = this.winSpecStores[winId];
-      winStores.delete(storeKey);
 
       stateKey = stateKey + "@" + winId;
       storeKey = storeKey + "@" + winId;

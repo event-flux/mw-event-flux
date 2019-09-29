@@ -90,7 +90,7 @@ describe("BrowserMainClient", () => {
           retWin.onbeforeunload && retWin.onbeforeunload!();
         },
       };
-      return newWin;
+      return retWin;
     });
     window.open = mockOpen;
 

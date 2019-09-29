@@ -1,8 +1,15 @@
 import { AppStore, AnyStoreDeclarer, DispatchItem, StoreBaseConstructor, declareStore, StoreBase } from "event-flux";
 import { IRendererClientCallback, IRendererClient } from "./rendererClientTypes";
 import { IWinProps, IOutStoreDeclarer } from "./mainClientTypes";
-import { renderRegisterName, renderRequestStoreName, renderReleaseStoreName } from "./constants";
-import BrowserRendererClient from "./browser/BrowserRendererClient";
+import {
+  renderRegisterName,
+  renderRequestStoreName,
+  renderReleaseStoreName,
+  messageName,
+  winMessageName,
+  renderDispatchName,
+} from "./constants";
+import RendererClient from "./RendererClient";
 
 class IDGenerator {
   count = 0;
@@ -10,8 +17,6 @@ class IDGenerator {
   genID() {
     return ++this.count;
   }
-
-  dispose(id: number) {}
 }
 
 declare global {
@@ -21,49 +26,46 @@ declare global {
   }
 }
 
-class StoreProxy implements DispatchItem {
+export class StoreProxy implements DispatchItem {
   _refCount = 0;
   _stateKey: string | undefined;
 
+  constructor(appStore: RendererAppStore, storeKey: string) {
+    return new Proxy(this, {
+      get(target: StoreProxy, property: string, receiver) {
+        if (target[property]) {
+          return target[property];
+        }
+        return (...args: any[]) => appStore.handleDispatch(storeKey, property, args);
+      },
+    });
+  }
+
   _init() {}
 
-  _inject(
-    StoreBuilder: StoreBaseConstructor<any>,
-    stateKey?: string,
-    depStores?: {
-      [storeKey: string]: DispatchItem;
-    },
-    initState?: any,
-    options?: any
-  ): void {}
+  _inject(): void {}
 
   dispose(): void {}
 
   _addRef(): void {
     this._refCount += 1;
   }
+
   _decreaseRef() {
     this._refCount -= 1;
   }
+
   getRefCount(): number {
     return this._refCount;
   }
-}
 
-export function getQuery() {
-  let query: { [key: string]: string } = {};
-  window.location.search
-    .slice(1)
-    .split("&")
-    .forEach(item => {
-      let [key, val] = item.split("=");
-      query[key] = decodeURIComponent(val);
-    });
-  return query;
+  [property: string]: any;
 }
 
 export default class RendererAppStore extends AppStore implements IRendererClientCallback {
   rendererClient: IRendererClient;
+  idGenerator = new IDGenerator();
+  resolveMap: { [invokeId: string]: { resolve: (data: any) => void; reject: (err: any) => void } } = {};
 
   constructor(storeDeclarers?: AnyStoreDeclarer[] | { [key: string]: any }, initStates?: any) {
     super();
@@ -73,14 +75,15 @@ export default class RendererAppStore extends AppStore implements IRendererClien
       storeDeclarers = [];
     }
 
-    this.rendererClient = new BrowserRendererClient(this);
-    this.rendererClient.sendMainMsg(renderRegisterName, window.winId);
+    this.rendererClient = new RendererClient(this);
 
     let { storeDeclarers: mainDeclarersStr, state, winId: clientId, ...winProps } = this.rendererClient.getQuery();
     if (typeof window === "object") {
       window.eventFluxWin = winProps as IWinProps;
       window.winId = clientId;
     }
+    this.rendererClient.sendMainMsg(renderRegisterName, window.winId);
+
     let mainDeclarers = JSON.parse(mainDeclarersStr) as IOutStoreDeclarer[];
 
     for (let storeDeclarer of mainDeclarers) {
@@ -110,12 +113,31 @@ export default class RendererAppStore extends AppStore implements IRendererClien
 
   handleWinMessage(senderId: string, data: any): void {}
 
+  handleInit(data: any): void {}
+
   handleMainRequestStores(storeNames: string[]) {
     this.rendererClient.sendMainMsg(renderRequestStoreName, storeNames);
   }
 
   handleMainReleaseStores(storeNames: string[]) {
     this.rendererClient.sendMainMsg(renderReleaseStoreName, storeNames);
+  }
+
+  sendMessage(args: any) {
+    this.rendererClient.sendMainMsg(messageName, args);
+  }
+
+  sendWindowMessage(sourceId: string, targetId: string, data: any) {
+    this.rendererClient.sendMainMsg(winMessageName, sourceId, targetId, data);
+  }
+
+  handleDispatch(storeKey: string, property: string, args: any[]) {
+    let invokeId = this.idGenerator.genID();
+    let storeAction = { store: storeKey, method: property, args };
+    this.rendererClient.sendMainMsg(renderDispatchName, window.winId, invokeId, storeAction);
+    return new Promise(
+      (thisResolve, thisReject) => (this.resolveMap[invokeId] = { resolve: thisResolve, reject: thisReject })
+    );
   }
 
   /**
@@ -145,13 +167,17 @@ export default class RendererAppStore extends AppStore implements IRendererClien
 
   _createStoreAndInject(storeKey: string) {
     let mainDepList = this.findMainDepList(storeKey);
-    this.handleMainRequestStores(mainDepList);
+    if (mainDepList.length > 0) {
+      this.handleMainRequestStores(mainDepList);
+    }
     return super._createStoreAndInject(storeKey);
   }
 
   _disposeStoreAndDeps(storeKey: string, store: DispatchItem) {
     let mainDepList = this.findMainDepList(storeKey);
-    this.handleMainReleaseStores(mainDepList);
+    if (mainDepList.length > 0) {
+      this.handleMainReleaseStores(mainDepList);
+    }
     return super._disposeStoreAndDeps(storeKey, store);
   }
 }

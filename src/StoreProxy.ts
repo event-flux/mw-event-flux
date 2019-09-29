@@ -1,4 +1,4 @@
-import { DispatchItem } from "event-flux";
+import { DispatchItem, StoreDeclarer, StoreBase, AppStore } from "event-flux";
 
 interface IStoreDispatcher {
   handleDispatch(storeKey: string, property: string, args: any[]): void;
@@ -11,8 +11,7 @@ export class StoreProxy implements DispatchItem {
   constructor(appStore: IStoreDispatcher, storeKey: string) {
     return new Proxy(this, {
       get(target: StoreProxy, property: string, receiver) {
-        console.log("property:", property, target[property]);
-        if (target[property]) {
+        if (target[property] != null) {
           return target[property];
         }
         return (...args: any[]) => appStore.handleDispatch(storeKey, property, args);
@@ -39,4 +38,12 @@ export class StoreProxy implements DispatchItem {
   }
 
   [property: string]: any;
+}
+
+type StoreProxyConstruct = new (appStore: IStoreDispatcher, storeKey: string) => StoreProxy;
+
+export class StoreProxyDeclarer<T> extends StoreDeclarer<T> {
+  create(appStore: AppStore & IStoreDispatcher): StoreBase<T> {
+    return (new ((this.Store as any) as StoreProxyConstruct)(appStore, this.options!.storeKey!) as any) as StoreBase<T>;
+  }
 }

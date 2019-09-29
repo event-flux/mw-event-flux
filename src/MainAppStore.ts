@@ -307,7 +307,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
         return;
       }
 
-      const action = { payload: { filterUpdated, filterDeleted } };
+      const action = { updated: filterUpdated, deleted: filterDeleted };
 
       this.mainClient.sendWinMsg(client, mainDispatchName, serialize(action));
     });

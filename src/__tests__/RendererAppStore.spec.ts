@@ -4,7 +4,7 @@ import { declareStore, StoreBase, RecycleStrategy } from "event-flux";
 import { encodeQuery } from "../utils/queryHandler";
 import { IOutStoreDeclarer } from "../mainClientTypes";
 import { IRendererClient } from "../rendererClientTypes";
-import { renderRegisterName, renderRequestStoreName, renderReleaseStoreName } from "../constants";
+import { renderRegisterName, renderRequestStoreName, renderReleaseStoreName, renderDispatchName } from "../constants";
 
 jest.mock("../RendererClient", () => {
   class MyRenderClient implements IRendererClient {
@@ -36,7 +36,7 @@ describe("RendererAppStore", () => {
     expect(appStore.rendererClient.sendMainMsg).toHaveBeenLastCalledWith(renderRegisterName, "win1");
   });
 
-  test.skip("request and release stores that in the renderer process", () => {
+  test("request and release stores that in the renderer process", () => {
     (window as any).query = {
       winId: "win1",
       storeDeclarers: JSON.stringify([
@@ -101,5 +101,59 @@ describe("RendererAppStore", () => {
     expect(appStore.findMainDepList("todo2Store")).toEqual(["todo1Store"]);
     expect(appStore.findMainDepList("todo3Store")).toEqual(["todo1Store"]);
     expect(appStore.findMainDepList("todo1Store")).toEqual(["todo1Store"]);
+  });
+
+  test("storeProxy should delegate the action to the mainAppStore", async () => {
+    (window as any).query = {
+      winId: "win1",
+      storeDeclarers: JSON.stringify([
+        { storeType: "Item", storeKey: "mainTodo1Store", stateKey: "main1Todo", depStoreNames: [] },
+      ]),
+      state: JSON.stringify({ hello: 1 }),
+    };
+    let appStore = new RendererAppStore([]);
+    appStore.init();
+
+    let mainStore = appStore.requestStore("mainTodo1Store") as any;
+    let actionRes = mainStore.doHello("arg1", "arg2");
+    expect(appStore.rendererClient.sendMainMsg).toHaveBeenLastCalledWith(
+      renderDispatchName,
+      "win1",
+      1,
+      JSON.stringify({
+        store: "mainTodo1Store",
+        method: "doHello",
+        args: ["arg1", "arg2"],
+      })
+    );
+    appStore.resolveMap[1].resolve("hello");
+    expect(await actionRes).toBe("hello");
+
+    actionRes = mainStore.doHello("arg1", "arg2");
+    appStore.resolveMap[2].reject("hello");
+
+    try {
+      await actionRes;
+    } catch (err) {
+      expect(err).toBeTruthy();
+    }
+
+    actionRes = mainStore.doHello("arg1", "arg2");
+    appStore.handleInvokeReturn("3", undefined, JSON.stringify("result"));
+    expect(await actionRes).toBe("result");
+  });
+
+  test("handleDispatchReturn should can merge the updated and deleted states", () => {
+    (window as any).query = {
+      winId: "win1",
+      storeDeclarers: JSON.stringify([]),
+      state: JSON.stringify({ hello: 1, world: 2 }),
+    };
+    let appStore = new RendererAppStore([]);
+
+    let originState = appStore.state;
+    appStore.handleDispatchReturn(JSON.stringify({ updated: { hello: 3 }, deleted: { world: true } }));
+    expect(appStore).not.toBe(originState);
+    expect(appStore.state).toEqual({ hello: 3 });
   });
 });

@@ -10,7 +10,8 @@ import {
   renderDispatchName,
 } from "./constants";
 import RendererClient from "./RendererClient";
-import { StoreProxy } from "./StoreProxy";
+import { StoreProxy, StoreProxyDeclarer } from "./StoreProxy";
+import objectMerge from "./utils/objectMerge";
 
 class IDGenerator {
   count = 0;
@@ -31,6 +32,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
   rendererClient: IRendererClient;
   idGenerator = new IDGenerator();
   resolveMap: { [invokeId: string]: { resolve: (data: any) => void; reject: (err: any) => void } } = {};
+  winId: string;
 
   constructor(storeDeclarers?: AnyStoreDeclarer[] | { [key: string]: any }, initStates?: any) {
     super();
@@ -47,13 +49,14 @@ export default class RendererAppStore extends AppStore implements IRendererClien
       window.eventFluxWin = winProps as IWinProps;
       window.winId = clientId;
     }
-    this.rendererClient.sendMainMsg(renderRegisterName, window.winId);
+    this.winId = clientId;
+    this.rendererClient.sendMainMsg(renderRegisterName, clientId);
 
     let mainDeclarers = JSON.parse(mainDeclarersStr) as IOutStoreDeclarer[];
 
     for (let storeDeclarer of mainDeclarers) {
       storeDeclarers.push(
-        declareStore((StoreProxy as any) as StoreBaseConstructor<any>, storeDeclarer.depStoreNames, {
+        new StoreProxyDeclarer((StoreProxy as any) as StoreBaseConstructor<any>, storeDeclarer.depStoreNames, {
           stateKey: storeDeclarer.stateKey,
           storeKey: storeDeclarer.storeKey,
           forMain: true,
@@ -70,15 +73,37 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     }
   }
 
-  handleDispatchReturn(data: any): void {}
+  handleDispatchReturn(actionStr: any): void {
+    const { updated, deleted } = JSON.parse(actionStr);
+    this.state = objectMerge(this.state, updated, deleted);
+    this.batchUpdater.requestUpdate();
+  }
 
-  handleInvokeReturn(invokeId: string, error: any, data: any): void {}
+  handleInvokeReturn(invokeId: string, error: any, result: any): void {
+    // this.idGenerator.dispose(invokeId);
+    let { resolve, reject } = this.resolveMap[invokeId];
+    delete this.resolveMap[invokeId];
+    if (error) {
+      reject(error);
+    }
+    if (result !== undefined) {
+      result = JSON.parse(result);
+    }
+    resolve(result);
+  }
 
   handleMessage(data: any): void {}
 
   handleWinMessage(senderId: string, data: any): void {}
 
-  handleInit(data: any): void {}
+  handleInit(data: IWinProps): void {
+    if (typeof window === "object") {
+      window.eventFluxWin = {
+        ...window.eventFluxWin,
+        ...data,
+      };
+    }
+  }
 
   handleMainRequestStores(storeNames: string[]) {
     this.rendererClient.sendMainMsg(renderRequestStoreName, storeNames);
@@ -99,7 +124,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
   handleDispatch(storeKey: string, property: string, args: any[]) {
     let invokeId = this.idGenerator.genID();
     let storeAction = { store: storeKey, method: property, args };
-    this.rendererClient.sendMainMsg(renderDispatchName, window.winId, invokeId, storeAction);
+    this.rendererClient.sendMainMsg(renderDispatchName, this.winId, invokeId, JSON.stringify(storeAction));
     return new Promise(
       (thisResolve, thisReject) => (this.resolveMap[invokeId] = { resolve: thisResolve, reject: thisReject })
     );

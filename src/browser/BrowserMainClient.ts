@@ -2,16 +2,26 @@ import { Log } from "../utils/loggerApply";
 import {
   renderRegisterName,
   renderDispatchName,
-  mainDispatchName,
-  mainInitName,
-  mainReturnName,
-  winMessageName,
-  messageName,
   renderRequestStoreName,
   renderReleaseStoreName,
+  winMessageName,
 } from "../constants";
 import { IWinInfo, IMainClient, IMainClientCallback, IWinProps, IWinParams } from "../mainClientTypes";
 import MultiWinSaver from "../MultiWinSaver";
+import { decodeQuery, encodeQuery } from "../utils/queryHandler";
+
+function genBrowserUrl(url = "", winId: string, winProps: IWinProps) {
+  let genUrl = new URL(url, location.href);
+  genUrl.search =
+    "?" +
+    encodeQuery({
+      ...decodeQuery(genUrl.search.slice(1)),
+      ...winProps,
+      winId,
+      isSlave: 1,
+    });
+  return genUrl.toString();
+}
 
 export default class BrowserMainClient implements IMainClient {
   multiWinSaver: MultiWinSaver;
@@ -25,7 +35,7 @@ export default class BrowserMainClient implements IMainClient {
 
     (window as any).isMainClient = true;
 
-    window.addEventListener("message", this.handleMessage);
+    window.addEventListener("message", this._handleMessage);
 
     this.multiWinSaver.addWin({
       winId: "mainClient",
@@ -50,41 +60,55 @@ export default class BrowserMainClient implements IMainClient {
     let featureStr = Object.keys(winParams)
       .map((key: string) => `${key}=${winParams[key]}`)
       .join(",");
+
     let childWin = window.open(
-      winProps.path,
+      genBrowserUrl(winProps.path, winId, winProps),
       "newwindow",
       featureStr + ", toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no, status=no, titlebar=no"
     );
     if (childWin) {
       childWin.onbeforeunload = () => this.multiWinSaver.deleteWin(winId);
     }
+    this.multiWinSaver.addWin({ winId, window: childWin });
     return childWin;
   }
 
   changeWin(winInfo: IWinInfo, winProps: IWinProps, winParams: IWinParams): void {}
 
-  private handleMessage = (event: MessageEvent) => {
+  _handleMessage = (event: MessageEvent) => {
     let { action, data: payload } = event.data || ({} as any);
-    if (action === renderDispatchName) {
-      // Renderer register self
-      let [clientId, invokeId, stringifiedAction] = payload;
-      this.mainClientCallback.handleRendererDispatch(clientId, invokeId, stringifiedAction);
-    } else if (action === winMessageName) {
-      let [senderId, clientId, data] = payload;
-      this.mainClientCallback.handleWinMessage(senderId, clientId, data);
-    } else if (action === renderRequestStoreName) {
-      let [clientId, storeKeys] = payload;
-      this.mainClientCallback.handleRequestStores(clientId, storeKeys);
-    } else if (action === renderReleaseStoreName) {
-      let [clientId, storeKeys] = payload;
-      this.mainClientCallback.handleReleaseStores(clientId, storeKeys);
-    } else if (action === "close") {
-      // Child window has closed
-      let [clientId] = payload;
-      this.multiWinSaver.deleteWin(clientId);
-    } else if (action === renderRegisterName) {
-      let [clientId] = payload;
-      this.multiWinSaver.registerWin(clientId);
+    switch (action) {
+      case renderDispatchName: {
+        let [clientId, invokeId, args] = payload;
+        this.mainClientCallback.handleRendererDispatch(clientId, invokeId, args);
+        break;
+      }
+      case renderRequestStoreName: {
+        let [clientId, storeKeys] = payload;
+        this.mainClientCallback.handleRequestStores(clientId, storeKeys);
+        break;
+      }
+      case renderReleaseStoreName: {
+        let [clientId, storeKeys] = payload;
+        this.mainClientCallback.handleReleaseStores(clientId, storeKeys);
+        break;
+      }
+      case winMessageName: {
+        let [senderId, clientId, data] = payload;
+        this.mainClientCallback.handleWinMessage(senderId, clientId, data);
+        break;
+      }
+      case "close": {
+        // Child window has closed
+        let [clientId] = payload;
+        this.multiWinSaver.deleteWin(clientId);
+        break;
+      }
+      case renderRegisterName: {
+        let [clientId] = payload;
+        this.multiWinSaver.registerWin(clientId);
+        break;
+      }
     }
   };
 }

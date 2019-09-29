@@ -3,6 +3,7 @@ export const renderDispatchName = "__RENDERER_DISPATCH__";
 export const mainInitName = "__MAIN_INIT__";
 export const mainDispatchName = "__MAIN_DISPATCH__";
 export const mainReturnName = "__MAIN_RETURN__";
+
 export const winManagerStoreName = "winManagerStore";
 export const winManagerKey = "winManager";
 

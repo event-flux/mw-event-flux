@@ -7,6 +7,11 @@ test("base diff", () => {
     deleted: { a: true },
   });
 
+  expect(filterDifference({}, { a: true, b: true })).toEqual({
+    updated: { a: true, b: true },
+    deleted: {},
+  });
+
   expect(filterDifference({ "*": true, b: 1 }, { "*": false, b: 1 })).toEqual({
     updated: { "*": false },
     deleted: {},

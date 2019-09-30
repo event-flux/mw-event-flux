@@ -12,7 +12,6 @@ interface PerWinOptions {
   isPerWin: boolean;
 }
 
-const IS_WIN_STORE = "@@__WIN_STORE_ITEM__@@";
 export class WinStoreDeclarer<T> extends StoreDeclarer<T> {
   options: StoreDeclarerOptions & PerWinOptions | undefined;
 
@@ -34,8 +33,6 @@ export function declareWinStore<T>(
   return new WinStoreDeclarer(Store, depStoreNames, options);
 }
 
-const IS_WIN_STORE_LIST = "@@__WIN_STORE_LIST__@@";
-
 export class WinStoreListDeclarer<T> extends StoreListDeclarer<T> {
   options: StoreListDeclarerOptions & PerWinOptions | undefined;
 
@@ -56,8 +53,6 @@ export function declareWinStoreList<T>(
 ) {
   return new WinStoreListDeclarer(Store, depStoreNames, options);
 }
-
-const IS_WIN_STORE_MAP = "@@__WIN_STORE_MAP__@@";
 
 export class WinStoreMapDeclarer<T> extends StoreMapDeclarer<T> {
   options: StoreMapDeclarerOptions & PerWinOptions | undefined;

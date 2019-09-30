@@ -82,7 +82,28 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       delete this.winHoldStores[winId];
       delete this.winFilters[winId];
     });
+
+    if (process.env.NODE_ENV !== "production") {
+      this._checkStoreRegistry();
+    }
     return this;
+  }
+
+  /**
+   * The window-spec stores can dependen on the window-spec stores and plain stores
+   * The plain stores can only dependen on the plain stores, not window-spec stores.
+   */
+  _checkStoreRegistry() {
+    let storeRegistry = this._storeRegisterMap;
+    for (let storeKey in storeRegistry) {
+      let { options, depStoreNames } = storeRegistry[storeKey];
+      if (!options!.isPerWin && depStoreNames && depStoreNames.length > 0) {
+        let isAllPlainStores = depStoreNames.every(name => !storeRegistry[name].options!.isPerWin);
+        if (!isAllPlainStores) {
+          console.error(`The plain store ${storeKey} can not dependent on the window-spec stores`);
+        }
+      }
+    }
   }
 
   _sendUpdate() {
@@ -149,35 +170,30 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
   }
 
   _createStore(storeKey: string, store: DispatchItem, winId: string) {
-    let { isPerWin, stateKey } = this._storeRegisterMap[storeKey].options! as any;
+    let { isPerWin } = this._storeRegisterMap[storeKey].options! as any;
     if (isPerWin) {
       if (!winId) {
         throw new Error("The winId parameter is necessary when creating isPerWin store ");
       }
-
-      stateKey = stateKey + "@" + winId;
       storeKey = storeKey + "@" + winId;
     }
     this.stores[storeKey] = store;
   }
 
   _deleteStore(storeKey: string, winId: string) {
-    let { isPerWin, stateKey } = this._storeRegisterMap[storeKey].options! as any;
+    let { isPerWin } = this._storeRegisterMap[storeKey].options! as any;
     if (isPerWin) {
       if (!winId) {
         throw new Error("The winId parameter is necessary when delete isPerWin store ");
       }
-
-      stateKey = stateKey + "@" + winId;
       storeKey = storeKey + "@" + winId;
     }
-    // Delete the stateKey from winFilter
-    delete this.winFilters[winId][stateKey];
-
     delete this.stores[storeKey];
   }
 
-  async _handleRendererPayload(payload: string): Promise<any> {}
+  async _handleRendererPayload(payload: string): Promise<any> {
+    let { store: storeKey, method, args } = JSON.parse(payload);
+  }
 
   handleRendererDispatch(winId: string, invokeId: string, stringifiedAction: string) {
     let winInfo = this.multiWinSaver.getWinInfo(winId);
@@ -234,9 +250,12 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       let depList = [storeKey];
       for (let i = 0; i < depList.length; i += 1) {
         let curStoreKey = depList[i];
+        if (!this._storeRegisterMap[curStoreKey]) {
+          console.error(`The store key ${curStoreKey} is not registered`);
+        }
         let { depStoreNames, options } = this._storeRegisterMap[curStoreKey];
 
-        let filterKey = this._getStateKey(options!.stateKey!, winId);
+        let filterKey = this._getStateKey(curStoreKey, options!.stateKey!, winId);
         if (forAdd ? newFilter[filterKey] : newFilter[filterKey] === undefined) {
           continue;
         }
@@ -257,6 +276,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     for (let storeKey of storeKeys) {
       if (winStores.has(storeKey)) {
         console.error(`The store ${storeKey} for win ${winId} has requested, This may be renderer bug `);
+        continue;
       }
       winStores.add(storeKey);
 
@@ -273,6 +293,10 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
   handleReleaseStores(winId: string, storeKeys: string[]) {
     let winStores = this.winHoldStores[winId];
     for (let storeKey of storeKeys) {
+      if (!winStores.has(storeKey)) {
+        console.error(`The store ${storeKey} for win ${winId} has released, This may be renderer bug `);
+        continue;
+      }
       this.releaseStore(storeKey, winId);
 
       winStores.delete(storeKey);
@@ -292,12 +316,13 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
   _transformWinState(finalState: any) {
     // Transform the win specific state that remove the window suffix
     for (let stateKey in finalState) {
-      let [realKey, id] = stateKey.split("&");
+      let [realKey, id] = stateKey.split("@");
       if (id) {
-        delete finalState[stateKey];
         finalState[realKey] = finalState[stateKey];
+        delete finalState[stateKey];
       }
     }
+    return finalState;
   }
 
   getInitStates(winId: string): string {
@@ -318,13 +343,16 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       }
     }
 
-    this._transformWinState(finalState);
+    return JSON.stringify(this._transformWinState(finalState));
+  }
 
-    return JSON.stringify(finalState);
+  handleWillChange(prevState: any, state: any) {
+    this.forwardState(prevState, state);
   }
 
   forwardState(prevState: any, state: any) {
     const delta = objectDifference(prevState, state);
+
     if (isEmpty(delta.updated) && isEmpty(delta.deleted)) {
       return;
     }
@@ -337,8 +365,8 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       let filterUpdated = filterApply(delta.updated, winFilters[winId]);
       let filterDeleted = filterApply(delta.deleted, winFilters[winId]);
 
-      this._transformWinState(filterUpdated);
-      this._transformWinState(filterDeleted);
+      filterUpdated = this._transformWinState(filterUpdated);
+      filterDeleted = this._transformWinState(filterDeleted);
 
       // let [updated, deleted] = filterWindowDelta(filterUpdated, filterDeleted, winManagerKey, clientId);
       if (isEmpty(filterUpdated) && isEmpty(filterDeleted)) {
@@ -355,7 +383,13 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     let { updated, deleted } = filterDifference(prevFilter, newFilter);
     let updateState = filterApply(this.state, updated);
 
-    const action = { updated: updateState, deleted };
+    updated = this._transformWinState(updateState);
+    deleted = this._transformWinState(deleted);
+
+    if (isEmpty(updated) && isEmpty(deleted)) {
+      return;
+    }
+    const action = { updated, deleted };
 
     this.mainClient.sendWinMsg(this.multiWinSaver.getWinInfo(winId), mainDispatchName, JSON.stringify(action));
   }

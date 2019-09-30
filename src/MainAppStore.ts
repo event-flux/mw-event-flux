@@ -191,8 +191,14 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     delete this.stores[storeKey];
   }
 
-  async _handleRendererPayload(payload: string): Promise<any> {
+  async _handleRendererPayload(winId: string, payload: string): Promise<any> {
     let { store: storeKey, method, args } = JSON.parse(payload);
+    let store = this.stores[this._getStoreKey(storeKey, winId)];
+    if (!store) {
+      throw new Error(`The store ${storeKey} for winId ${winId} is not exists`);
+    }
+    let result = await (store as any)[method](...args);
+    return result;
   }
 
   handleRendererDispatch(winId: string, invokeId: string, stringifiedAction: string) {
@@ -200,7 +206,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     if (!winInfo) {
       return;
     }
-    this._handleRendererPayload(stringifiedAction).then(
+    return this._handleRendererPayload(winId, stringifiedAction).then(
       result => {
         this.mainClient.sendWinMsg(winInfo, mainReturnName, invokeId, undefined, result);
       },

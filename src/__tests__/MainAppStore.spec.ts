@@ -1,7 +1,7 @@
 import MainAppStore from "../MainAppStore";
 import { declareStore, StoreBase, RecycleStrategy } from "event-flux";
 import { IMainClient } from "../mainClientTypes";
-import { mainDispatchName } from "../constants";
+import { mainDispatchName, mainReturnName } from "../constants";
 import { declareWinStore } from "../StoreDeclarer";
 
 jest.mock("../MainClient", () => {
@@ -109,6 +109,64 @@ describe("MainAppStore", () => {
         updated: { todo1: "win2" },
         deleted: {},
       })
+    );
+  });
+
+  test("handleRendererDispatch should can dispatch the method invocation", async () => {
+    let mainAppStore = new MainAppStore([
+      declareStore(StoreBase, [], { stateKey: "todo2", storeKey: "todo2Store" }),
+      declareWinStore(StoreBase, [], { stateKey: "todo1", storeKey: "todo1Store" }),
+      declareWinStore(StoreBase, ["todo1Store", "todo2Store"], { stateKey: "todo3", storeKey: "todo3Store" }),
+    ]);
+    mainAppStore.init();
+
+    mainAppStore.multiWinSaver.addWin({ winId: "win1" });
+    mainAppStore.handleRequestStores("win1", ["todo3Store"]);
+
+    await mainAppStore.handleRendererDispatch(
+      "win1",
+      "1",
+      JSON.stringify({ store: "todo2Store", method: "getRefCount", args: [] })
+    );
+    expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenLastCalledWith(
+      { winId: "win1" },
+      mainReturnName,
+      "1",
+      undefined,
+      1
+    );
+
+    (mainAppStore.mainClient.sendWinMsg as jest.Mock).mockReset();
+    await mainAppStore.handleRendererDispatch(
+      "win1",
+      "2",
+      JSON.stringify({ store: "todo1Store", method: "getRefCount", args: [] })
+    );
+    expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenLastCalledWith(
+      { winId: "win1" },
+      mainReturnName,
+      "2",
+      undefined,
+      1
+    );
+
+    (mainAppStore.mainClient.sendWinMsg as jest.Mock).mockReset();
+    let errorObj;
+    try {
+      await mainAppStore.handleRendererDispatch(
+        "win1",
+        "3",
+        JSON.stringify({ store: "todo1Store", method: "none", args: [] })
+      );
+    } catch (err) {
+      errorObj = { name: err.name, message: err.message };
+    }
+    expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenLastCalledWith(
+      { winId: "win1" },
+      mainReturnName,
+      "3",
+      errorObj,
+      undefined
     );
   });
 });

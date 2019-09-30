@@ -11,6 +11,15 @@ test("base merge", () => {
   expect(retObj).toEqual(newObj);
 });
 
+test("base merge with undefined value", () => {
+  let sameObj = { hello: "a" };
+  let oldObj = { d: "b", same: sameObj, p: 1 };
+  let newObj = { m: "b", same: sameObj, p: undefined };
+  let { updated, deleted } = objectDifference(oldObj, newObj);
+  let retObj = objectMerge(oldObj, updated, deleted);
+  expect(retObj).toEqual(newObj);
+});
+
 test("immutable diff", () => {
   let val1 = Map({ a: 2, b: 3, c: 4 });
   let val2: Map<any, any> = Map({ a: 3, c: 4 });

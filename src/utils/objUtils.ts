@@ -37,3 +37,7 @@ export function omit(obj: { [key: string]: any }, ...keys: Array<string | string
   }
   return resObj;
 }
+
+export function union(list1: any[] | undefined, list2: any[] | undefined): string[] {
+  return Array.from(new Set<string>([...(list1 || []), ...(list2 || [])]));
+}

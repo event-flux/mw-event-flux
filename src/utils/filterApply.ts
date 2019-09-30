@@ -26,6 +26,12 @@
     {}
   ) would return
     { a: { d: 1 } }
+
+  4. filterApply(
+    { a: { d: 1 }, b: { m: 'd' } },
+    { a: true },
+    { b: { m: true } }
+  )
 */
 import { isObject } from "./objUtils";
 
@@ -34,7 +40,8 @@ interface IFilterObject {
 }
 
 export default function filterApply(origin: IFilterObject, updated: IFilterObject, deleted: IFilterObject | null) {
-  let merged: IFilterObject = {};
+  let merged: IFilterObject = {},
+    removed: IFilterObject = {};
   if (updated["*"]) {
     if (Array.isArray(origin)) {
       return origin;
@@ -55,15 +62,24 @@ export default function filterApply(origin: IFilterObject, updated: IFilterObjec
       if (key === "*" || key === "*@exclude") {
         return;
       }
-      if (origin[key] != null && updated[key]) {
-        merged[key] = filterApply(origin[key], updated[key], deleted && deleted[key]);
+      if (origin[key] !== undefined && updated[key]) {
+        if (updated[key] === true) {
+          merged[key] = origin[key];
+          return;
+        }
+        if (updated[key] === false) {
+          return;
+        }
+        let [subMerged, subRemoved] = filterApply(origin[key], updated[key], deleted && deleted[key]);
+        merged[key] = subMerged;
+        removed[key] = subRemoved;
       }
     });
   }
   if (isObject(deleted)) {
     Object.keys(deleted!).forEach(key => {
-      merged[key] = undefined;
+      removed[key] = true;
     });
   }
-  return merged;
+  return [merged, removed];
 }

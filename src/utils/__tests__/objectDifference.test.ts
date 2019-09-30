@@ -12,6 +12,17 @@ test("base diff", () => {
   });
 });
 
+test("object diff with undefined value", () => {
+  let sameObj = { hello: "a" };
+  let oldObj = { d: "b", same: sameObj, v: undefined, e: 2 };
+  let newObj = { m: "b", same: sameObj, v: 1, e: undefined };
+  let retObj = objectDifference(oldObj, newObj);
+  expect(retObj).toEqual({
+    updated: { m: "b", v: 1, e: undefined },
+    deleted: { d: true },
+  });
+});
+
 test("immutable diff", () => {
   let val1 = Map({ a: 2, b: 3 });
   let val2: Map<any, any> = Map({ a: 3, c: 4 });

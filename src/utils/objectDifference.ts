@@ -9,9 +9,7 @@
 */
 
 import { Map, List } from "immutable";
-const isObject = require("lodash/isObject");
-const isEmpty = require("lodash/isEmpty");
-const keys = require("lodash/keys");
+import { isObject, isEmpty } from "./objUtils";
 
 const isShallow = (val: any) => Array.isArray(val) || !isObject(val) || List.isList(val);
 
@@ -48,14 +46,14 @@ function objectDifference(old: any, curr: any) {
     curr.forEach((val: any, key: string) => checkUpdateVal(JSON.stringify(key), old.get(key), val, updated, deleted));
 
     old.forEach((val: any, key: string) => {
-      if (curr.get(key) === undefined) {
+      if (!curr.has(key)) {
         deleted[JSON.stringify(key)] = true;
       }
     });
   } else {
-    keys(curr).forEach((key: string) => checkUpdateVal(key, old[key], curr[key], updated, deleted));
-    keys(old).forEach((key: string) => {
-      if (curr[key] === undefined) {
+    Object.keys(curr).forEach((key: string) => checkUpdateVal(key, old[key], curr[key], updated, deleted));
+    Object.keys(old).forEach((key: string) => {
+      if (!curr.hasOwnProperty(key)) {
         deleted[key] = true;
       }
     });

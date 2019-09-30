@@ -19,11 +19,11 @@ import {
 import IErrorObj from "./IErrorObj";
 import MultiWinSaver from "./MultiWinSaver";
 import { IMainClient, IMainClientCallback, IWinProps, IWinInfo, IOutStoreDeclarer } from "./mainClientTypes";
-import { serialize, deserialize } from "json-immutable-bn";
 import objectDifference from "./utils/objectDifference";
 import { isEmpty, isObject } from "./utils/objUtils";
 import filterApply from "./utils/filterApply";
-import BrowserMainClient from "./browser/BrowserMainClient";
+import MainClient from "./MainClient";
+import filterDifference from "./utils/filterDifference";
 
 function getStoreType(storeDeclarer: AnyStoreDeclarer) {
   if (StoreDeclarer.isStore(storeDeclarer)) {
@@ -52,14 +52,18 @@ function genOutStoreDeclarers(appStore: AppStore) {
   return JSON.stringify(declarers);
 }
 
+interface IWinFilter {
+  [storeKey: string]: true | false | IWinFilter;
+}
+
 export default class MainAppStore extends AppStore implements IMainClientCallback {
   multiWinSaver: MultiWinSaver = new MultiWinSaver();
-  winFilters: { [winId: string]: Array<string | [string, string[]]> } = {};
+  winFilters: { [winId: string]: IWinFilter } = {};
 
   outStoreDeclarers: string = "";
-  winHoldStores: { [winId: string]: string[] } = {};
+  winHoldStores: { [winId: string]: Set<string> } = {};
 
-  mainClient: IMainClient = new BrowserMainClient(this.multiWinSaver, this);
+  mainClient: IMainClient = new MainClient(this.multiWinSaver, this);
 
   init() {
     super.init();
@@ -67,13 +71,15 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     this.outStoreDeclarers = genOutStoreDeclarers(this);
 
     this.multiWinSaver.onDidAddWin((winId: string) => {
-      this.winFilters[winId] = [];
+      this.winFilters[winId] = {};
+      this.winHoldStores[winId] = new Set<string>();
     });
     this.multiWinSaver.onDidDeleteWin((winId: string) => {
       let winStoreKeys = this.winHoldStores[winId];
       for (let storeKey of winStoreKeys) {
         this.releaseStore(storeKey, winId);
       }
+      delete this.winHoldStores[winId];
       delete this.winFilters[winId];
     });
     return this;
@@ -118,23 +124,27 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     return stateKey;
   }
 
+  /**
+   * When the renderer process request the StoreMap's stores, then we need change the filter
+   *
+   * @param storeKey: the StoreMap's storeKey
+   * @param keys: the StoreMap's keys that the renderer process will use
+   * @param winId: the renderer process's window ID
+   */
   _requestStoreMapFilter(storeKey: string, keys: string[], winId: string) {
     let { isPerWin, stateKey } = this._storeRegisterMap[storeKey].options! as any;
     // If the storeMap exists per window, then the filter is not necessary.
     if (isPerWin) {
       return;
     }
-    // let filters = this.winFilters[winId];
-    let filterIndex = this.winFilters[winId].findIndex(item => {
-      if (Array.isArray(item)) {
-        item = item[0];
-      }
-      return item === stateKey;
-    });
-    if (filterIndex !== -1) {
-      this.winFilters[winId][filterIndex] = [stateKey, keys];
-    } else {
-      this.winFilters[winId].push([stateKey, keys]);
+
+    let winFilter = this.winFilters[winId];
+    let storeFilter = winFilter[storeKey];
+    if (!storeFilter || typeof storeFilter === "boolean") {
+      storeFilter = winFilter[storeKey] = {};
+    }
+    for (let key of keys) {
+      winFilter[key] = true;
     }
   }
 
@@ -148,9 +158,6 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       stateKey = stateKey + "@" + winId;
       storeKey = storeKey + "@" + winId;
     }
-    // Add the win specific stateKey into the winFilter
-    this.winFilters[winId].push(stateKey);
-
     this.stores[storeKey] = store;
   }
 
@@ -165,10 +172,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       storeKey = storeKey + "@" + winId;
     }
     // Delete the stateKey from winFilter
-    let filterIndex = this.winFilters[winId].indexOf(stateKey);
-    if (filterIndex !== -1) {
-      this.winFilters[winId].splice(filterIndex);
-    }
+    delete this.winFilters[winId][stateKey];
 
     delete this.stores[storeKey];
   }
@@ -223,16 +227,47 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     });
   }
 
-  handleRequestStores(winId: string, storeKeys: string[]) {
-    let winStores = this.winHoldStores[winId];
-    if (!winStores) {
-      winStores = this.winHoldStores[winId] = [];
-    }
-    winStores.splice(winStores.length, 0, ...storeKeys);
+  _applyFilterForStore(winFilter: IWinFilter, winId: string, storeKeys: string[], forAdd: boolean) {
+    let newFilter = { ...winFilter };
 
     for (let storeKey of storeKeys) {
+      let depList = [storeKey];
+      for (let i = 0; i < depList.length; i += 1) {
+        let curStoreKey = depList[i];
+        let { depStoreNames, options } = this._storeRegisterMap[curStoreKey];
+
+        let filterKey = this._getStateKey(options!.stateKey!, winId);
+        if (forAdd ? newFilter[filterKey] : newFilter[filterKey] === undefined) {
+          continue;
+        }
+        if (forAdd) {
+          newFilter[filterKey] = true;
+        } else {
+          delete newFilter[filterKey];
+        }
+
+        depList.splice(depList.length, 0, ...(depStoreNames || []));
+      }
+    }
+    return newFilter;
+  }
+
+  handleRequestStores(winId: string, storeKeys: string[]) {
+    let winStores = this.winHoldStores[winId];
+    for (let storeKey of storeKeys) {
+      if (winStores.has(storeKey)) {
+        console.error(`The store ${storeKey} for win ${winId} has requested, This may be renderer bug `);
+      }
+      winStores.add(storeKey);
+
       this.requestStore(storeKey, winId);
     }
+
+    // Update the store's filter for this window
+    let winFilter = this.winFilters[winId];
+    let newFilter = this._applyFilterForStore(winFilter, winId, storeKeys, true);
+    this.forwardDeltaFilter(winId, winFilter, newFilter);
+    this.winFilters[winId] = newFilter;
   }
 
   handleReleaseStores(winId: string, storeKeys: string[]) {
@@ -240,11 +275,14 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     for (let storeKey of storeKeys) {
       this.releaseStore(storeKey, winId);
 
-      let index = winStores.indexOf(storeKey);
-      if (index !== -1) {
-        winStores.splice(index, 1);
-      }
+      winStores.delete(storeKey);
     }
+
+    // Update the store's filter for this window
+    let winFilter = this.winFilters[winId];
+    let newFilter = this._applyFilterForStore(winFilter, winId, storeKeys, false);
+    this.forwardDeltaFilter(winId, winFilter, newFilter);
+    this.winFilters[winId] = newFilter;
   }
 
   getStoreDeclarers(): string {
@@ -268,7 +306,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     let finalState: any = {};
 
     // Generate the new final state by the win filter
-    for (let iFilter of winFilter) {
+    for (let iFilter in winFilter) {
       if (Array.isArray(iFilter)) {
         let [stateKey, keys] = iFilter;
         finalState[stateKey] = {};
@@ -282,7 +320,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
 
     this._transformWinState(finalState);
 
-    return serialize(finalState);
+    return JSON.stringify(finalState);
   }
 
   forwardState(prevState: any, state: any) {
@@ -309,7 +347,16 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
 
       const action = { updated: filterUpdated, deleted: filterDeleted };
 
-      this.mainClient.sendWinMsg(client, mainDispatchName, serialize(action));
+      this.mainClient.sendWinMsg(client, mainDispatchName, JSON.stringify(action));
     });
+  }
+
+  forwardDeltaFilter(winId: string, prevFilter: IWinFilter, newFilter: IWinFilter) {
+    let { updated, deleted } = filterDifference(prevFilter, newFilter);
+    let updateState = filterApply(this.state, updated, deleted);
+
+    const action = { updated: updateState };
+
+    this.mainClient.sendWinMsg(this.multiWinSaver.getWinInfo(winId), mainDispatchName, JSON.stringify(action));
   }
 }

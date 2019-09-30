@@ -334,8 +334,8 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     this.multiWinSaver.winInfos.forEach((client: IWinInfo) => {
       let { winId } = client;
 
-      let filterUpdated = filterApply(delta.updated, winFilters[winId], null);
-      let filterDeleted = filterApply(delta.deleted, winFilters[winId], null);
+      let filterUpdated = filterApply(delta.updated, winFilters[winId]);
+      let filterDeleted = filterApply(delta.deleted, winFilters[winId]);
 
       this._transformWinState(filterUpdated);
       this._transformWinState(filterDeleted);
@@ -353,9 +353,9 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
 
   forwardDeltaFilter(winId: string, prevFilter: IWinFilter, newFilter: IWinFilter) {
     let { updated, deleted } = filterDifference(prevFilter, newFilter);
-    let updateState = filterApply(this.state, updated, deleted);
+    let updateState = filterApply(this.state, updated);
 
-    const action = { updated: updateState };
+    const action = { updated: updateState, deleted };
 
     this.mainClient.sendWinMsg(this.multiWinSaver.getWinInfo(winId), mainDispatchName, JSON.stringify(action));
   }

@@ -5,11 +5,11 @@
   been deleted given a value of true).
 
   ex: 
-  1. filterDifference({*: true, a: 1}, {*: false, b: 2}) would return
-    {updated: {*: false, b: 2, '*@exclude': ['b']}, deleted: {a: true}}
+  1. filterDifference({ m: true, a: 1 }, { m: false, b: 2 }) would return
+    { updated: { m: false, b: 2 }, deleted: { a: true } }
 
-  1. filterDifference({*: true, b: 1}, {*: false, b: 1}) would return
-    {updated: {*: false, '*@exclude': ['b'] }}
+  1. filterDifference({ m: true, b: 1 }, { m: false, b: 1 }) would return
+    { updated: { m: false } }
 */
 
 import { isObject, isEmpty } from "./objUtils";
@@ -33,12 +33,6 @@ function checkUpdateVal(
     return;
   }
 
-  if (key === "*") {
-    updated[key] = currVal;
-
-    updated["*@exclude"] = Object.keys(curr).filter(k => k !== "*");
-    return;
-  }
   if (isShallow(currVal) || isShallow(oldVal)) {
     updated[key] = currVal;
   } else {
@@ -58,7 +52,7 @@ function filterDifference(old: IFilterObject, curr: IFilterObject) {
 
   Object.keys(curr).forEach(key => checkUpdateVal(key, old, curr, updated, deleted));
   Object.keys(old).forEach(key => {
-    if (curr[key] === undefined) {
+    if (!curr.hasOwnProperty(key)) {
       deleted[key] = true;
     }
   });

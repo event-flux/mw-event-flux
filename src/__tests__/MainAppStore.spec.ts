@@ -133,7 +133,7 @@ describe("MainAppStore", () => {
       mainReturnName,
       "1",
       undefined,
-      1
+      "1"
     );
 
     (mainAppStore.mainClient.sendWinMsg as jest.Mock).mockReset();
@@ -147,7 +147,7 @@ describe("MainAppStore", () => {
       mainReturnName,
       "2",
       undefined,
-      1
+      "1"
     );
 
     (mainAppStore.mainClient.sendWinMsg as jest.Mock).mockReset();

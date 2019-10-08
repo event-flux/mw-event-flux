@@ -212,7 +212,13 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     }
     return this._handleRendererPayload(winId, stringifiedAction).then(
       result => {
-        this.mainClient.sendWinMsg(winInfo, mainReturnName, invokeId, undefined, result);
+        this.mainClient.sendWinMsg(
+          winInfo,
+          mainReturnName,
+          invokeId,
+          undefined,
+          result !== undefined ? JSON.stringify(result) : result
+        );
       },
       err => {
         let errObj: IErrorObj | null = null;
@@ -337,7 +343,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
 
   getInitStates(winId: string): string {
     let winFilter = this.winFilters[winId];
-    let state = this.state;
+    let state = this.prevState;
     let finalState: any = {};
 
     // Generate the new final state by the win filter

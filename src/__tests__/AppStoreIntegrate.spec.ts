@@ -1,9 +1,9 @@
 import MainAppStore from "../MainAppStore";
-import { declareStore, StoreBase, RecycleStrategy, AnyStoreDeclarer } from "event-flux";
+import { declareStore, StoreBase, RecycleStrategy, AnyStoreDeclarer, AppStore, DispatchParent } from "event-flux";
 import { IMainClient, IWinInfo, IMainClientCallback } from "../mainClientTypes";
 import { mainDispatchName, mainReturnName, renderRegisterName } from "../constants";
 import { declareWinStore } from "../StoreDeclarer";
-import { IRendererClient } from "../rendererClientTypes";
+import { IRendererClient, IRendererClientCallback } from "../rendererClientTypes";
 import MultiWinSaver from "../MultiWinSaver";
 import RendererAppStore from "../RendererAppStore";
 import RendererClient from "../RendererClient";
@@ -59,6 +59,11 @@ jest.mock("../MainClient", () => {
 jest.mock("../RendererClient", () => {
   class MyRenderClient implements IRendererClient {
     msgChannel: any[] = [];
+    rendererCallback: IRendererClientCallback;
+
+    constructor(rendererCallback: IRendererClientCallback) {
+      this.rendererCallback = rendererCallback;
+    }
 
     initChannel(inChannels: { [winId: string]: any }, outChannel: any[]) {
       let query = this.getQuery();
@@ -66,7 +71,7 @@ jest.mock("../RendererClient", () => {
         get: (target: any[], property: string, receiver: any) => {
           if (property === "push") {
             return (elem: any) => {
-              let BrowserRendererClient = require("../browser/BrowserMainClient").default;
+              let BrowserRendererClient = require("../browser/BrowserRendererClient").default;
               BrowserRendererClient.prototype._handleMessage.call(this, {
                 data: { action: elem[0], data: elem[1] },
               } as MessageEvent);
@@ -121,16 +126,47 @@ function initAppStore(
   return [mainAppStore, rendererAppStore];
 }
 
-describe("AppStore integration", () => {
-  test("Main and Renderer app store should create", () => {
+class TodoStore extends StoreBase<{ hello: string }> {
+  constructor(appStore: DispatchParent) {
+    super(appStore);
+    this.state = { hello: "hello1" };
+  }
+
+  reflect(arg: string) {
+    this.setState({ hello: arg });
+    return arg;
+  }
+}
+
+describe("For AppStore integration, Main and Renderer app store", () => {
+  test("should create and request stores", () => {
     let [mainAppStore, rendererAppStore] = initAppStore(
-      [declareStore(StoreBase, [], { stateKey: "mainTodo", storeKey: "mainTodoStore" })],
-      [declareStore(StoreBase, [], { stateKey: "todo", storeKey: "todoStore" })]
+      [declareStore(TodoStore, [], { stateKey: "mainTodo", storeKey: "mainTodoStore" })],
+      [declareStore(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
     );
+
+    mainAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
+    rendererAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
 
     expect(mainAppStore.multiWinSaver.registerIds).toEqual(new Set<string>(["mainClient"]));
     let mainTodoStore = rendererAppStore.requestStore("mainTodoStore");
     expect(Object.keys(mainAppStore.stores)).toEqual(["mainTodoStore"]);
     expect(Object.keys(rendererAppStore.stores)).toEqual(["mainTodoStore"]);
+
+    rendererAppStore.releaseStore("mainTodoStore");
+    expect(Object.keys(mainAppStore.stores)).toEqual([]);
+    expect(Object.keys(rendererAppStore.stores)).toEqual([]);
+
+    rendererAppStore.rendererClient.sendMainMsg("close", "mainClient");
+    expect(mainAppStore.multiWinSaver.winInfos).toEqual([]);
+  });
+
+  test("should invoke normally", async () => {
+    let [mainAppStore, rendererAppStore] = initAppStore(
+      [declareStore(TodoStore, [], { stateKey: "mainTodo", storeKey: "mainTodoStore" })],
+      [declareStore(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
+    );
+    let mainTodoStore = rendererAppStore.requestStore("mainTodoStore");
+    expect(await (mainTodoStore as any).reflect("hello")).toBe("hello");
   });
 });

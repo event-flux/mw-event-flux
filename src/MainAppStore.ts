@@ -70,6 +70,10 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
 
     this.outStoreDeclarers = genOutStoreDeclarers(this);
 
+    this.multiWinSaver.winInfos.forEach((winInfo: IWinInfo) => {
+      this.winFilters[winInfo.winId] = {};
+      this.winHoldStores[winInfo.winId] = new Set<string>();
+    });
     this.multiWinSaver.onDidAddWin((winId: string) => {
       this.winFilters[winId] = {};
       this.winHoldStores[winId] = new Set<string>();

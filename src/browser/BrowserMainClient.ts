@@ -35,7 +35,7 @@ export default class BrowserMainClient implements IMainClient {
 
     (window as any).isMainClient = true;
 
-    window.addEventListener("message", this._handleMessage);
+    window.addEventListener("message", this._handleMessage.bind(this));
 
     this.multiWinSaver.addWin({
       winId: "mainClient",
@@ -75,7 +75,7 @@ export default class BrowserMainClient implements IMainClient {
 
   changeWin(winInfo: IWinInfo, winProps: IWinProps, winParams: IWinParams): void {}
 
-  _handleMessage = (event: MessageEvent) => {
+  _handleMessage(event: MessageEvent) {
     let { action, data: payload } = event.data || ({} as any);
     switch (action) {
       case renderDispatchName: {
@@ -110,5 +110,5 @@ export default class BrowserMainClient implements IMainClient {
         break;
       }
     }
-  };
+  }
 }

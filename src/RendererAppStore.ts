@@ -106,11 +106,11 @@ export default class RendererAppStore extends AppStore implements IRendererClien
   }
 
   handleMainRequestStores(storeNames: string[]) {
-    this.rendererClient.sendMainMsg(renderRequestStoreName, storeNames);
+    this.rendererClient.sendMainMsg(renderRequestStoreName, this.winId, storeNames);
   }
 
   handleMainReleaseStores(storeNames: string[]) {
-    this.rendererClient.sendMainMsg(renderReleaseStoreName, storeNames);
+    this.rendererClient.sendMainMsg(renderReleaseStoreName, this.winId, storeNames);
   }
 
   sendMessage(args: any) {

@@ -65,13 +65,13 @@ describe("RendererAppStore", () => {
     (appStore.rendererClient.sendMainMsg as jest.Mock).mockReset();
     appStore.requestStore("mainTodo2Store");
     expect(Object.keys(appStore.stores).sort()).toEqual(["mainTodo1Store", "mainTodo2Store"]);
-    expect(appStore.rendererClient.sendMainMsg as jest.Mock).toHaveBeenLastCalledWith(renderRequestStoreName, [
+    expect(appStore.rendererClient.sendMainMsg as jest.Mock).toHaveBeenLastCalledWith(renderRequestStoreName, "win1", [
       "mainTodo2Store",
     ]);
 
     appStore.releaseStore("mainTodo2Store");
     expect(appStore.stores).toEqual({});
-    expect(appStore.rendererClient.sendMainMsg as jest.Mock).toHaveBeenLastCalledWith(renderReleaseStoreName, [
+    expect(appStore.rendererClient.sendMainMsg as jest.Mock).toHaveBeenLastCalledWith(renderReleaseStoreName, "win1", [
       "mainTodo2Store",
     ]);
 
@@ -81,7 +81,7 @@ describe("RendererAppStore", () => {
 
     appStore.releaseStore("todo3Store");
     expect(appStore.stores).toEqual({});
-    expect(appStore.rendererClient.sendMainMsg as jest.Mock).toHaveBeenLastCalledWith(renderReleaseStoreName, [
+    expect(appStore.rendererClient.sendMainMsg as jest.Mock).toHaveBeenLastCalledWith(renderReleaseStoreName, "win1", [
       "mainTodo1Store",
     ]);
   });

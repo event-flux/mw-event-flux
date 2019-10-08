@@ -177,4 +177,19 @@ describe("For AppStore integration, Main and Renderer app store", () => {
     }
     expect(errorObj).toBeTruthy();
   });
+
+  test("should sync messages", async () => {
+    let [mainAppStore, rendererAppStore] = initAppStore(
+      [declareStore(TodoStore, [], { stateKey: "mainTodo", storeKey: "mainTodoStore" })],
+      [declareStore(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
+    );
+    expect(rendererAppStore.state).toEqual({});
+    let mainTodoStore = rendererAppStore.requestStore("mainTodoStore");
+    expect(rendererAppStore.state).toEqual({ mainTodo: { hello: "hello1" } });
+
+    expect(await (mainTodoStore as any).reflect("hello")).toBe("hello");
+    jest.runAllTimers();
+
+    expect(rendererAppStore.state).toEqual({ mainTodo: { hello: "hello" } });
+  });
 });

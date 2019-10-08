@@ -183,6 +183,9 @@ describe("For AppStore integration, Main and Renderer app store", () => {
       [declareStore(TodoStore, [], { stateKey: "mainTodo", storeKey: "mainTodoStore" })],
       [declareStore(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
     );
+    mainAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
+    rendererAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
+
     expect(rendererAppStore.state).toEqual({});
     let mainTodoStore = rendererAppStore.requestStore("mainTodoStore");
     expect(rendererAppStore.state).toEqual({ mainTodo: { hello: "hello1" } });
@@ -191,5 +194,9 @@ describe("For AppStore integration, Main and Renderer app store", () => {
     jest.runAllTimers();
 
     expect(rendererAppStore.state).toEqual({ mainTodo: { hello: "hello" } });
+
+    rendererAppStore.releaseStore("mainTodoStore");
+    jest.runAllTimers();
+    expect(rendererAppStore.state).toEqual({ mainTodo: undefined });
   });
 });

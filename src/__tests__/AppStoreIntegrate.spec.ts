@@ -169,6 +169,12 @@ describe("For AppStore integration, Main and Renderer app store", () => {
     let mainTodoStore = rendererAppStore.requestStore("mainTodoStore");
     expect(await (mainTodoStore as any).reflect("hello")).toBe("hello");
 
-    expect(await (mainTodoStore as any).notExists("hello")).toThrow();
+    let errorObj = null;
+    try {
+      await (mainTodoStore as any).notExists("hello");
+    } catch (err) {
+      errorObj = err;
+    }
+    expect(errorObj).toBeTruthy();
   });
 });

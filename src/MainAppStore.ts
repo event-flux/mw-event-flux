@@ -201,6 +201,9 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     if (!store) {
       throw new Error(`The store ${storeKey} for winId ${winId} is not exists`);
     }
+    if (!(store as any)[method]) {
+      throw new Error(`The store ${storeKey}'s method ${method} is not exists`);
+    }
     let result = await (store as any)[method](...args);
     return result;
   }
@@ -232,7 +235,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
 
         this.mainClient.sendWinMsg(winInfo, mainReturnName, invokeId, errObj, undefined);
 
-        if (process.env.NODE_ENV !== "production") {
+        if (process.env.NODE_ENV === "development") {
           throw err;
         }
       }

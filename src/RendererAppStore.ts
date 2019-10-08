@@ -84,7 +84,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     let { resolve, reject } = this.resolveMap[invokeId];
     delete this.resolveMap[invokeId];
     if (error) {
-      reject(error);
+      return reject(error);
     }
     if (result !== undefined) {
       result = JSON.parse(result);

@@ -151,21 +151,18 @@ describe("MainAppStore", () => {
     );
 
     (mainAppStore.mainClient.sendWinMsg as jest.Mock).mockReset();
-    let errorObj;
-    try {
-      await mainAppStore.handleRendererDispatch(
-        "win1",
-        "3",
-        JSON.stringify({ store: "todo1Store", method: "none", args: [] })
-      );
-    } catch (err) {
-      errorObj = { name: err.name, message: err.message };
-    }
+
+    await mainAppStore.handleRendererDispatch(
+      "win1",
+      "3",
+      JSON.stringify({ store: "todo1Store", method: "none", args: [] })
+    );
+
     expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenLastCalledWith(
       { winId: "win1" },
       mainReturnName,
       "3",
-      errorObj,
+      { message: "The store todo1Store's method none is not exists", name: "Error" },
       undefined
     );
   });

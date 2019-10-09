@@ -47,6 +47,8 @@ export interface IMainClient {
 export interface IMainClientCallback {
   handleRendererDispatch(winId: string, invokeId: string, stringifiedAction: string): void;
 
+  handleRendererDispatchNoReturn(winId: string, stringifiedAction: string): void;
+
   handleWinMessage(senderId: string, targetId: string, data: any): void;
 
   handleRequestStores(winId: string, storeKeys: string[]): void;

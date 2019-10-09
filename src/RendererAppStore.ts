@@ -8,6 +8,7 @@ import {
   messageName,
   winMessageName,
   renderDispatchName,
+  renderDispatchNoReturnName,
 } from "./constants";
 import RendererClient from "./RendererClient";
 import { StoreProxy, StoreProxyDeclarer } from "./StoreProxy";
@@ -128,6 +129,11 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     return new Promise(
       (thisResolve, thisReject) => (this.resolveMap[invokeId] = { resolve: thisResolve, reject: thisReject })
     );
+  }
+
+  handleDispatchNoReturn(storeKey: string, property: string, args: any[]) {
+    let storeAction = { store: storeKey, method: property, args };
+    this.rendererClient.sendMainMsg(renderDispatchNoReturnName, this.winId, JSON.stringify(storeAction));
   }
 
   /**

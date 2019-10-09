@@ -242,6 +242,14 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     );
   }
 
+  handleRendererDispatchNoReturn(winId: string, stringifiedAction: string): void {
+    let winInfo = this.multiWinSaver.getWinInfo(winId);
+    if (!winInfo) {
+      return;
+    }
+    this._handleRendererPayload(winId, stringifiedAction);
+  }
+
   handleWinMessage(senderId: string, targetId: string, data: any) {
     let winInfo = this.multiWinSaver.getWinInfo(targetId);
     if (!winInfo) {

@@ -5,6 +5,7 @@ import {
   renderRequestStoreName,
   renderReleaseStoreName,
   winMessageName,
+  renderDispatchNoReturnName,
 } from "../constants";
 import { IWinInfo, IMainClient, IMainClientCallback, IWinProps, IWinParams } from "../mainClientTypes";
 import MultiWinSaver from "../MultiWinSaver";
@@ -82,6 +83,10 @@ export default class BrowserMainClient implements IMainClient {
         let [clientId, invokeId, args] = payload;
         this.mainClientCallback.handleRendererDispatch(clientId, invokeId, args);
         break;
+      }
+      case renderDispatchNoReturnName: {
+        let [clientId, args] = payload;
+        this.mainClientCallback.handleRendererDispatchNoReturn(clientId, args);
       }
       case renderRequestStoreName: {
         let [clientId, storeKeys] = payload;

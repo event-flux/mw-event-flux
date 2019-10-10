@@ -1,4 +1,4 @@
-import { DispatchItem, AppStore, StoreMapDeclarer, StoreMap } from "event-flux";
+import { DispatchItem, AppStore, StoreMapDeclarer, StoreMap, OperateMode, OperateModeSwitch } from "event-flux";
 import DispatchItemProxy, { IStoreDispatcher } from "./DispatchItemProxy";
 import { DisposableLike, CompositeDisposable } from "event-kit";
 
@@ -26,6 +26,8 @@ export class StoreMapProxy extends DispatchItemProxy {
   _keyRefs: { [key: string]: number } = {};
   _disposables = new CompositeDisposable();
 
+  operateModeSwitch = new OperateModeSwitch();
+
   constructor(appStore: IStoreDispatcher, storeKey: string) {
     super();
     this._appStore = appStore;
@@ -37,6 +39,8 @@ export class StoreMapProxy extends DispatchItemProxy {
   }
 
   requestStore(storeKey: string) {
+    this.operateModeSwitch.enterRefCountMode();
+
     if (this._keyRefs[storeKey]) {
       this._keyRefs[storeKey] += 1;
     } else {
@@ -77,6 +81,8 @@ export class StoreMapProxy extends DispatchItemProxy {
   }
 
   add(keys: string | string[]) {
+    this.operateModeSwitch.enterDirectMode();
+
     this._appStore.handleDispatchNoReturn({ store: this._storeKey, method: "add", args: [keys] });
 
     const addOne = (key: string) => {

@@ -1,4 +1,5 @@
 import { StoreMapProxy } from "../StoreMapProxy";
+import { OperateMode } from "event-flux";
 
 describe("StoreMapProxy", () => {
   test("should add and delete store proxy", () => {
@@ -9,6 +10,7 @@ describe("StoreMapProxy", () => {
     let newStore = new StoreMapProxy(storeDispatcher, "helloStore");
 
     newStore.add("key1");
+    expect(newStore.operateModeSwitch.operateMode).toEqual(OperateMode.Direct);
     expect(storeDispatcher.handleDispatchNoReturn).toHaveBeenLastCalledWith({
       store: "helloStore",
       method: "add",
@@ -47,6 +49,8 @@ describe("StoreMapProxy", () => {
       method: "doSome",
       args: ["hello", "do"],
     });
+
+    expect(() => newStore.request("key2")).toThrowError();
   });
 
   test("should requestStore and releaseStore store proxy", () => {
@@ -90,5 +94,7 @@ describe("StoreMapProxy", () => {
 
     disposable2.dispose();
     expect(Array.from(newStore.storeMap.keys())).toEqual([]);
+
+    expect(() => newStore.add("key2")).toThrowError();
   });
 });

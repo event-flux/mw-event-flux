@@ -277,17 +277,18 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       let depList = [storeKey];
       for (let i = 0; i < depList.length; i += 1) {
         let curStoreKey = depList[i];
-        if (!this._storeRegisterMap[curStoreKey]) {
+        let storeDeclarer = this._storeRegisterMap[curStoreKey];
+        if (!storeDeclarer) {
           console.error(`The store key ${curStoreKey} is not registered`);
         }
-        let { depStoreNames, options } = this._storeRegisterMap[curStoreKey];
+        let { depStoreNames, options } = storeDeclarer;
 
         let filterKey = this._getStateKey(curStoreKey, options!.stateKey!, winId);
         if (forAdd ? newFilter[filterKey] : newFilter[filterKey] === undefined) {
           continue;
         }
         if (forAdd) {
-          newFilter[filterKey] = true;
+          newFilter[filterKey] = StoreMapDeclarer.isStoreMap(storeDeclarer) ? {} : true;
         } else {
           delete newFilter[filterKey];
         }

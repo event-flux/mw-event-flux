@@ -14,6 +14,8 @@ import RendererClient from "./RendererClient";
 import { StoreProxy, StoreProxyDeclarer } from "./storeProxy/StoreProxy";
 import objectMerge from "./utils/objectMerge";
 import { IStoreDispatcher, IDispatchInfo } from "./storeProxy/DispatchItemProxy";
+import { StoreListProxyDeclarer } from "./storeProxy/StoreListProxy";
+import { StoreMapProxyDeclarer } from "./storeProxy/StoreMapProxy";
 
 class IDGenerator {
   count = 0;
@@ -57,8 +59,22 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     let mainDeclarers = JSON.parse(mainDeclarersStr) as IOutStoreDeclarer[];
 
     for (let storeDeclarer of mainDeclarers) {
+      let ProxyDeclarer: any;
+      switch (storeDeclarer.storeType) {
+        case "Item":
+          ProxyDeclarer = StoreProxyDeclarer;
+          break;
+        case "List":
+          ProxyDeclarer = StoreListProxyDeclarer;
+          break;
+        case "Map":
+          ProxyDeclarer = StoreMapProxyDeclarer;
+          break;
+        default:
+          ProxyDeclarer = StoreProxyDeclarer;
+      }
       storeDeclarers.push(
-        new StoreProxyDeclarer((StoreProxy as any) as StoreBaseConstructor<any>, storeDeclarer.depStoreNames, {
+        new ProxyDeclarer((StoreProxy as any) as StoreBaseConstructor<any>, storeDeclarer.depStoreNames, {
           stateKey: storeDeclarer.stateKey,
           storeKey: storeDeclarer.storeKey,
           forMain: true,

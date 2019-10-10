@@ -1,7 +1,7 @@
-import { StoreProxy } from "../storeProxy/StoreProxy";
+import { StoreProxy } from "../StoreProxy";
 
 describe("StoreProxy", () => {
-  test("StoreProxy should can proxy other methods", () => {
+  test("should can proxy other methods", () => {
     let storeDispatcher = {
       handleDispatch: jest.fn(),
       handleDispatchNoReturn: jest.fn(),

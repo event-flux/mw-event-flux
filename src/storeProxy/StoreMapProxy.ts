@@ -1,4 +1,4 @@
-import { DispatchItem, AppStore, StoreListDeclarer, StoreList } from "event-flux";
+import { DispatchItem, AppStore, StoreMapDeclarer, StoreMap } from "event-flux";
 import DispatchItemProxy, { IStoreDispatcher } from "./DispatchItemProxy";
 import { DisposableLike, CompositeDisposable } from "event-kit";
 
@@ -17,7 +17,7 @@ class StoreMapItemProxy extends DispatchItemProxy {
   }
 }
 
-export class StoreListProxy extends DispatchItemProxy {
+export class StoreMapProxy extends DispatchItemProxy {
   _appStore: IStoreDispatcher;
   _storeKey: string;
 
@@ -43,6 +43,9 @@ export class StoreListProxy extends DispatchItemProxy {
       this._keyRefs[storeKey] = 1;
       // this.add(storeKey);
       this._invokeRemoteMethod("requestStore", storeKey);
+      if (!this.storeMap.has(storeKey)) {
+        this.storeMap.set(storeKey, new StoreMapItemProxy(this._appStore, this._storeKey, storeKey));
+      }
     }
   }
 
@@ -51,6 +54,7 @@ export class StoreListProxy extends DispatchItemProxy {
     if (this._keyRefs[storeKey] === 0) {
       // this.delete(storeKey);
       this._invokeRemoteMethod("releaseStore", storeKey);
+      this.storeMap.delete(storeKey);
     }
   }
 
@@ -98,8 +102,8 @@ export class StoreListProxy extends DispatchItemProxy {
     }
   }
 
-  get(index: number) {
-    return this.storeArray[index];
+  get(index: string) {
+    return this.storeMap.get(index);
   }
 
   dispose() {
@@ -108,12 +112,12 @@ export class StoreListProxy extends DispatchItemProxy {
   }
 }
 
-type StoreListProxyConstruct = new (appStore: IStoreDispatcher, storeKey: string) => StoreListProxy;
+type StoreMapProxyConstruct = new (appStore: IStoreDispatcher, storeKey: string) => StoreMapProxy;
 
-export class StoreListProxyDeclarer<T> extends StoreListDeclarer<T> {
-  create(appStore: AppStore & IStoreDispatcher): StoreList<T> {
-    const ListClass = this.options!.StoreList || StoreList;
-    let storeListProxy = new ((ListClass as any) as StoreListProxyConstruct)(appStore, this.options!.storeKey!);
-    return (storeListProxy as any) as StoreList<T>;
+export class StoreMapProxyDeclarer<T> extends StoreMapDeclarer<T> {
+  create(appStore: AppStore & IStoreDispatcher): StoreMap<T> {
+    const MapClass = this.options!.StoreMap || StoreMap;
+    let storeMapProxy = new ((MapClass as any) as StoreMapProxyConstruct)(appStore, this.options!.storeKey!);
+    return (storeMapProxy as any) as StoreMap<T>;
   }
 }

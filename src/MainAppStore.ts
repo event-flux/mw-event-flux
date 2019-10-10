@@ -152,30 +152,6 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     return stateKey;
   }
 
-  /**
-   * When the renderer process request the StoreMap's stores, then we need change the filter
-   *
-   * @param storeKey: the StoreMap's storeKey
-   * @param keys: the StoreMap's keys that the renderer process will use
-   * @param winId: the renderer process's window ID
-   */
-  _requestStoreMapFilter(storeKey: string, keys: string[], winId: string) {
-    let { isPerWin, stateKey } = this._storeRegisterMap[storeKey].options! as any;
-    // If the storeMap exists per window, then the filter is not necessary.
-    if (isPerWin) {
-      return;
-    }
-
-    let winFilter = this.winFilters[winId];
-    let storeFilter = winFilter[storeKey];
-    if (!storeFilter || typeof storeFilter === "boolean") {
-      storeFilter = winFilter[storeKey] = {};
-    }
-    for (let key of keys) {
-      winFilter[key] = true;
-    }
-  }
-
   _createStore(storeKey: string, store: DispatchItem, winId: string) {
     let { isPerWin } = this._storeRegisterMap[storeKey].options! as any;
     if (isPerWin) {

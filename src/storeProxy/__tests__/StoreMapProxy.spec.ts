@@ -1,5 +1,6 @@
 import { StoreMapProxy } from "../StoreMapProxy";
 import { OperateMode } from "event-flux";
+import { IStoreDispatcher } from "../DispatchItemProxy";
 
 describe("StoreMapProxy", () => {
   test("should add and delete store proxy", () => {
@@ -57,30 +58,24 @@ describe("StoreMapProxy", () => {
     let storeDispatcher = {
       handleDispatch: jest.fn(),
       handleDispatchNoReturn: jest.fn(),
+      handleMainMapRequestStores: jest.fn(),
+      handleMainMapReleaseStores: jest.fn(),
     };
     let newStore = new StoreMapProxy(storeDispatcher, "helloStore");
 
     newStore.requestStore("key1");
-    expect(storeDispatcher.handleDispatchNoReturn).toHaveBeenLastCalledWith({
-      store: "helloStore",
-      method: "requestStore",
-      args: ["key1"],
-    });
-    storeDispatcher.handleDispatchNoReturn.mockReset();
+    expect(storeDispatcher.handleMainMapRequestStores).toHaveBeenLastCalledWith("helloStore", ["key1"]);
+    storeDispatcher.handleMainMapRequestStores.mockReset();
 
     newStore.requestStore("key1");
-    expect(storeDispatcher.handleDispatchNoReturn).not.toHaveBeenCalled();
+    expect(storeDispatcher.handleMainMapRequestStores).not.toHaveBeenCalled();
     expect(newStore._keyRefs.key1).toEqual(2);
 
     newStore.releaseStore("key1");
-    expect(storeDispatcher.handleDispatchNoReturn).not.toHaveBeenCalled();
+    expect(storeDispatcher.handleMainMapRequestStores).not.toHaveBeenCalled();
 
     newStore.releaseStore("key1");
-    expect(storeDispatcher.handleDispatchNoReturn).toHaveBeenLastCalledWith({
-      store: "helloStore",
-      method: "releaseStore",
-      args: ["key1"],
-    });
+    expect(storeDispatcher.handleMainMapReleaseStores).toHaveBeenLastCalledWith("helloStore", ["key1"]);
     expect(Array.from(newStore.storeMap.keys())).toEqual([]);
 
     let disposable1 = newStore.request("key1");

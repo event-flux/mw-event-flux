@@ -9,6 +9,8 @@ import {
   winMessageName,
   renderDispatchName,
   renderDispatchNoReturnName,
+  renderMapRequestStoreName,
+  renderMapReleaseStoreName,
 } from "./constants";
 import RendererClient from "./RendererClient";
 import { StoreProxy, StoreProxyDeclarer } from "./storeProxy/StoreProxy";
@@ -129,6 +131,14 @@ export default class RendererAppStore extends AppStore implements IRendererClien
 
   handleMainReleaseStores(storeNames: string[]) {
     this.rendererClient.sendMainMsg(renderReleaseStoreName, this.winId, storeNames);
+  }
+
+  handleMainMapRequestStores(storeName: string, mapKeys: string[]) {
+    this.rendererClient.sendMainMsg(renderMapRequestStoreName, this.winId, storeName, mapKeys);
+  }
+
+  handleMainMapReleaseStores(storeName: string, mapKeys: string[]) {
+    this.rendererClient.sendMainMsg(renderMapReleaseStoreName, this.winId, storeName, mapKeys);
   }
 
   sendMessage(args: any) {

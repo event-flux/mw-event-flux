@@ -5,6 +5,8 @@ import {
   StoreDeclarer,
   StoreListDeclarer,
   StoreMapDeclarer,
+  OperateMode,
+  StoreMap,
 } from "event-flux";
 import {
   mainInitName,
@@ -62,6 +64,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
 
   outStoreDeclarers: string = "";
   winHoldStores: { [winId: string]: Set<string> } = {};
+  storeMapModes: { [storeMapKey: string]: OperateMode } = {};
 
   mainClient: IMainClient = new MainClient(this.multiWinSaver, this);
 
@@ -288,7 +291,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
           continue;
         }
         if (forAdd) {
-          newFilter[filterKey] = StoreMapDeclarer.isStoreMap(storeDeclarer) ? {} : true;
+          newFilter[filterKey] = this.storeMapModes[curStoreKey] === OperateMode.RefCount ? {} : true;
         } else {
           delete newFilter[filterKey];
         }
@@ -335,6 +338,77 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     let newFilter = this._applyFilterForStore(winFilter, winId, storeKeys, false);
     this.forwardDeltaFilter(winId, winFilter, newFilter);
     this.winFilters[winId] = newFilter;
+  }
+
+  handleMapRequestStores(winId: string, storeKey: string, mapKeys: string[]): void {
+    let winStores = this.winHoldStores[winId];
+    for (let mapKey of mapKeys) {
+      let mapStoreKey = storeKey + "@" + mapKey;
+      if (winStores.has(mapStoreKey)) {
+        console.error(
+          `The map store ${storeKey}'s ${mapKey} for win ${winId} has requested, This may be renderer bug `
+        );
+        continue;
+      }
+      winStores.add(mapStoreKey);
+
+      let store = this.stores[this._getStoreKey(storeKey, winId)] as StoreMap<any>;
+      store.requestStore(mapKey);
+    }
+    // StoreMap's OperateMode change from Direct to RefCount,
+    // then this storeMap filter for all the win should change to {}
+    if (this.storeMapModes[storeKey] !== OperateMode.RefCount) {
+      this.storeMapModes[storeKey] = OperateMode.RefCount;
+
+      let { options } = this._storeRegisterMap[storeKey];
+
+      this.multiWinSaver.winInfos.forEach(winInfo => {
+        let filterKey = this._getStateKey(storeKey, options!.stateKey!, winInfo.winId);
+        let winFilter = this.winFilters[winInfo.winId];
+        winFilter[filterKey] = {};
+      });
+    }
+
+    // Update this winId's storeMap filter and forward this filter to renderer process.
+    let thisWinFilter = this.winFilters[winId];
+    let { options: thisOptions } = this._storeRegisterMap[storeKey];
+    let thisStateKey = this._getStateKey(storeKey, thisOptions!.stateKey!, winId);
+
+    let mapFilter = thisWinFilter[thisStateKey] as IWinFilter;
+    let newMapFilter = { ...mapFilter };
+    for (let mapKey of mapKeys) {
+      newMapFilter[mapKey] = true;
+    }
+    this.forwardDeltaFilter(winId, { [thisStateKey]: mapFilter }, { [thisStateKey]: newMapFilter });
+    thisWinFilter[thisStateKey] = newMapFilter;
+  }
+
+  handleMapReleaseStores(winId: string, storeKey: string, mapKeys: string[]): void {
+    let winStores = this.winHoldStores[winId];
+    for (let mapKey of mapKeys) {
+      let mapStoreKey = storeKey + "@" + mapKey;
+      if (!winStores.has(mapStoreKey)) {
+        console.error(`The map store ${storeKey}'s ${mapKey} for win ${winId} has released, This may be renderer bug `);
+        continue;
+      }
+      winStores.delete(mapStoreKey);
+
+      let store = this.stores[this._getStoreKey(storeKey, winId)] as StoreMap<any>;
+      store.releaseStore(mapKey);
+    }
+
+    // Update this winId's storeMap filter and forward this filter to renderer process.
+    let winFilter = this.winFilters[winId];
+    let { options } = this._storeRegisterMap[storeKey];
+    let thisStateKey = this._getStateKey(storeKey, options!.stateKey!, winId);
+
+    let mapFilter = winFilter[thisStateKey] as IWinFilter;
+    let newMapFilter = { ...mapFilter };
+    for (let mapKey of mapKeys) {
+      delete newMapFilter[mapKey];
+    }
+    this.forwardDeltaFilter(winId, { [thisStateKey]: mapFilter }, { [thisStateKey]: newMapFilter });
+    winFilter[thisStateKey] = newMapFilter;
   }
 
   getStoreDeclarers(): string {

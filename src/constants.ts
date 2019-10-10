@@ -10,6 +10,8 @@ export const winManagerKey = "winManager";
 
 export const renderRequestStoreName = "__RENDERER_REQUEST__";
 export const renderReleaseStoreName = "__RENDERER_RELEASE__";
+export const renderMapRequestStoreName = "__RENDERER_MAP_REQUEST__";
+export const renderMapReleaseStoreName = "__RENDERER_MAP_RELEASE__";
 
 export const messageName = "__MESSAGE__";
 export const winMessageName = "__WIN_MESSAGE__";

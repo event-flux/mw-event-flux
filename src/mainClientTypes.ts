@@ -55,6 +55,10 @@ export interface IMainClientCallback {
 
   handleReleaseStores(winId: string, storeKeys: string[]): void;
 
+  handleMapRequestStores(winId: string, storeKey: string, mapKeys: string[]): void;
+
+  handleMapReleaseStores(winId: string, storeKey: string, mapKeys: string[]): void;
+
   initWin(winId: string, params: IWinProps): void;
 
   getStoreDeclarers(): string;

@@ -46,7 +46,7 @@ export class StoreMapProxy extends DispatchItemProxy {
     } else {
       this._keyRefs[storeKey] = 1;
       // this.add(storeKey);
-      this._invokeRemoteMethod("requestStore", storeKey);
+      this._appStore.handleMainMapRequestStores!(this._storeKey, [storeKey]);
       if (!this.storeMap.has(storeKey)) {
         this.storeMap.set(storeKey, new StoreMapItemProxy(this._appStore, this._storeKey, storeKey));
       }
@@ -57,7 +57,7 @@ export class StoreMapProxy extends DispatchItemProxy {
     this._keyRefs[storeKey] -= 1;
     if (this._keyRefs[storeKey] === 0) {
       // this.delete(storeKey);
-      this._invokeRemoteMethod("releaseStore", storeKey);
+      this._appStore.handleMainMapReleaseStores!(this._storeKey, [storeKey]);
       this.storeMap.delete(storeKey);
     }
   }

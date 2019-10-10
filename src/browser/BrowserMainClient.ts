@@ -6,6 +6,8 @@ import {
   renderReleaseStoreName,
   winMessageName,
   renderDispatchNoReturnName,
+  renderMapRequestStoreName,
+  renderMapReleaseStoreName,
 } from "../constants";
 import { IWinInfo, IMainClient, IMainClientCallback, IWinProps, IWinParams } from "../mainClientTypes";
 import MultiWinSaver from "../MultiWinSaver";
@@ -96,6 +98,16 @@ export default class BrowserMainClient implements IMainClient {
       case renderReleaseStoreName: {
         let [clientId, storeKeys] = payload;
         this.mainClientCallback.handleReleaseStores(clientId, storeKeys);
+        break;
+      }
+      case renderMapRequestStoreName: {
+        let [clientId, storeKey, mapKeys] = payload;
+        this.mainClientCallback.handleMapRequestStores(clientId, storeKey, mapKeys);
+        break;
+      }
+      case renderMapReleaseStoreName: {
+        let [clientId, storeKey, mapKeys] = payload;
+        this.mainClientCallback.handleMapReleaseStores(clientId, storeKey, mapKeys);
         break;
       }
       case winMessageName: {

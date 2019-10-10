@@ -11,6 +11,10 @@ export interface IStoreDispatcher {
   handleDispatch(dispatchInfo: IDispatchInfo): void;
 
   handleDispatchNoReturn(dispatchInfo: IDispatchInfo): void;
+
+  handleMainMapRequestStores?(storeName: string, mapKeys: string[]): void;
+
+  handleMainMapReleaseStores?(storeName: string, mapKeys: string[]): void;
 }
 
 export default class DispatchItemProxy implements DispatchItem {

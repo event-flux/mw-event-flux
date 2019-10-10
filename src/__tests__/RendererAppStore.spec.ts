@@ -1,5 +1,5 @@
 import RendererAppStore from "../RendererAppStore";
-import { StoreProxy } from "../StoreProxy";
+import { StoreProxy } from "../storeProxy/StoreProxy";
 import { declareStore, StoreBase, RecycleStrategy } from "event-flux";
 import { encodeQuery } from "../utils/queryHandler";
 import { IOutStoreDeclarer } from "../mainClientTypes";

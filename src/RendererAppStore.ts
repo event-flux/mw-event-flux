@@ -11,8 +11,9 @@ import {
   renderDispatchNoReturnName,
 } from "./constants";
 import RendererClient from "./RendererClient";
-import { StoreProxy, StoreProxyDeclarer } from "./StoreProxy";
+import { StoreProxy, StoreProxyDeclarer } from "./storeProxy/StoreProxy";
 import objectMerge from "./utils/objectMerge";
+import { IStoreDispatcher, IDispatchInfo } from "./storeProxy/DispatchItemProxy";
 
 class IDGenerator {
   count = 0;
@@ -29,7 +30,7 @@ declare global {
   }
 }
 
-export default class RendererAppStore extends AppStore implements IRendererClientCallback {
+export default class RendererAppStore extends AppStore implements IRendererClientCallback, IStoreDispatcher {
   rendererClient: IRendererClient;
   idGenerator = new IDGenerator();
   resolveMap: { [invokeId: string]: { resolve: (data: any) => void; reject: (err: any) => void } } = {};
@@ -122,18 +123,16 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     this.rendererClient.sendMainMsg(winMessageName, sourceId, targetId, data);
   }
 
-  handleDispatch(storeKey: string, property: string, args: any[]) {
+  handleDispatch(dispatchInfo: IDispatchInfo) {
     let invokeId = this.idGenerator.genID();
-    let storeAction = { store: storeKey, method: property, args };
-    this.rendererClient.sendMainMsg(renderDispatchName, this.winId, invokeId, JSON.stringify(storeAction));
+    this.rendererClient.sendMainMsg(renderDispatchName, this.winId, invokeId, JSON.stringify(dispatchInfo));
     return new Promise(
       (thisResolve, thisReject) => (this.resolveMap[invokeId] = { resolve: thisResolve, reject: thisReject })
     );
   }
 
-  handleDispatchNoReturn(storeKey: string, property: string, args: any[]) {
-    let storeAction = { store: storeKey, method: property, args };
-    this.rendererClient.sendMainMsg(renderDispatchNoReturnName, this.winId, JSON.stringify(storeAction));
+  handleDispatchNoReturn(dispatchInfo: IDispatchInfo) {
+    this.rendererClient.sendMainMsg(renderDispatchNoReturnName, this.winId, JSON.stringify(dispatchInfo));
   }
 
   /**

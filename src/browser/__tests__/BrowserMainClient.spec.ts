@@ -25,6 +25,7 @@ describe("BrowserMainClient", () => {
 
     mainClientCallback = {
       handleRendererDispatch: jest.fn(),
+      handleRendererDispatchNoReturn: jest.fn(),
       handleWinMessage: jest.fn(),
       handleRequestStores: jest.fn(),
       handleReleaseStores: jest.fn(),

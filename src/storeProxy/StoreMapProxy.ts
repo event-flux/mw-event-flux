@@ -1,0 +1,119 @@
+import { DispatchItem, AppStore, StoreListDeclarer, StoreList } from "event-flux";
+import DispatchItemProxy, { IStoreDispatcher } from "./DispatchItemProxy";
+import { DisposableLike, CompositeDisposable } from "event-kit";
+
+class StoreMapItemProxy extends DispatchItemProxy {
+  constructor(appStore: IStoreDispatcher, storeKey: string, indexKey: string) {
+    super();
+    return new Proxy(this, {
+      get(target: StoreMapItemProxy, property: string, receiver) {
+        if (target[property] != null) {
+          return target[property];
+        }
+        return (...args: any[]) =>
+          appStore.handleDispatch({ store: storeKey, index: indexKey, method: property, args });
+      },
+    });
+  }
+}
+
+export class StoreListProxy extends DispatchItemProxy {
+  _appStore: IStoreDispatcher;
+  _storeKey: string;
+
+  length: number = 0;
+  storeMap: Map<string, StoreMapItemProxy> = new Map();
+  _keyRefs: { [key: string]: number } = {};
+  _disposables = new CompositeDisposable();
+
+  constructor(appStore: IStoreDispatcher, storeKey: string) {
+    super();
+    this._appStore = appStore;
+    this._storeKey = storeKey;
+  }
+
+  _invokeRemoteMethod(method: string, ...args: any[]) {
+    this._appStore.handleDispatchNoReturn({ store: this._storeKey, method, args });
+  }
+
+  requestStore(storeKey: string) {
+    if (this._keyRefs[storeKey]) {
+      this._keyRefs[storeKey] += 1;
+    } else {
+      this._keyRefs[storeKey] = 1;
+      // this.add(storeKey);
+      this._invokeRemoteMethod("requestStore", storeKey);
+    }
+  }
+
+  releaseStore(storeKey: string) {
+    this._keyRefs[storeKey] -= 1;
+    if (this._keyRefs[storeKey] === 0) {
+      // this.delete(storeKey);
+      this._invokeRemoteMethod("releaseStore", storeKey);
+    }
+  }
+
+  request(keys: string | string[]): DisposableLike {
+    if (!Array.isArray(keys)) {
+      keys = [keys];
+    }
+    for (let key of keys) {
+      this.requestStore(key);
+    }
+    let disposable = {
+      dispose: () => {
+        for (let key of keys) {
+          this.releaseStore(key);
+        }
+      },
+    };
+    this._disposables.add(disposable);
+    return disposable;
+  }
+
+  add(keys: string | string[]) {
+    this._appStore.handleDispatchNoReturn({ store: this._storeKey, method: "add", args: [keys] });
+
+    const addOne = (key: string) => {
+      if (this.storeMap.has(key)) {
+        return;
+      }
+      this.storeMap.set(key, new StoreMapItemProxy(this._appStore, this._storeKey, key));
+    };
+    if (Array.isArray(keys)) {
+      keys.forEach(key => addOne(key));
+    } else {
+      addOne(keys);
+    }
+  }
+
+  delete(keys: string | string[]) {
+    this._appStore.handleDispatchNoReturn({ store: this._storeKey, method: "delete", args: [keys] });
+
+    if (Array.isArray(keys)) {
+      keys.forEach(key => this.storeMap.delete(key));
+    } else {
+      this.storeMap.delete(keys);
+    }
+  }
+
+  get(index: number) {
+    return this.storeArray[index];
+  }
+
+  dispose() {
+    this.storeMap.clear();
+    this._disposables.dispose();
+  }
+}
+
+type StoreListProxyConstruct = new (appStore: IStoreDispatcher, storeKey: string) => StoreListProxy;
+
+export class StoreListProxyDeclarer<T> extends StoreListDeclarer<T> {
+  create(appStore: AppStore & IStoreDispatcher): StoreList<T> {
+    const ListClass = this.options!.StoreList || StoreList;
+    let storeListProxy = new ((ListClass as any) as StoreListProxyConstruct)(appStore, this.options!.storeKey!);
+    return (storeListProxy as any) as StoreList<T>;
+  }
+}

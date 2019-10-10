@@ -1,9 +1,10 @@
-import { StoreProxy } from "../StoreProxy";
+import { StoreProxy } from "../storeProxy/StoreProxy";
 
 describe("StoreProxy", () => {
   test("StoreProxy should can proxy other methods", () => {
     let storeDispatcher = {
       handleDispatch: jest.fn(),
+      handleDispatchNoReturn: jest.fn(),
     };
     let newStore = new StoreProxy(storeDispatcher, "helloStore");
     newStore._addRef();
@@ -14,6 +15,10 @@ describe("StoreProxy", () => {
     expect(newStore.getRefCount()).toBe(0);
 
     newStore.hello("hello");
-    expect(storeDispatcher.handleDispatch).toHaveBeenLastCalledWith("helloStore", "hello", ["hello"]);
+    expect(storeDispatcher.handleDispatch).toHaveBeenLastCalledWith({
+      store: "helloStore",
+      method: "hello",
+      args: ["hello"],
+    });
   });
 });

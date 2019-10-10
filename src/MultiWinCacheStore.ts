@@ -292,6 +292,9 @@ class MultiWinCacheStore extends MultiWinStore {
       maxHeight: params.maxHeight,
       title: params.title,
       useContentSize: params.useContentSize,
+      webPreferences: {
+        nodeIntegration: true,
+      },
     });
 
     if (isDevelopment) {

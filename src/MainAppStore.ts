@@ -84,7 +84,14 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     this.multiWinSaver.onDidDeleteWin((winId: string) => {
       let winStoreKeys = this.winHoldStores[winId];
       for (let storeKey of winStoreKeys) {
-        this.releaseStore(storeKey, winId);
+        let mapStoreIndex = storeKey.split("@");
+        if (mapStoreIndex.length === 1) {
+          this.releaseStore(storeKey, winId);
+        }
+        // else {
+        //   let store = this.stores[this._getStoreKey(mapStoreIndex[0], winId)] as StoreMap<any>;
+        //   store.releaseStore(mapStoreIndex[1]);
+        // }
       }
       delete this.winHoldStores[winId];
       delete this.winFilters[winId];
@@ -111,10 +118,6 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
         }
       }
     }
-  }
-
-  _sendUpdate() {
-    super._sendUpdate();
   }
 
   requestStore(storeKey: string, winId: string): DispatchItem {
@@ -430,7 +433,6 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
 
   forwardState(prevState: any, state: any) {
     const delta = objectDifference(prevState, state);
-
     if (isEmpty(delta.updated) && isEmpty(delta.deleted)) {
       return;
     }
@@ -447,28 +449,23 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       filterDeleted = this._transformWinState(filterDeleted);
 
       // let [updated, deleted] = filterWindowDelta(filterUpdated, filterDeleted, winManagerKey, clientId);
-      if (isEmpty(filterUpdated) && isEmpty(filterDeleted)) {
-        return;
+      if (!isEmpty(filterUpdated) || !isEmpty(filterDeleted)) {
+        const action = { updated: filterUpdated, deleted: filterDeleted };
+        this.mainClient.sendWinMsg(client, mainDispatchName, JSON.stringify(action));
       }
-
-      const action = { updated: filterUpdated, deleted: filterDeleted };
-
-      this.mainClient.sendWinMsg(client, mainDispatchName, JSON.stringify(action));
     });
   }
 
   forwardDeltaFilter(winId: string, prevFilter: IWinFilter, newFilter: IWinFilter) {
     let { updated, deleted } = filterDifference(prevFilter, newFilter);
-    let updateState = filterApply(this.state, updated);
+    let updateState = filterApply(this.prevState, updated);
 
     updated = this._transformWinState(updateState);
     deleted = this._transformWinState(deleted);
 
-    if (isEmpty(updated) && isEmpty(deleted)) {
-      return;
+    if (!isEmpty(updated) || !isEmpty(deleted)) {
+      const action = { updated, deleted };
+      this.mainClient.sendWinMsg(this.multiWinSaver.getWinInfo(winId), mainDispatchName, JSON.stringify(action));
     }
-    const action = { updated, deleted };
-
-    this.mainClient.sendWinMsg(this.multiWinSaver.getWinInfo(winId), mainDispatchName, JSON.stringify(action));
   }
 }

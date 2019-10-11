@@ -1,8 +1,10 @@
 import MainAppStore from "../MainAppStore";
-import { declareStore, StoreBase, RecycleStrategy } from "event-flux";
+import { declareStore, StoreBase, RecycleStrategy, declareStoreMap } from "event-flux";
 import { IMainClient } from "../mainClientTypes";
 import { mainDispatchName, mainReturnName } from "../constants";
 import { declareWinStore } from "../StoreDeclarer";
+
+jest.useFakeTimers();
 
 jest.mock("../MainClient", () => {
   class MyMainClient implements IMainClient {
@@ -37,6 +39,8 @@ describe("MainAppStore", () => {
     mainAppStore.handleRequestStores("win1", ["todo2Store"]);
     expect(mainAppStore.winHoldStores.win1).toEqual(new Set<string>(["todo2Store"]));
     expect(mainAppStore.winFilters.win1).toEqual({ todo1: true, todo2: true });
+
+    jest.runAllTimers();
     expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenLastCalledWith(
       { winId: "win1" },
       mainDispatchName,
@@ -46,11 +50,98 @@ describe("MainAppStore", () => {
     mainAppStore.handleReleaseStores("win1", ["todo2Store"]);
     expect(mainAppStore.winHoldStores.win1).toEqual(new Set<string>());
     expect(mainAppStore.winFilters.win1).toEqual({});
+
+    jest.runAllTimers();
     expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenLastCalledWith(
       { winId: "win1" },
       mainDispatchName,
       JSON.stringify({ updated: {}, deleted: { todo2: true, todo1: true } })
     );
+  });
+
+  test("request store and release store for storeMap should behave normally", () => {
+    let mainAppStore = new MainAppStore([
+      declareStore(StoreBase, [], { stateKey: "todo1", storeKey: "todo1Store" }),
+      declareStoreMap(StoreBase, ["todo1Store"], { stateKey: "todo2", storeKey: "todo2Store" }),
+    ]);
+    mainAppStore.init();
+
+    mainAppStore.multiWinSaver.addWin({ winId: "win1" });
+    mainAppStore.multiWinSaver.addWin({ winId: "win2" });
+
+    expect(mainAppStore.winFilters.win1).toEqual({});
+    expect(mainAppStore.winHoldStores.win1).toEqual(new Set<string>());
+
+    mainAppStore.handleRequestStores("win1", ["todo2Store"]);
+    mainAppStore.handleRequestStores("win2", ["todo2Store"]);
+    expect(mainAppStore.winHoldStores.win1).toEqual(new Set<string>(["todo2Store"]));
+    expect(mainAppStore.winFilters.win1).toEqual({ todo1: true, todo2: true });
+    expect(mainAppStore.winFilters.win2).toEqual({ todo1: true, todo2: true });
+
+    mainAppStore.handleMapRequestStores("win1", "todo2Store", ["key1", "key2"]);
+    expect(Array.from(mainAppStore.stores.todo2Store.storeMap.keys())).toEqual(["key1", "key2"]);
+
+    expect(mainAppStore.winHoldStores.win1).toEqual(
+      new Set<string>(["todo2Store", "todo2Store@key1", "todo2Store@key2"])
+    );
+    expect(mainAppStore.winFilters.win1).toEqual({ todo1: true, todo2: { key1: true, key2: true } });
+    expect(mainAppStore.winFilters.win2).toEqual({ todo1: true, todo2: {} });
+
+    jest.runAllTimers();
+    expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenNthCalledWith(
+      1,
+      { winId: "win1" },
+      mainDispatchName,
+      JSON.stringify({ updated: { todo2: { key1: {}, key2: {} }, todo1: {} }, deleted: {} })
+    );
+    (mainAppStore.mainClient.sendWinMsg as jest.Mock).mockReset();
+
+    // Request the todo2Store's key2 subStore for win2
+    mainAppStore.handleMapRequestStores("win2", "todo2Store", ["key2"]);
+    expect(mainAppStore.stores.todo2Store._keyRefs.key2).toBe(2);
+    expect(mainAppStore.winHoldStores.win2).toEqual(new Set<string>(["todo2Store", "todo2Store@key2"]));
+    expect(mainAppStore.winFilters.win2).toEqual({ todo1: true, todo2: { key2: true } });
+    jest.runAllTimers();
+    expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenCalledWith(
+      { winId: "win2" },
+      mainDispatchName,
+      JSON.stringify({ updated: { todo2: { key2: {} } }, deleted: {} })
+    );
+
+    mainAppStore.multiWinSaver.addWin({ winId: "win3" });
+    mainAppStore.handleRequestStores("win3", ["todo2Store"]);
+    expect(mainAppStore.winFilters.win3).toEqual({ todo1: true, todo2: {} });
+
+    (mainAppStore.mainClient.sendWinMsg as jest.Mock).mockReset();
+    mainAppStore.handleMapReleaseStores("win1", "todo2Store", ["key1", "key2"]);
+    expect(mainAppStore.winFilters.win1).toEqual({ todo1: true, todo2: {} });
+    expect(mainAppStore.winHoldStores.win1).toEqual(new Set<string>(["todo2Store"]));
+    expect(Array.from(mainAppStore.stores.todo2Store.storeMap.keys())).toEqual(["key2"]);
+    expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenNthCalledWith(
+      1,
+      { winId: "win1" },
+      mainDispatchName,
+      JSON.stringify({ updated: {}, deleted: { todo2: { key1: true, key2: true } } })
+    );
+  });
+
+  test("delete win should release all the stores in that win ", () => {
+    let mainAppStore = new MainAppStore([
+      declareStore(StoreBase, [], { stateKey: "todo1", storeKey: "todo1Store" }),
+      declareStoreMap(StoreBase, ["todo1Store"], { stateKey: "todo2", storeKey: "todo2Store" }),
+    ]);
+    mainAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
+    mainAppStore.init();
+
+    mainAppStore.multiWinSaver.addWin({ winId: "win1" });
+
+    mainAppStore.handleRequestStores("win1", ["todo2Store"]);
+    mainAppStore.handleMapRequestStores("win1", "todo2Store", ["key1", "key2"]);
+
+    mainAppStore.multiWinSaver.deleteWin("win1");
+    expect(mainAppStore.winFilters).toEqual({});
+    expect(mainAppStore.winHoldStores).toEqual({});
+    expect(mainAppStore.stores).toEqual({});
   });
 
   test("requestStore and releaseStore can handle win specific stores", () => {

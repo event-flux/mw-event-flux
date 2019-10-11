@@ -188,6 +188,8 @@ describe("For AppStore integration, Main and Renderer app store", () => {
 
     expect(rendererAppStore.state).toEqual({});
     let mainTodoStore = rendererAppStore.requestStore("mainTodoStore");
+
+    jest.runAllTimers();
     expect(rendererAppStore.state).toEqual({ mainTodo: { hello: "hello1" } });
 
     expect(await (mainTodoStore as any).reflect("hello")).toBe("hello");

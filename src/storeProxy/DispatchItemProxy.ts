@@ -2,7 +2,7 @@ import { DispatchItem } from "event-flux";
 
 export interface IDispatchInfo {
   store: string;
-  index?: string;
+  index?: string | number;
   method: string;
   args: any[];
 }

@@ -89,6 +89,7 @@ export default class BrowserMainClient implements IMainClient {
       case renderDispatchNoReturnName: {
         let [clientId, args] = payload;
         this.mainClientCallback.handleRendererDispatchNoReturn(clientId, args);
+        break;
       }
       case renderRequestStoreName: {
         let [clientId, storeKeys] = payload;

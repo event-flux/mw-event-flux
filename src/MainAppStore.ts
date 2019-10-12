@@ -27,6 +27,8 @@ import filterApply from "./utils/filterApply";
 import MainClient from "./MainClient";
 import filterDifference from "./utils/filterDifference";
 
+const stringifyReplacer = (key: string, value: any) => (typeof value === "undefined" ? null : value);
+
 function getStoreType(storeDeclarer: AnyStoreDeclarer) {
   if (StoreDeclarer.isStore(storeDeclarer)) {
     return "Item";
@@ -178,14 +180,23 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
   }
 
   async _handleRendererPayload(winId: string, payload: string): Promise<any> {
-    let { store: storeKey, method, args } = JSON.parse(payload);
+    let { store: storeKey, method, index, args } = JSON.parse(payload);
     let store = this.stores[this._getStoreKey(storeKey, winId)];
     if (!store) {
       throw new Error(`The store ${storeKey} for winId ${winId} is not exists`);
     }
+
+    if (index !== undefined) {
+      store = store.get(index);
+      if (!store) {
+        throw new Error(`The store ${storeKey}'s sub key ${index} store is not exists`);
+      }
+    }
+
     if (!(store as any)[method]) {
       throw new Error(`The store ${storeKey}'s method ${method} is not exists`);
     }
+
     let result = await (store as any)[method](...args);
     return result;
   }
@@ -424,7 +435,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       }
     }
 
-    return JSON.stringify(this._transformWinState(finalState));
+    return JSON.stringify(this._transformWinState(finalState), stringifyReplacer);
   }
 
   handleWillChange(prevState: any, state: any) {
@@ -451,7 +462,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       // let [updated, deleted] = filterWindowDelta(filterUpdated, filterDeleted, winManagerKey, clientId);
       if (!isEmpty(filterUpdated) || !isEmpty(filterDeleted)) {
         const action = { updated: filterUpdated, deleted: filterDeleted };
-        this.mainClient.sendWinMsg(client, mainDispatchName, JSON.stringify(action));
+        this.mainClient.sendWinMsg(client, mainDispatchName, JSON.stringify(action, stringifyReplacer));
       }
     });
   }
@@ -465,7 +476,11 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
 
     if (!isEmpty(updated) || !isEmpty(deleted)) {
       const action = { updated, deleted };
-      this.mainClient.sendWinMsg(this.multiWinSaver.getWinInfo(winId), mainDispatchName, JSON.stringify(action));
+      this.mainClient.sendWinMsg(
+        this.multiWinSaver.getWinInfo(winId),
+        mainDispatchName,
+        JSON.stringify(action, stringifyReplacer)
+      );
     }
   }
 }

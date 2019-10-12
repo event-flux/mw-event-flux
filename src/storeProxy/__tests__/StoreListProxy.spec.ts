@@ -19,7 +19,7 @@ describe("StoreListProxy", () => {
     expect(newStore.get(1).doSome("hello", "do"));
     expect(storeDispatcher.handleDispatch).toHaveBeenLastCalledWith({
       store: "helloStore",
-      index: "1",
+      index: 1,
       method: "doSome",
       args: ["hello", "do"],
     });

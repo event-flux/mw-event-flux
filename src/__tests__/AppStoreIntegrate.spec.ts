@@ -1,5 +1,14 @@
 import MainAppStore from "../MainAppStore";
-import { declareStore, StoreBase, RecycleStrategy, AnyStoreDeclarer, AppStore, DispatchParent } from "event-flux";
+import {
+  declareStore,
+  StoreBase,
+  RecycleStrategy,
+  AnyStoreDeclarer,
+  AppStore,
+  DispatchParent,
+  declareStoreMap,
+  declareStoreList,
+} from "event-flux";
 import { IMainClient, IWinInfo, IMainClientCallback } from "../mainClientTypes";
 import { mainDispatchName, mainReturnName, renderRegisterName } from "../constants";
 import { declareWinStore } from "../StoreDeclarer";
@@ -200,5 +209,74 @@ describe("For AppStore integration, Main and Renderer app store", () => {
     rendererAppStore.releaseStore("mainTodoStore");
     jest.runAllTimers();
     expect(rendererAppStore.state).toEqual({ mainTodo: undefined });
+  });
+
+  test("should sync store map messages when requestStore and releaseStore", async () => {
+    let [mainAppStore, rendererAppStore] = initAppStore(
+      [declareStoreMap(TodoStore, [], { stateKey: "mainTodo", storeKey: "mainTodoStore" })],
+      [declareStoreMap(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
+    );
+    mainAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
+    rendererAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
+
+    expect(rendererAppStore.state).toEqual({});
+    let mainTodoStore = rendererAppStore.requestStore("mainTodoStore");
+    mainTodoStore.requestStore("key1");
+    mainTodoStore.requestStore("key2");
+
+    jest.runAllTimers();
+    expect(rendererAppStore.state).toEqual({ mainTodo: { key1: { hello: "hello1" }, key2: { hello: "hello1" } } });
+
+    mainTodoStore.releaseStore("key1");
+    jest.runAllTimers();
+    expect(rendererAppStore.state).toEqual({ mainTodo: { key2: { hello: "hello1" } } });
+  });
+
+  test.only("should sync store map messages when add and delete", async () => {
+    let [mainAppStore, rendererAppStore] = initAppStore(
+      [declareStoreMap(TodoStore, [], { stateKey: "mainTodo", storeKey: "mainTodoStore" })],
+      [declareStoreMap(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
+    );
+    mainAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
+    rendererAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
+
+    expect(rendererAppStore.state).toEqual({});
+    let mainTodoStore = rendererAppStore.requestStore("mainTodoStore");
+    mainTodoStore.add(["key1", "key2"]);
+
+    jest.runAllTimers();
+    expect(rendererAppStore.state).toEqual({ mainTodo: { key1: { hello: "hello1" }, key2: { hello: "hello1" } } });
+
+    mainTodoStore.delete(["key1"]);
+    jest.runAllTimers();
+    expect(rendererAppStore.state).toEqual({ mainTodo: { key1: null, key2: { hello: "hello1" } } });
+
+    mainTodoStore.get("key2").reflect("good");
+    jest.runAllTimers();
+    expect(mainAppStore.state).toEqual({ mainTodo: { key1: undefined, key2: { hello: "good" } } });
+  });
+
+  test("should sync store list messages when setSize", async () => {
+    let [mainAppStore, rendererAppStore] = initAppStore(
+      [declareStoreList(TodoStore, [], { stateKey: "mainTodo", storeKey: "mainTodoStore" })],
+      [declareStoreMap(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
+    );
+    mainAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
+    rendererAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
+
+    expect(rendererAppStore.state).toEqual({});
+    let mainTodoStore = rendererAppStore.requestStore("mainTodoStore");
+    mainTodoStore.setSize(2);
+
+    jest.runAllTimers();
+    expect(rendererAppStore.state).toEqual({ mainTodo: { 0: { hello: "hello1" }, 1: { hello: "hello1" } } });
+
+    mainTodoStore.setSize(1);
+    jest.runAllTimers();
+    expect(rendererAppStore.state).toEqual({ mainTodo: { 0: { hello: "hello1" }, 1: null } });
+
+    mainTodoStore.get(0).reflect("good");
+    jest.runAllTimers();
+    expect(mainAppStore.state).toEqual({ mainTodo: { 0: { hello: "good" }, 1: undefined } });
   });
 });

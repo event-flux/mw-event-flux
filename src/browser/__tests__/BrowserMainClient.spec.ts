@@ -29,6 +29,8 @@ describe("BrowserMainClient", () => {
       handleWinMessage: jest.fn(),
       handleRequestStores: jest.fn(),
       handleReleaseStores: jest.fn(),
+      handleMapRequestStores: jest.fn(),
+      handleMapReleaseStores: jest.fn(),
       initWin: jest.fn(),
       getStoreDeclarers: jest.fn(),
       getInitStates: jest.fn(),

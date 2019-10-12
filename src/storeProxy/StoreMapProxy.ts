@@ -40,7 +40,6 @@ export class StoreMapProxy extends DispatchItemProxy {
 
   requestStore(storeKey: string) {
     this.operateModeSwitch.enterRefCountMode();
-
     if (this._keyRefs[storeKey]) {
       this._keyRefs[storeKey] += 1;
     } else {
@@ -122,8 +121,7 @@ type StoreMapProxyConstruct = new (appStore: IStoreDispatcher, storeKey: string)
 
 export class StoreMapProxyDeclarer<T> extends StoreMapDeclarer<T> {
   create(appStore: AppStore & IStoreDispatcher): StoreMap<T> {
-    const MapClass = this.options!.StoreMap || StoreMap;
-    let storeMapProxy = new ((MapClass as any) as StoreMapProxyConstruct)(appStore, this.options!.storeKey!);
+    let storeMapProxy = new StoreMapProxy(appStore, this.options!.storeKey!);
     return (storeMapProxy as any) as StoreMap<T>;
   }
 }

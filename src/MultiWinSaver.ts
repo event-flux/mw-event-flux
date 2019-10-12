@@ -37,6 +37,10 @@ export default class MultiWinSaver {
     return this.winIdMap[winId];
   }
 
+  getWinInfos() {
+    return this.winInfos;
+  }
+
   findWinInfo(callback: (winInfo: IWinInfo) => boolean): IWinInfo | undefined {
     return this.winInfos.find(callback);
   }

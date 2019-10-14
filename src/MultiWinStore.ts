@@ -1,27 +1,9 @@
-import { StoreBase } from "event-flux";
+import { StoreBase, AppStore } from "event-flux";
 import { IWinProps, IWinParams, IMultiWinStore } from "./mainClientTypes";
-import { winManagerStoreName } from "./constants";
+import { messageName } from "./constants";
 import MainAppStore from "./MainAppStore";
 import { IMainClient } from "./mainClientTypes";
 import MultiWinSaver from "./MultiWinSaver";
-
-function genBrowserUrl(url = "", clientId: string, parentId: string) {
-  let genUrl = new URL(url, location.href);
-  if (genUrl.search) {
-    genUrl.search += `&clientId=${clientId}`;
-  } else {
-    genUrl.search = `?clientId=${clientId}`;
-  }
-  genUrl.search += "&isSlave=1";
-  if (parentId) {
-    genUrl.search += `&parentId=${parentId}`;
-  }
-  return genUrl.toString();
-}
-
-interface IWindow {
-  close(): void;
-}
 
 export default class MultiWinStore extends StoreBase<any> implements IMultiWinStore {
   clientIds: string[] = [];
@@ -32,24 +14,27 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
 
   groupsMap: { [clientId: string]: string[] } = {};
 
-  clientWins: { [clientId: string]: IWindow } = {};
+  mainClient: IMainClient;
+  multiWinSaver: MultiWinSaver;
 
-  mainClient: IMainClient | undefined;
-  multiWinSaver: MultiWinSaver | undefined;
+  constructor(appStore: MainAppStore) {
+    super(appStore);
+    this.multiWinSaver = (this._appStore as MainAppStore).multiWinSaver;
+    this.mainClient = (this._appStore as MainAppStore).mainClient;
+  }
 
   init() {
-    let multiWinSaver = (this._appStore as MainAppStore).multiWinSaver;
-    let mainClient = (this._appStore as MainAppStore).mainClient;
-
-    this.mainClient = mainClient;
-    this.multiWinSaver = multiWinSaver;
-
-    let winInfos = multiWinSaver.getWinInfos();
+    let winInfos = this.multiWinSaver.getWinInfos();
     if (winInfos.length === 0) {
-      mainClient.createWin("mainClient", { path: "/", name: "mainClient", groups: ["main"] }, {});
+      // this.mainClient.createWin("mainClient", { path: "/", name: "mainClient", groups: ["main"] }, {});
+      let winProps = { path: "/", name: "mainClient", groups: ["main"] };
+      this.mainClient!.createWin("mainClient", winProps, {});
+      this._addWinProps("mainClient", winProps);
+    } else {
+      this.clientIds = winInfos.map(item => item.winId);
     }
 
-    multiWinSaver.onDidDeleteWin((winId: string) => {
+    this.multiWinSaver.onDidDeleteWin((winId: string) => {
       this._removeClientId(winId);
       if (winId === "mainClient") {
         this.closeAllWindows();
@@ -66,19 +51,18 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
     //   window.addEventListener("beforeunload", event => {
     //     this.closeAllWindows();
     //   });
-    //   // 将main window加入到 新创建窗口列表中
     //   this._addWinProps("mainClient", window, { name: "mainClient", groups: ["main"] });
     // }
   }
 
-  // 新增clientId对应的 winProps
-  _addWinProps(clientId: string, win: IWindow | null, winProps: IWinProps) {
-    if (!win) {
-      return;
-    }
+  // add winProps for clientId
+  _addWinProps(clientId: string, winProps: IWinProps) {
     this.clientIds.push(clientId);
-    this.clientWins[clientId] = win;
 
+    this._updateWinProps(clientId, winProps);
+  }
+
+  _updateWinProps(clientId: string, winProps: IWinProps) {
     if (winProps.name) {
       this.clientNameIdMap[winProps.name] = clientId;
       this.clientIdNameMap[clientId] = winProps.name;
@@ -88,9 +72,9 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
     }
   }
 
-  _parseWinProps(winProps: string | IWinProps, parentId?: string): IWinProps {
+  _parseWinProps(winProps: string | IWinProps, parentId?: string | null): IWinProps {
     let parseProps: IWinProps = typeof winProps === "string" ? { path: winProps } : winProps;
-    // 默认窗口被分组到main分组
+    // default window will be distributed to main group
     if (parseProps.groups === undefined) {
       parseProps.groups = ["main"];
     }
@@ -100,10 +84,8 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
     return parseProps;
   }
 
-  // 删除窗口的clientId
   _removeClientId(clientId: string) {
     let name = this.clientIdNameMap[clientId];
-    delete this.clientWins[clientId];
     if (name) {
       delete this.clientNameIdMap[name];
       delete this.clientIdNameMap[clientId];
@@ -116,41 +98,30 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
     }
   }
 
-  _createWinForBrowser(winProps: IWinProps | string, parentClientId: string, params: IWinParams): string {
-    let clientId = this._genClientId();
-    // get url from winProps
-    winProps = this._parseWinProps(winProps);
-    // create new browser window
-    let win = this.createBrowserWin(genBrowserUrl(winProps.path, clientId, parentClientId), clientId, params);
-
-    this._addWinProps(clientId, win, winProps);
-
-    (this._appStore! as any).mainClient.addWin(clientId, win);
-    return clientId;
-  }
-
-  _createWinForElectron(winProps: IWinProps | string, parentClientId: string, params: IWinParams): string | null {
-    return "";
-  }
-
-  createWin(winProps: IWinProps | string, parentClientId: string, params: IWinParams): string | null {
+  createWin(
+    winProps: IWinProps | string,
+    parentClientId: string | null | undefined,
+    params: IWinParams
+  ): string | null {
     let clientId = this._genClientId();
 
     // get url from winProps
     winProps = this._parseWinProps(winProps, parentClientId);
 
     this.mainClient!.createWin(clientId, winProps, params);
+    this._addWinProps(clientId, winProps);
+
     return clientId;
-    // if (typeof window === "object") {
-    //   return this._createWinForBrowser(winProps, parentClientId, params);
-    // } else {
-    //   return this._createWinForElectron(winProps, parentClientId, params);
-    // }
   }
 
   // Create new win if the specific winId is not exists
-  createOrOpenWin(winName: string, url: string | IWinProps, parentClientId: string, params: any): string | null {
-    // winName对应的窗口未存在，则创建新窗口
+  createOrOpenWin(
+    winName: string,
+    url: string | IWinProps,
+    parentClientId: string | null | undefined,
+    params: any
+  ): string | null {
+    // If the window named winName not exists, then we will create new window
     if (!this.clientNameIdMap[winName]) {
       let winProps: IWinProps = typeof url === "string" ? { path: url, name: winName } : { ...url, name: winName };
       return this.createWin(winProps, parentClientId, params);
@@ -163,15 +134,14 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
 
       this.mainClient!.changeWin(this.multiWinSaver!.getWinInfo(clientId), winProps, params);
       this.activeWin(clientId);
+      this._updateWinProps(clientId!, winProps);
       return clientId;
     }
   }
 
   closeWin(clientId: string) {
-    let win: IWindow | undefined = this.clientWins[clientId];
-    if (win) {
-      win.close();
-    }
+    let winInfo = this.multiWinSaver.getWinInfo(clientId);
+    this.mainClient.closeWin(winInfo);
   }
 
   closeWinByName(name: string) {
@@ -190,7 +160,10 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
     }
   }
 
-  activeWin(clientId: string) {}
+  activeWin(clientId: string) {
+    let winInfo = this.multiWinSaver.getWinInfo(clientId);
+    this.mainClient.activeWin(winInfo);
+  }
 
   activeWindow(clientId: string) {
     this.activeWin(clientId);
@@ -213,7 +186,7 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
   }
 
   sendWinMsg(clientId: string, message: any) {
-    (this._appStore as any).mainClient.sendWinMsg(clientId, message);
+    this.mainClient.sendWinMsg(this.multiWinSaver.getWinInfo(clientId), messageName, message);
   }
 
   sendWinMsgByName(name: string, message: any) {
@@ -244,37 +217,5 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
     this.clientIds.slice(0).forEach(clientId => {
       this.closeWin(clientId);
     });
-  }
-
-  createBrowserWin(url: string, clientId: string, params: any = {}): Window | null {
-    if (!params.width) {
-      params.width = 400;
-    }
-    if (!params.height) {
-      params.height = 400;
-    }
-    let featureStr = Object.keys(params)
-      .map(key => `${key}=${params[key]}`)
-      .join(",");
-    let childWin = window.open(
-      url,
-      "newwindow",
-      featureStr + ", toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no, status=no, titlebar=no"
-    );
-    if (childWin) {
-      childWin.onbeforeunload = () => this._removeClientId(clientId);
-    }
-    return childWin;
-  }
-
-  createElectronWin(url: string, clientId: string, parentClientId: string, params: any): string | undefined {
-    console.error("Please provide the createElectronWin");
-    return;
-  }
-
-  onChangeAction(clientId: string, action: string) {}
-
-  getWinRootStore(clientId: string) {
-    return (this.appStores[winManagerStoreName] as any).winPackMapStore.get(clientId);
   }
 }

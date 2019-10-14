@@ -5,7 +5,7 @@ export interface IWinInfo {
 
 export interface IWinProps {
   path: string;
-  parentId?: string;
+  parentId?: string | null;
   name?: string;
   groups?: string[];
   [key: string]: any;
@@ -42,6 +42,8 @@ export interface IMainClient {
   createWin(winId: string, winProps: IWinProps, winParams: IWinParams): void;
 
   changeWin(winInfo: IWinInfo, winProps: IWinProps, winParams: IWinParams): void;
+
+  closeWin(winInfo: IWinInfo): void;
 }
 
 export interface IMainClientCallback {
@@ -89,6 +91,4 @@ export interface IMultiWinStore {
   sendWinMsgByName(name: string, message: any): void;
 
   sendWinMsgByGroup(group: string, message: any): void;
-
-  onChangeAction(clientId: string, action: string): void;
 }

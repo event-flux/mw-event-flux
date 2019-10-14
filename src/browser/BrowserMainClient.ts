@@ -78,6 +78,10 @@ export default class BrowserMainClient implements IMainClient {
 
   changeWin(winInfo: IWinInfo, winProps: IWinProps, winParams: IWinParams): void {}
 
+  closeWin(winInfo: IWinInfo) {
+    winInfo.window.close();
+  }
+
   _handleMessage(event: MessageEvent) {
     let { action, data: payload } = event.data || ({} as any);
     switch (action) {

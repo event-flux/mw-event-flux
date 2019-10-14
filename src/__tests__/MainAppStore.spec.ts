@@ -12,6 +12,7 @@ jest.mock("../MainClient", () => {
     activeWin = jest.fn();
     createWin = jest.fn();
     changeWin = jest.fn();
+    closeWin = jest.fn();
   }
   return { default: MyMainClient };
 });

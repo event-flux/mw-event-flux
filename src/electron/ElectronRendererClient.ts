@@ -2,8 +2,8 @@ import {
   mainInitName,
   renderRegisterName,
   renderDispatchName,
-  renderRequestStore,
-  renderReleaseStore,
+  renderRequestStoreName,
+  renderReleaseStoreName,
   mainDispatchName,
   mainReturnName,
   winMessageName,
@@ -72,11 +72,11 @@ export default class ElectronRendererClient {
   }
 
   requestStores(storeNames: string[]) {
-    ipcRenderer.send(renderRequestStore, storeNames);
+    ipcRenderer.send(renderRequestStoreName, storeNames);
   }
 
   releaseStores(storeNames: string[]) {
-    ipcRenderer.send(renderReleaseStore, storeNames);
+    ipcRenderer.send(renderReleaseStoreName, storeNames);
   }
 
   sendMessage(args: any) {

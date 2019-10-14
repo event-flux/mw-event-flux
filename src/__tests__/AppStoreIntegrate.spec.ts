@@ -26,6 +26,7 @@ jest.mock("../MainClient", () => {
     activeWin = jest.fn();
     createWin = jest.fn();
     changeWin = jest.fn();
+    closeWin = jest.fn();
 
     constructor(multiWinSaver: MultiWinSaver, callback: IMainClientCallback) {
       this.multiWinSaver = multiWinSaver;

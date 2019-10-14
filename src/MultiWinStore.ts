@@ -100,15 +100,15 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
 
   createWin(
     winProps: IWinProps | string,
-    parentClientId: string | null | undefined,
-    params: IWinParams
+    parentClientId?: string | null | undefined,
+    params?: IWinParams
   ): string | null {
     let clientId = this._genClientId();
 
     // get url from winProps
     winProps = this._parseWinProps(winProps, parentClientId);
 
-    this.mainClient!.createWin(clientId, winProps, params);
+    this.mainClient!.createWin(clientId, winProps, params || {});
     this._addWinProps(clientId, winProps);
 
     return clientId;
@@ -141,7 +141,9 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
 
   closeWin(clientId: string) {
     let winInfo = this.multiWinSaver.getWinInfo(clientId);
-    this.mainClient.closeWin(winInfo);
+    if (winInfo) {
+      this.mainClient.closeWin(winInfo);
+    }
   }
 
   closeWinByName(name: string) {
@@ -162,7 +164,9 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
 
   activeWin(clientId: string) {
     let winInfo = this.multiWinSaver.getWinInfo(clientId);
-    this.mainClient.activeWin(winInfo);
+    if (winInfo) {
+      this.mainClient.activeWin(winInfo);
+    }
   }
 
   activeWindow(clientId: string) {
@@ -186,7 +190,10 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
   }
 
   sendWinMsg(clientId: string, message: any) {
-    this.mainClient.sendWinMsg(this.multiWinSaver.getWinInfo(clientId), messageName, message);
+    let winInfo = this.multiWinSaver.getWinInfo(clientId);
+    if (winInfo) {
+      this.mainClient.sendWinMsg(winInfo, messageName, message);
+    }
   }
 
   sendWinMsgByName(name: string, message: any) {

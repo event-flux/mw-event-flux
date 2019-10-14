@@ -4,7 +4,7 @@ import { format as formatUrl } from "url";
 import * as path from "path";
 import { app, BrowserWindow, screen } from "electron";
 import IStorage from "./storage/IStorage";
-import { IWinProps, IWinParams } from "./IMultiWinStore";
+import { IWinProps, IWinParams } from "./mainClientTypes";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -123,9 +123,7 @@ class MultiWinCacheStore extends MultiWinStore {
     delete this.clientInfoMap[clientId];
   }
 
-  onDidWinClose(clientId: string) {
-    (this._appStore as any).mainClient.sendWinMsg(clientId, { action: "did-close" });
-  }
+  handleDidCloseWin(winId: string) {}
 
   closeWin(clientId: string) {
     let win = this.clientWins[clientId] as BrowserWindow;
@@ -196,9 +194,10 @@ class MultiWinCacheStore extends MultiWinStore {
     if (!clientId) {
       clientId = winInfo.clientId;
     }
+    this.multiWinSaver.addWin({ winId: clientId, window: winInfo.win });
 
+    this._addWinProps(clientId, winProps);
     let win = winInfo.win;
-    this._addWinProps(clientId, win, winProps);
 
     this.clientInfoMap[clientId] = { url: winProps.path!, clientId, parentId, winState: winState.state };
 
@@ -211,7 +210,7 @@ class MultiWinCacheStore extends MultiWinStore {
 
     this.saveClients(); // Save clients into Storage
 
-    win.on("closed", this.onCloseWin.bind(this, clientId));
+    win.on("closed", this.handleClosed.bind(this, clientId));
     return clientId;
   }
 
@@ -230,7 +229,7 @@ class MultiWinCacheStore extends MultiWinStore {
         win = winInfo.window;
 
         // this._appStore.mainClient.sendMessage(win, { action: 'change-props', url, parentId });
-        (this._appStore as any).mainClient.changeClientAction(clientId, { url, parentId });
+        this.mainClient.changeWin(this.multiWinSaver.getWinInfo(clientId), { path: url, parentId }, {});
 
         let setBoundsFunc: "setContentBounds" | "setBounds" = params.useContentSize ? "setContentBounds" : "setBounds";
 
@@ -292,8 +291,10 @@ class MultiWinCacheStore extends MultiWinStore {
       maxHeight: params.maxHeight,
       title: params.title,
       useContentSize: params.useContentSize,
+      ...params,
       webPreferences: {
         nodeIntegration: true,
+        ...params.webPreferences,
       },
     });
 
@@ -332,23 +333,16 @@ class MultiWinCacheStore extends MultiWinStore {
     return window;
   }
 
-  onChangeAction(clientId: string, action: string) {
-    if (this.clientInfoMap[clientId]) {
-      this.clientInfoMap[clientId].url = action;
-      this.saveClients();
-    }
-  }
-
-  onCloseMainClient() {
+  handleCloseMainClient() {
     this.willQuit = true;
     this.closeAllWindows();
   }
 
-  onCloseWin(clientId: string) {
+  handleClosed(clientId: string) {
     if (clientId === "mainClient") {
-      this.onCloseMainClient();
+      this.handleCloseMainClient();
     }
-    this.onDidWinClose && this.onDidWinClose(clientId!);
+    this.handleDidCloseWin && this.handleDidCloseWin(clientId!);
     let index = this.clientIds.indexOf(clientId!);
     if (index !== -1) {
       this.clientIds.splice(index, 1);
@@ -361,19 +355,10 @@ class MultiWinCacheStore extends MultiWinStore {
 
   closeAllWindows() {
     super.closeAllWindows();
-    // 关掉隐藏窗口
+    // Dispose the windowManager to destroy the hide windows.
     if (this.windowManager) {
       this.windowManager.dispose();
       this.windowManager = undefined;
-    }
-  }
-
-  activeWin(clientId: string) {
-    const win = this.clientWins[clientId] as BrowserWindow;
-    if (win) {
-      win.moveTop();
-      // win && win.minimize();
-      win.focus();
     }
   }
 }

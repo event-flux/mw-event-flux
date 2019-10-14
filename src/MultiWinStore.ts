@@ -40,19 +40,6 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
         this.closeAllWindows();
       }
     });
-
-    // if (typeof window === "object") {
-    //   window.addEventListener("message", event => {
-    //     let { action, clientId } = event.data || ({} as any);
-    //     if (action === "close") {
-    //       this._removeClientId(clientId);
-    //     }
-    //   });
-    //   window.addEventListener("beforeunload", event => {
-    //     this.closeAllWindows();
-    //   });
-    //   this._addWinProps("mainClient", window, { name: "mainClient", groups: ["main"] });
-    // }
   }
 
   // add winProps for clientId

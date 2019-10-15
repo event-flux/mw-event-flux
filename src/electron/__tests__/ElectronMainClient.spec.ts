@@ -9,6 +9,9 @@ import {
   renderReleaseStoreName,
   winMessageName,
 } from "../../constants";
+import { decodeQuery } from "../../utils/queryHandler";
+
+jest.useFakeTimers();
 
 describe("BrowserMainClient", () => {
   let multiWinSaver: MultiWinSaver;
@@ -57,41 +60,71 @@ describe("BrowserMainClient", () => {
     expect(mainClientCallback.handleWinMessage).toHaveBeenLastCalledWith("win1", "win2", "data");
   });
 
-  // test("sendWinMsg should can post message", async () => {
-  //   let onMessage = jest.fn();
-  //   window.addEventListener("message", onMessage);
-  //   mainClient!.sendWinMsg({ winId: "win1", window }, "msg1", "arg1", "arg2");
-  //   await new Promise(resolve => setTimeout(resolve, 0));
-  //   expect(onMessage.mock.calls[0][0].data).toEqual({ action: "msg1", data: ["arg1", "arg2"] });
-  // });
+  test("sendWinMsg should can post message", async () => {
+    let window = new BrowserWindow({ x: 10 });
 
-  // test("createWin should can create the new window", () => {
-  //   let originOpen = window.open;
-  //   let mockOpen = jest.fn(() => {
-  //     let retWin = {
-  //       onbeforeunload: () => {},
-  //       close() {
-  //         retWin.onbeforeunload && retWin.onbeforeunload!();
-  //       },
-  //     };
-  //     return retWin;
-  //   });
-  //   window.open = mockOpen;
+    mainClient!.sendWinMsg({ winId: "win1", window, webContents: window.webContents }, "msg1", "arg1", "arg2");
+    expect((window.webContents as any).channels).toEqual([["msg1", "arg1", "arg2"]]);
+  });
 
-  //   let newWin = mainClient!.createWin(
-  //     "win1",
-  //     { path: "/hello", parentId: "win2", name: "win1", groups: ["hello"] },
-  //     { minWidth: 300 }
-  //   );
-  //   expect(mockOpen.mock.calls[0][0]).toBe(
-  //     `http://localhost/hello?path=%2Fhello&parentId=win2&name=win1&groups=hello&winId=win1&isSlave=1`
-  //   );
-  //   expect(mockOpen.mock.calls[0][2].split(",")[0]).toBe("minWidth=300");
+  test("createWin should can create the new window", () => {
+    let newWin = mainClient!.createWin(
+      "win1",
+      { path: "/hello", parentId: "win2", name: "win1", groups: ["hello"] },
+      { minWidth: 300 }
+    );
+    let loadUrl = require("url").parse((newWin as any).url);
+    expect(decodeQuery(loadUrl.query)).toEqual({
+      path: "/hello",
+      parentId: "win2",
+      name: "win1",
+      groups: "hello",
+      winId: "win1",
+    });
+    expect((newWin as any).props).toEqual({ minWidth: 300, show: false, x: 0, y: 0 });
 
-  //   expect(multiWinSaver.winInfos).toEqual([{ winId: "mainClient", window }, { winId: "win1", window: newWin }]);
+    expect(multiWinSaver.winInfos).toEqual([{ winId: "win1", window: newWin, webContents: newWin.webContents }]);
 
-  //   newWin!.close();
-  //   expect(multiWinSaver.winInfos).toEqual([{ winId: "mainClient", window }]);
-  //   window.open = originOpen;
-  // });
+    newWin!.emit("closed");
+    expect(multiWinSaver.winInfos).toEqual([]);
+  });
+
+  test("changeWin should can change the window props", () => {
+    let newWin = mainClient!.createWin(
+      "win1",
+      { path: "/hello", parentId: "win2", name: "win1", groups: ["hello"] },
+      { minWidth: 300, show: false }
+    );
+
+    newWin.setContentBounds = jest.fn();
+    newWin.setBounds = jest.fn();
+    newWin.setMinimumSize = jest.fn();
+    newWin.setMaximumSize = jest.fn();
+    newWin.setTitle = jest.fn();
+    newWin.show = jest.fn();
+
+    mainClient!.changeWin(
+      multiWinSaver.getWinInfo("win1"),
+      { path: "/home" },
+      {
+        useContentSize: true,
+        x: 1,
+        width: 150,
+        height: 150,
+        minWidth: 100,
+        minHeight: 100,
+        maxWidth: 200,
+        maxHeight: 200,
+        title: "hello",
+        show: true,
+      }
+    );
+
+    expect(newWin.setMinimumSize).toHaveBeenLastCalledWith(100, 100);
+    expect(newWin.setMaximumSize).toHaveBeenLastCalledWith(200, 200);
+    expect(newWin.setTitle).toHaveBeenLastCalledWith("hello");
+    expect(newWin.setContentBounds).toHaveBeenLastCalledWith({ x: 1, y: 0, width: 150, height: 150 });
+    jest.runAllTimers();
+    expect(newWin.show).toHaveBeenCalled();
+  });
 });

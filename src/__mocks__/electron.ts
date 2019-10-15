@@ -32,6 +32,10 @@ class FakeBrowserWindow extends EventEmitter {
   loadURL(url: any) {
     this.url = url;
   }
+
+  show() {
+    this.props.show = true;
+  }
 }
 
 export const ipcMain = new EventEmitter();

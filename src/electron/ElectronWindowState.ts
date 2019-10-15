@@ -3,7 +3,21 @@
 import { BrowserWindow, Rectangle } from "electron";
 
 let electron = require("electron");
-let deepEqual = require("deep-equal");
+
+export function deepEqual(obj1: any, obj2: any) {
+  if (obj1 && obj2 && typeof obj1 === "object" && typeof obj2 === "object") {
+    if (Object.keys(obj1).length !== Object.keys(obj2).length) {
+      return false;
+    }
+    for (let key in obj1) {
+      if (obj1[key] !== obj2[key]) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return obj1 === obj2;
+}
 
 const isInteger = (Number as any).isInteger;
 const eventHandlingDelay = 100;
@@ -102,7 +116,7 @@ export default class ElectronWindowState {
     if (this.hasBounds() && state.displayBounds) {
       // Check if the display where the window was last open is still available
       let displayBounds = electron.screen.getDisplayMatching(state as Rectangle).bounds;
-      let sameBounds = deepEqual(state.displayBounds, displayBounds, { strict: true });
+      let sameBounds = deepEqual(state.displayBounds, displayBounds);
       if (!sameBounds) {
         if (displayBounds.width < state.displayBounds.width) {
           if ((state.x as number) > displayBounds.width) {

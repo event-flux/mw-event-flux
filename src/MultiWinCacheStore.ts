@@ -194,7 +194,6 @@ class MultiWinCacheStore extends MultiWinStore {
     if (!clientId) {
       clientId = winInfo.clientId;
     }
-    this.multiWinSaver.addWin({ winId: clientId, window: winInfo.win });
 
     this._addWinProps(clientId, winProps);
     let win = winInfo.win;
@@ -229,47 +228,13 @@ class MultiWinCacheStore extends MultiWinStore {
         win = winInfo.window;
 
         // this._appStore.mainClient.sendMessage(win, { action: 'change-props', url, parentId });
-        this.mainClient.changeWin(this.multiWinSaver.getWinInfo(clientId), { path: url, parentId }, {});
-
-        let setBoundsFunc: "setContentBounds" | "setBounds" = params.useContentSize ? "setContentBounds" : "setBounds";
-
-        let x = Math.floor(params.x || 0);
-        let y = Math.floor(params.y || 0);
-        let width = Math.floor(params.width || 800),
-          height = Math.floor(params.height || 600);
-        if (params.minWidth && params.minHeight) {
-          win.setMinimumSize(Math.floor(params.minWidth), Math.floor(params.minHeight));
-        }
-        if (params.maxWidth && params.maxHeight) {
-          win.setMaximumSize(Math.floor(params.maxWidth), Math.floor(params.maxHeight));
-        }
-        if (params.title) {
-          win.setTitle(params.title);
-        }
-        win[setBoundsFunc]({
-          x,
-          y,
-          width,
-          height,
-        });
-
-        win[setBoundsFunc]({
-          x,
-          y,
-          width,
-          height,
-        });
-
-        setTimeout(() => {
-          win[setBoundsFunc]({ x, y, width, height });
-          win.show();
-        }, 0);
+        this.mainClient.changeWin(this.multiWinSaver.getWinInfo(clientId), { path: url, parentId }, params);
       }
     }
     return { clientId, win };
   }
 
-  createNativeWindow(clientId: string, url = "empty", parentId = "", params: IWinParams) {
+  createNativeWindow(clientId: string, url = "empty", parentId = "", params: IWinParams): BrowserWindow {
     if (params == null) {
       params = {
         x: 0,
@@ -277,52 +242,12 @@ class MultiWinCacheStore extends MultiWinStore {
         width: 1280,
         height: 800,
         useContentSize: true,
+        webPreferences: {
+          nodeIntegration: true,
+        },
       };
     }
-    const window = new BrowserWindow({
-      show: false,
-      x: Math.floor(params.x || 0),
-      y: Math.floor(params.y || 0),
-      width: params.width,
-      height: params.height,
-      minWidth: params.minWidth || params.width,
-      minHeight: params.minHeight || params.height,
-      maxWidth: params.maxWidth,
-      maxHeight: params.maxHeight,
-      title: params.title,
-      useContentSize: params.useContentSize,
-      ...params,
-      webPreferences: {
-        nodeIntegration: true,
-        ...params.webPreferences,
-      },
-    });
-
-    if (isDevelopment) {
-      window.loadURL(
-        `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?url=${url}&clientId=${clientId}&parentId=${parentId}`
-      );
-      // window.webContents.openDevTools();
-    } else {
-      window.loadURL(
-        formatUrl({
-          pathname: path.join(__dirname, "index.html"),
-          protocol: "file",
-          slashes: true,
-          query: { url, clientId, parentId },
-        })
-      );
-    }
-
-    // window.webContents.openDevTools();
-    window.webContents.on("devtools-opened", () => {
-      window.focus();
-      setImmediate(() => {
-        window.focus();
-      });
-    });
-
-    return window;
+    return this.mainClient.createWin(clientId, { path: url, parentId }, params);
   }
 
   createMainWindow(url: string, clientId: string, parentId: string | undefined, params: any = {}) {

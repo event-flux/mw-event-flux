@@ -39,7 +39,7 @@ export interface IMainClient {
 
   activeWin(winInfo: IWinInfo): void;
 
-  createWin(winId: string, winProps: IWinProps, winParams: IWinParams): void;
+  createWin(winId: string, winProps: IWinProps, winParams: IWinParams): any;
 
   changeWin(winInfo: IWinInfo, winProps: IWinProps, winParams: IWinParams): void;
 

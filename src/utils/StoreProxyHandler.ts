@@ -1,4 +1,4 @@
-const isEmpty = require("lodash/isEmpty");
+import { isEmpty } from "./objUtils";
 
 interface ListStorePathUnit {
   index?: string;

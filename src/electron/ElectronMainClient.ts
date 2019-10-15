@@ -24,9 +24,9 @@ interface IElectronWinInfo {
 export default class ElectronMainClient implements IMainClient {
   multiWinSaver: MultiWinSaver;
   mainClientCallback: IMainClientCallback;
-  log: Log;
+  log?: Log;
 
-  constructor(multiWinSaver: MultiWinSaver, callback: IMainClientCallback, log: Log) {
+  constructor(multiWinSaver: MultiWinSaver, callback: IMainClientCallback, log?: Log) {
     this.multiWinSaver = multiWinSaver;
     this.mainClientCallback = callback;
     this.log = log;
@@ -56,36 +56,7 @@ export default class ElectronMainClient implements IMainClient {
     ipcMain.on(renderRegisterName, (event: Event, clientId: string) => {
       this.multiWinSaver.registerWin(clientId);
     });
-    return this;
   }
-
-  handleWinMessage = (event: Event, clientId: string, data: any) => {
-    let sourceWinInfo = this.multiWinSaver.findWinInfo((item: IWinInfo) => item.webContents === event.sender);
-    if (sourceWinInfo) {
-      let senderId = sourceWinInfo.winId;
-      this.mainClientCallback.handleWinMessage(senderId, clientId, data);
-    }
-  };
-
-  // dispatchToRenderer(clientId: string, payload: any) {
-  //   let winInfo: IElectronWinInfo = this.multiWinSaver.getWinInfo(clientId) as IElectronWinInfo;
-  //   if (!winInfo) return;
-  //   let webContents = winInfo.webContents;
-
-  //   // if (webContents.isDestroyed() || webContents.isCrashed()) {
-  //   //   return this.unregisterRenderer(client.clientId);
-  //   // }
-  //   this._sendForWebContents(webContents, mainDispatchName, payload);
-  // }
-
-  // sendWinMsg(clientId: string, message: any) {
-  //   let winInfo: IElectronWinInfo = this.multiWinSaver.getWinInfo(clientId) as IElectronWinInfo;
-  //   if (!winInfo) return;
-  //   let webContents = winInfo.webContents;
-  //   this.multiWinSaver.whenRegister(clientId, () => {
-  //     this._sendForWebContents(webContents, messageName, message);
-  //   })
-  // }
 
   sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void {
     this._sendForWebContents(winInfo.webContents, msgName, ...args);
@@ -134,7 +105,7 @@ export default class ElectronMainClient implements IMainClient {
     window.on("closed", () => {
       this.multiWinSaver.deleteWin(winId);
     });
-    this.multiWinSaver.addWin({ winId, window });
+    this.multiWinSaver.addWin({ winId, window, webContents: window.webContents });
     return window;
   }
 

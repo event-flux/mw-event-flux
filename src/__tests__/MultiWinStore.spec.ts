@@ -17,7 +17,7 @@ jest.mock("../MainClient", () => {
     closeWin = jest.fn();
     constructor(private multiWinSaver: MultiWinSaver) {}
   }
-  return { default: MyMainClient };
+  return MyMainClient;
 });
 
 describe("MultiWinStore", () => {

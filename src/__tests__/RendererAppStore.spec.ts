@@ -13,7 +13,7 @@ jest.mock("../RendererClient", () => {
       return (window as any).query;
     }
   }
-  return { default: MyRenderClient };
+  return MyRenderClient;
 });
 
 jest.useFakeTimers();

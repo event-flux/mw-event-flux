@@ -14,7 +14,7 @@ jest.mock("../MainClient", () => {
     changeWin = jest.fn();
     closeWin = jest.fn();
   }
-  return { default: MyMainClient };
+  return MyMainClient;
 });
 
 describe("MainAppStore", () => {

@@ -63,7 +63,7 @@ jest.mock("../MainClient", () => {
       winChannel.push([msgName, args]);
     }
   }
-  return { default: MyMainClient };
+  return MyMainClient;
 });
 
 jest.mock("../RendererClient", () => {
@@ -103,7 +103,7 @@ jest.mock("../RendererClient", () => {
       return (window as any).query;
     }
   }
-  return { default: MyRenderClient };
+  return MyRenderClient;
 });
 
 jest.useFakeTimers();

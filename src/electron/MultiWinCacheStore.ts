@@ -1,10 +1,10 @@
-import MultiWinStore from "./MultiWinStore";
-import ElectronWindowState, { IWinState } from "./electron/ElectronWindowState";
+import MultiWinStore from "../MultiWinStore";
+import ElectronWindowState, { IWinState } from "./ElectronWindowState";
 import { format as formatUrl } from "url";
 import * as path from "path";
 import { app, BrowserWindow, screen } from "electron";
-import IStorage from "./storage/IStorage";
-import { IWinProps, IWinParams } from "./mainClientTypes";
+import IStorage from "../storage/IStorage";
+import { IWinProps, IWinParams } from "../mainClientTypes";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -16,8 +16,8 @@ export class WindowManager {
   constructor(winHandler: MultiWinCacheStore) {
     this.windows = [];
     this.winHandler = winHandler;
-    app.whenReady().then(() => this.ensureWindows());
-    // this.ensureWindows();
+    // app.whenReady().then(() => this.ensureWindows());
+    this.ensureWindows();
   }
 
   genClientId() {
@@ -87,16 +87,17 @@ class MultiWinCacheStore extends MultiWinStore {
       this.windowManager = new WindowManager(this);
     }
 
-    app.whenReady().then(() => {
-      clients.forEach((item: IClientCacheInfo) => {
-        this.createWinForClientId(
-          { path: item.url, groups: item.groups, name: item.name },
-          item.clientId,
-          item.parentId,
-          item.winState!
-        );
-      });
+    clients.forEach((item: IClientCacheInfo) => {
+      this.createWinForClientId(
+        { path: item.url, groups: item.groups, name: item.name },
+        item.clientId,
+        item.parentId,
+        item.winState!
+      );
     });
+    // app.whenReady().then(() => {
+
+    // });
   }
 
   saveClients() {
@@ -137,7 +138,6 @@ class MultiWinCacheStore extends MultiWinStore {
     this.saveClients();
   }
 
-  // 当要创建的窗口有clientId时
   createWinForClientId(
     winProps: IWinProps,
     clientId: string,
@@ -147,7 +147,6 @@ class MultiWinCacheStore extends MultiWinStore {
     return this._createElectronWin(winProps, clientId, parentClientId, params);
   }
 
-  // 创建一个全新的窗口，使用自生成的clientId
   createWin(winProps: IWinProps | string, parentClientId: string, params: IWinParams): string | null {
     return this._createWinForElectron(winProps, parentClientId, params);
   }

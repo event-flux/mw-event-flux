@@ -18,9 +18,8 @@ import {
   winMessageName,
   initMessageName,
 } from "./constants";
-import IErrorObj from "./IErrorObj";
 import MultiWinSaver from "./MultiWinSaver";
-import { IMainClient, IMainClientCallback, IWinProps, IWinInfo, IOutStoreDeclarer } from "./mainClientTypes";
+import { IMainClient, IMainClientCallback, IErrorObj, IWinProps, IWinInfo, IOutStoreDeclarer } from "./mainClientTypes";
 import objectDifference from "./utils/objectDifference";
 import { isEmpty, isObject } from "./utils/objUtils";
 import filterApply from "./utils/filterApply";

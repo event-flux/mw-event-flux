@@ -34,6 +34,12 @@ export interface IOutStoreDeclarer {
   [key: string]: any;
 }
 
+export interface IErrorObj {
+  name: string;
+  message: string;
+  [key: string]: any;
+}
+
 export interface IMainClient {
   sendWinMsg(winInfo: IWinInfo, msgName: string, ...args: any[]): void;
 

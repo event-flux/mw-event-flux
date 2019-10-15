@@ -1,5 +1,5 @@
 import MultiWinStore from "./MultiWinStore";
-import ElectronWindowState, { IWinState } from "./ElectronWindowState";
+import ElectronWindowState, { IWinState } from "./electron/ElectronWindowState";
 import { format as formatUrl } from "url";
 import * as path from "path";
 import { app, BrowserWindow, screen } from "electron";

@@ -1,15 +1,5 @@
-import {
-  mainInitName,
-  renderRegisterName,
-  renderDispatchName,
-  renderRequestStoreName,
-  renderReleaseStoreName,
-  mainDispatchName,
-  mainReturnName,
-  winMessageName,
-  messageName,
-} from "../constants";
-import { ipcRenderer, remote } from "electron";
+import { initMessageName, mainDispatchName, mainReturnName, winMessageName, messageName } from "../constants";
+import { ipcRenderer } from "electron";
 import { Log, Logger } from "../utils/loggerApply";
 import { IRendererClientCallback } from "../rendererClientTypes";
 import { decodeQuery } from "../utils/queryHandler";
@@ -36,7 +26,7 @@ export default class ElectronRendererClient {
     ipcRenderer.on(winMessageName, (event: Event, senderId: string, params: any) => {
       this.rendererCallback.handleWinMessage(senderId, params);
     });
-    ipcRenderer.on(mainInitName, (event: Event, arg: any) => {
+    ipcRenderer.on(initMessageName, (event: Event, arg: any) => {
       this.rendererCallback.handleInit(arg);
     });
   }

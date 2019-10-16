@@ -9,7 +9,6 @@ import {
   StoreMap,
 } from "event-flux";
 import {
-  mainInitName,
   mainDispatchName,
   mainReturnName,
   renderDispatchName,

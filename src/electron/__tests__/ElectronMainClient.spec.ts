@@ -13,7 +13,7 @@ import { decodeQuery } from "../../utils/queryHandler";
 
 jest.useFakeTimers();
 
-describe("BrowserMainClient", () => {
+describe("ElectronMainClient", () => {
   let multiWinSaver: MultiWinSaver;
   let mainClientCallback: IMainClientCallback;
   let mainClient: ElectronMainClient | undefined;

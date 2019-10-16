@@ -1,8 +1,6 @@
 "use strict";
 
-import { BrowserWindow, Rectangle } from "electron";
-
-let electron = require("electron");
+import { BrowserWindow, Rectangle, screen } from "electron";
 
 export function deepEqual(obj1: any, obj2: any) {
   if (obj1 && obj2 && typeof obj1 === "object" && typeof obj2 === "object") {
@@ -115,7 +113,7 @@ export default class ElectronWindowState {
 
     if (this.hasBounds() && state.displayBounds) {
       // Check if the display where the window was last open is still available
-      let displayBounds = electron.screen.getDisplayMatching(state as Rectangle).bounds;
+      let displayBounds = screen.getDisplayMatching(state as Rectangle).bounds;
       let sameBounds = deepEqual(state.displayBounds, displayBounds);
       if (!sameBounds) {
         if (displayBounds.width < state.displayBounds.width) {
@@ -158,7 +156,7 @@ export default class ElectronWindowState {
       }
       state.isMaximized = win.isMaximized();
       state.isFullScreen = win.isFullScreen();
-      state.displayBounds = electron.screen.getDisplayMatching(winBounds).bounds;
+      state.displayBounds = screen.getDisplayMatching(winBounds).bounds;
     } catch (err) {
       console.error(err);
     }

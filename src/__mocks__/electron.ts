@@ -95,6 +95,8 @@ interface Rectangle {
 }
 
 export const ipcMain = new EventEmitter();
+export const ipcRenderer = new EventEmitter();
+
 export const BrowserWindow = FakeBrowserWindow;
 export const screen = {
   getDisplayMatching(rect: Rectangle) {

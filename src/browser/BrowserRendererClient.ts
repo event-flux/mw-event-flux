@@ -1,13 +1,4 @@
-import {
-  renderDispatchName,
-  renderRegisterName,
-  mainDispatchName,
-  mainInitName,
-  mainReturnName,
-  winMessageName,
-  messageName,
-  initMessageName,
-} from "../constants";
+import { mainDispatchName, mainReturnName, winMessageName, messageName, initMessageName } from "../constants";
 import { IRendererClient, IRendererClientCallback } from "../rendererClientTypes";
 import { decodeQuery } from "../utils/queryHandler";
 

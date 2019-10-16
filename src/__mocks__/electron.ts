@@ -31,6 +31,9 @@ class FakeBrowserWindow extends EventEmitter {
   constructor(props: any) {
     super();
     this.props = props;
+    if (props && typeof props.x === "number" && typeof props.y === "number" && props.width && props.height) {
+      this._bounds = this._contentBounds = { x: props.x, y: props.y, width: props.width, height: props.height };
+    }
     this.webContents = new FakeWebContents();
   }
 
@@ -92,6 +95,10 @@ class FakeBrowserWindow extends EventEmitter {
     return this._contentBounds;
   }
 
+  isDestroyed() {
+    return false;
+  }
+
   close() {
     this.emit("close", {});
     this.emit("closed", {});
@@ -114,6 +121,9 @@ export const screen = {
     return {
       bounds: { x: 0, y: 0, width: 1200, height: 800 } as Rectangle,
     };
+  },
+  getPrimaryDisplay() {
+    return { size: { width: 1200, height: 800 } };
   },
 };
 

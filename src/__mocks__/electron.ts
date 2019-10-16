@@ -50,6 +50,10 @@ class FakeBrowserWindow extends EventEmitter {
     this._isMaximized = false;
   }
 
+  isMaximized() {
+    return this._isMaximized;
+  }
+
   minimize() {
     this._isMinimized = true;
   }
@@ -58,8 +62,8 @@ class FakeBrowserWindow extends EventEmitter {
     this._isMinimized = false;
   }
 
-  isMaximized() {
-    this._isMinimized = true;
+  isMinimized() {
+    return this._isMinimized;
   }
 
   setFullScreen(flag: boolean) {
@@ -72,6 +76,7 @@ class FakeBrowserWindow extends EventEmitter {
 
   setBounds(bounds: Rectangle) {
     this._bounds = bounds;
+    this.emit("resize", {});
   }
 
   getBounds() {
@@ -80,10 +85,16 @@ class FakeBrowserWindow extends EventEmitter {
 
   setContentBounds(bounds: Rectangle) {
     this._contentBounds = bounds;
+    this.emit("resize", {});
   }
 
   getContentBounds() {
     return this._contentBounds;
+  }
+
+  close() {
+    this.emit("close", {});
+    this.emit("closed", {});
   }
 }
 
@@ -101,7 +112,7 @@ export const BrowserWindow = FakeBrowserWindow;
 export const screen = {
   getDisplayMatching(rect: Rectangle) {
     return {
-      bounds: { x: 0, y: 0, width: 100, height: 100 } as Rectangle,
+      bounds: { x: 0, y: 0, width: 1200, height: 800 } as Rectangle,
     };
   },
 };

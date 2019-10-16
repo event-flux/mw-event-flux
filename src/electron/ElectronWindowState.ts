@@ -1,27 +1,9 @@
-"use strict";
-
 import { BrowserWindow, Rectangle, screen } from "electron";
 
-export function deepEqual(obj1: any, obj2: any) {
-  if (obj1 && obj2 && typeof obj1 === "object" && typeof obj2 === "object") {
-    if (Object.keys(obj1).length !== Object.keys(obj2).length) {
-      return false;
-    }
-    for (let key in obj1) {
-      if (obj1[key] !== obj2[key]) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return obj1 === obj2;
-}
-
-const isInteger = (Number as any).isInteger;
 const eventHandlingDelay = 100;
 
 function isNumber(num: any) {
-  return typeof typeof num === "number" && !isNaN(num);
+  return typeof num === "number" && !isNaN(num);
 }
 
 type OnSave = (state: any) => void;
@@ -32,12 +14,13 @@ export interface IWinState {
   width?: number;
   height?: number;
   useContentSize?: boolean;
-  displayBounds?: Rectangle;
   isMaximized?: boolean;
   isFullScreen?: boolean;
 }
 
 interface IWinConfig {
+  defaultX?: number;
+  defaultY?: number;
   defaultWidth?: number;
   defaultHeight?: number;
   useContentSize?: boolean;
@@ -49,7 +32,7 @@ export default class ElectronWindowState {
   winRef: any;
   stateChangeTimer: any;
 
-  constructor(config: any, state: any, onSave: OnSave | null) {
+  constructor(config: any, state: IWinState, onSave: OnSave | null) {
     this.onSave = onSave;
     this.stateChangeHandler = this.stateChangeHandler.bind(this);
     this.closeHandler = this.closeHandler.bind(this);
@@ -58,97 +41,66 @@ export default class ElectronWindowState {
   }
 
   loadState(state: IWinState, config: IWinConfig) {
-    this.state = this.normState(state);
+    this.state = state;
+    this.normState(this.state, config);
     // Check state validity
-    this.validateState();
-    // Set state fallback values
-    this.state = (Object as any).assign(
-      {
-        width: config.defaultWidth || 800,
-        height: config.defaultHeight || 600,
-        useContentSize: config.useContentSize || false,
-      },
-      this.state
-    );
+    this.validateState(this.state);
   }
 
-  normState(state: IWinState) {
-    if (isNumber(state.x)) {
-      state.x = Math.floor(state.x as number);
+  normState(state: IWinState, config: IWinConfig) {
+    if (!isNumber(state.x)) {
+      state.x = config.defaultX || 0;
     }
-    if (isNumber(state.y)) {
-      state.y = Math.floor(state.y as number);
+    state.x = Math.floor(state.x as number);
+
+    if (!isNumber(state.y)) {
+      state.y = config.defaultY || 0;
     }
-    if (isNumber(state.width)) {
-      state.width = Math.floor(state.width as number);
+    state.y = Math.floor(state.y as number);
+
+    if (!isNumber(state.width)) {
+      state.width = config.defaultWidth || 800;
     }
-    if (isNumber(state.height)) {
-      state.height = Math.floor(state.height as number);
+    state.width = Math.floor(state.width as number);
+
+    if (!isNumber(state.height)) {
+      state.height = config.defaultHeight || 600;
     }
-    return state;
+    state.height = Math.floor(state.height as number);
+
+    if (state.useContentSize == null) {
+      state.useContentSize = config.useContentSize || false;
+    }
   }
 
   isNormal(win: BrowserWindow) {
     return !win.isMaximized() && !win.isMinimized() && !win.isFullScreen();
   }
 
-  hasBounds() {
-    let state = this.state;
-    return (
-      state &&
-      isInteger(state.x) &&
-      isInteger(state.y) &&
-      isInteger(state.width) &&
-      (state.width as number) > 0 &&
-      isInteger(state.height) &&
-      (state.height as number) > 0
-    );
-  }
-
-  validateState() {
-    let state = this.state;
-    if (state && (state.isMaximized || state.isFullScreen)) {
+  validateState(state: IWinState) {
+    // Get the display where the window was last open
+    let displayBounds = screen.getDisplayMatching(state as Rectangle).bounds;
+    if (
+      state.y! >= displayBounds.y &&
+      state.y! + state.height! <= displayBounds.y + displayBounds.height &&
+      state.x! >= displayBounds.x &&
+      state.x! + state.width! <= displayBounds.x + displayBounds.width
+    ) {
       return;
     }
-
-    if (this.hasBounds() && state.displayBounds) {
-      // Check if the display where the window was last open is still available
-      let displayBounds = screen.getDisplayMatching(state as Rectangle).bounds;
-      let sameBounds = deepEqual(state.displayBounds, displayBounds);
-      if (!sameBounds) {
-        if (displayBounds.width < state.displayBounds.width) {
-          if ((state.x as number) > displayBounds.width) {
-            state.x = 0;
-          }
-
-          if ((state.width as number) > displayBounds.width) {
-            state.width = displayBounds.width;
-          }
-        }
-
-        if (displayBounds.height < state.displayBounds.height) {
-          if ((state.y as number) > displayBounds.height) {
-            state.y = 0;
-          }
-
-          if ((state.height as number) > displayBounds.height) {
-            state.height = displayBounds.height;
-          }
-        }
-      }
-    }
+    state.width = Math.min(displayBounds.width, state.width!);
+    state.height = Math.min(displayBounds.height, state.height!);
+    state.x = Math.floor(displayBounds.x + (displayBounds.width - state.width) / 2);
+    state.y = Math.floor(displayBounds.y + (displayBounds.height - state.height) / 2);
   }
 
   updateState() {
     let state = this.state;
     let win = this.winRef;
-    if (!win) {
-      return;
-    }
     // don't throw an error when window was closed
     try {
-      let winBounds = state.useContentSize ? win.getContentBounds() : win.getBounds();
       if (this.isNormal(win)) {
+        let winBounds = state.useContentSize ? win.getContentBounds() : win.getBounds();
         state.x = winBounds.x;
         state.y = winBounds.y;
         state.width = winBounds.width;
@@ -156,7 +108,6 @@ export default class ElectronWindowState {
       }
       state.isMaximized = win.isMaximized();
       state.isFullScreen = win.isFullScreen();
-      state.displayBounds = screen.getDisplayMatching(winBounds).bounds;
     } catch (err) {
       console.error(err);
     }
@@ -175,7 +126,6 @@ export default class ElectronWindowState {
   closedHandler() {
     // Unregister listeners and save state
     this.unmanage();
-    this.updateState();
     this.onSave && this.onSave(this.state);
   }
 

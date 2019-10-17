@@ -10,6 +10,7 @@ branches:
 before_install:
   - npm install -g jest 
   - npm install -g codecov
+  - npm install electron-store
   
 install:
   - npm install

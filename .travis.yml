@@ -11,6 +11,7 @@ before_install:
   - npm install -g jest 
   - npm install -g codecov
   - npm install electron-store
+  - npm install react
   
 install:
   - npm install

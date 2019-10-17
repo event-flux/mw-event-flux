@@ -36,6 +36,31 @@ describe("RendererAppStore", () => {
     expect(appStore.rendererClient.sendMainMsg).toHaveBeenLastCalledWith(renderRegisterName, "win1");
   });
 
+  test("onDidMessage should observe messages", () => {
+    (window as any).query = {
+      winId: "win1",
+      parentId: "win2",
+      storeDeclarers: JSON.stringify([]),
+      state: JSON.stringify({ hello: 1 }),
+    };
+    let appStore = new RendererAppStore();
+
+    let observer = jest.fn();
+    appStore.onDidMessage(observer);
+    appStore.handleMessage("hello");
+    expect(observer).toHaveBeenCalledWith("hello");
+
+    observer.mockReset();
+    appStore.onDidWinMessage(observer);
+    appStore.handleWinMessage("win2", "hello");
+    expect(observer).toHaveBeenCalledWith({ senderId: "win2", data: "hello" });
+
+    observer.mockReset();
+    appStore.onDidInit(observer);
+    appStore.handleInit({ parentId: "win2", path: "/hello" });
+    expect(observer).toHaveBeenCalledWith({ parentId: "win2", path: "/hello" });
+  });
+
   test("request and release stores that in the renderer process", () => {
     (window as any).query = {
       winId: "win1",

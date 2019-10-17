@@ -3,10 +3,10 @@ import { Emitter } from "event-kit";
 
 export default class WindowProxy {
   store: RendererAppStore;
-  winId: string;
+  winId: string | null;
   emitter = new Emitter();
 
-  constructor(store: RendererAppStore, winId: string) {
+  constructor(store: RendererAppStore, winId: string | null) {
     this.store = store;
     this.winId = winId;
 

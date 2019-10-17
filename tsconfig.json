@@ -1,6 +1,6 @@
 {
   "include": [
-    "src/**/*.ts", "src/withState.tsx", "src/Provider.tsx"
+    "src/**/*.ts"
   ],
   "compilerOptions": {
     "module": "commonjs",

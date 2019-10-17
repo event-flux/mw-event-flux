@@ -18,6 +18,7 @@ export class ChildWindowProxy {
       this.messages.forEach(message => {
         this.send(message);
       });
+      this.messages = [];
     });
     this.store.onDidWinMessage(this.handleWinMessage.bind(this));
   }

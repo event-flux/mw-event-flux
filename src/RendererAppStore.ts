@@ -18,6 +18,8 @@ import objectMerge from "./utils/objectMerge";
 import { IStoreDispatcher, IDispatchInfo } from "./storeProxy/DispatchItemProxy";
 import { StoreListProxyDeclarer } from "./storeProxy/StoreListProxy";
 import { StoreMapProxyDeclarer } from "./storeProxy/StoreMapProxy";
+import { Emitter } from "event-kit";
+import WindowProxy from "./WindowProxy";
 
 class IDGenerator {
   count = 0;
@@ -31,6 +33,8 @@ declare global {
   interface Window {
     eventFluxWin: IWinProps;
     winId: string;
+    parentId?: string;
+    parentWin: WindowProxy;
   }
 }
 
@@ -39,6 +43,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
   idGenerator = new IDGenerator();
   resolveMap: { [invokeId: string]: { resolve: (data: any) => void; reject: (err: any) => void } } = {};
   winId: string;
+  emitter = new Emitter();
 
   constructor(storeDeclarers?: AnyStoreDeclarer[] | { [key: string]: any }, initStates?: any) {
     super();
@@ -54,6 +59,8 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     if (typeof window === "object") {
       window.eventFluxWin = winProps as IWinProps;
       window.winId = clientId;
+      window.parentId = winProps.parentId;
+      window.parentWin = new WindowProxy(this, winProps.parentId);
     }
     this.winId = clientId;
     this.rendererClient.sendMainMsg(renderRegisterName, clientId);
@@ -112,17 +119,41 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     resolve(result);
   }
 
-  handleMessage(data: any): void {}
+  // When renderer process receive message
+  handleMessage(data: any): void {
+    this.emitter.emit("did-message", data);
+  }
 
-  handleWinMessage(senderId: string, data: any): void {}
+  // When renderer process receive win message
+  handleWinMessage(senderId: string, data: any): void {
+    this.emitter.emit("did-win-message", { senderId, data });
+  }
 
+  // When renderer process receive init message
   handleInit(data: IWinProps): void {
     if (typeof window === "object") {
       window.eventFluxWin = {
         ...window.eventFluxWin,
         ...data,
       };
+      if (window.parentId) {
+        window.parentId = window.parentId;
+        window.parentWin.changeWinId(window.parentId);
+      }
+      this.emitter.emit("did-init", window.eventFluxWin);
     }
+  }
+
+  onDidMessage(callback: (data: any) => void) {
+    return this.emitter.on("did-message", callback);
+  }
+
+  onDidWinMessage(callback: (params: { senderId: string; data: any }) => void) {
+    return this.emitter.on("did-win-message", callback);
+  }
+
+  onDidInit(callback: (params: any) => void) {
+    return this.emitter.on("did-init", callback);
   }
 
   handleMainRequestStores(storeNames: string[]) {

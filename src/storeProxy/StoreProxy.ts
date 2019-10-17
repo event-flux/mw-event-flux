@@ -1,10 +1,8 @@
 import { DispatchItem, StoreDeclarer, StoreBase, AppStore } from "event-flux";
 import DispatchItemProxy, { IStoreDispatcher } from "./DispatchItemProxy";
+import { MultiWinStoreProxy } from "./MultiWinStoreProxy";
 
 export class StoreProxy extends DispatchItemProxy {
-  _refCount = 0;
-  _stateKey: string | undefined;
-
   constructor(appStore: IStoreDispatcher, storeKey: string) {
     super();
     return new Proxy(this, {
@@ -22,6 +20,9 @@ type StoreProxyConstruct = new (appStore: IStoreDispatcher, storeKey: string) =>
 
 export class StoreProxyDeclarer<T> extends StoreDeclarer<T> {
   create(appStore: AppStore & IStoreDispatcher): StoreBase<T> {
+    if (this.options!.storeKey === "multiWinStore") {
+      return (new MultiWinStoreProxy(appStore, this.options!.storeKey!) as any) as StoreBase<T>;
+    }
     return (new ((this.Store as any) as StoreProxyConstruct)(appStore, this.options!.storeKey!) as any) as StoreBase<T>;
   }
 }

@@ -1,11 +1,11 @@
 {
   "name": "electron-event-flux",
-  "version": "2.0.20",
+  "version": "3.0.0",
   "description": "Redux store which synchronizes between instances in multiple process",
   "main": "lib/index.js",
   "scripts": {
     "start": "electron tests",
-    "test": "jest",
+    "test": "jest --detectLeaks --coverage && codecov",
     "prepublish": "gulp",
     "lint": "tslint src/**/*.{ts,tsx}",
     "lint:fix": "tslint --fix ./src/**/*.{ts,tsx}",
@@ -38,15 +38,14 @@
   "author": "liuxiong",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/samiskin/redux-electron-store/issues"
+    "url": "https://github.com/event-flux/electron-event-flux/issues"
   },
   "files": [
     "src",
     "lib"
   ],
-  "homepage": "https://github.com/samiskin/redux-electron-store#readme",
+  "homepage": "https://github.com/event-flux/electron-event-flux#readme",
   "dependencies": {
-    "electron-store": "^4.0.0",
     "event-flux": "^1.0.14",
     "event-kit": "^2.5.3",
     "immutable": "^3.8.2",
@@ -88,7 +87,7 @@
     "weak": "^1.0.1"
   },
   "peerDependencies": {
-    "electron-store": "^2.0.0",
+    "electron-store": "^4.0.0",
     "react": ">16.0.0"
   }
 }

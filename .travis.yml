@@ -1,0 +1,18 @@
+language: node_js
+env: CI=true
+node_js:
+  - 'v10.16.0'
+
+branches:
+  only:
+    - master
+
+before_install:
+  - npm install -g jest 
+  - npm install -g codecov
+  
+install:
+  - npm install
+
+script:
+  - npm run test

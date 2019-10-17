@@ -1,10 +1,9 @@
-
-[![Travis CI](https://travis-ci.org/event-flux/event-flux.svg?branch=master)](https://travis-ci.org/event-flux/event-flux)
-[![codecov](https://codecov.io/gh/event-flux/event-flux/branch/master/graph/badge.svg)](https://codecov.io/gh/event-flux/event-flux)
-[![npm version](https://badge.fury.io/js/event-flux.svg)](https://www.npmjs.com/package/event-flux)
-[![Downloads](https://img.shields.io/npm/dm/event-flux.svg)](https://www.npmjs.com/package/event-flux)
-
 # event-flux
+
+[![Travis CI](https://travis-ci.org/event-flux/electron-event-flux.svg?branch=master)](https://travis-ci.org/event-flux/electron-event-flux)
+[![codecov](https://codecov.io/gh/event-flux/electron-event-flux/branch/master/graph/badge.svg)](https://codecov.io/gh/event-flux/electron-event-flux)
+[![npm version](https://badge.fury.io/js/electron-event-flux.svg)](https://www.npmjs.com/package/electron-event-flux)
+[![Downloads](https://img.shields.io/npm/dm/electron-event-flux.svg)](https://www.npmjs.com/package/electron-event-flux)
 
 
 event-flux是一个用于Javascript App的状态管理框架。它是为强交互的大型应用而生。

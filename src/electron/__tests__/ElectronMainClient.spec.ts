@@ -8,6 +8,8 @@ import {
   renderRequestStoreName,
   renderReleaseStoreName,
   winMessageName,
+  renderDispatchObserve,
+  renderDispatchDispose,
 } from "../../constants";
 import { decodeQuery } from "../../utils/queryHandler";
 
@@ -51,6 +53,12 @@ describe("ElectronMainClient", () => {
 
     ipcMain.emit(renderDispatchName, {}, "win1", 12, "hello");
     expect(mainClientCallback.handleRendererDispatch).toHaveBeenLastCalledWith("win1", 12, "hello");
+
+    ipcMain.emit(renderDispatchObserve, {}, "win1", 12, { store: "helloStore" });
+    expect(mainClientCallback.handleRendererDispatchObserve).toHaveBeenCalledWith("win1", 12, { store: "helloStore" });
+
+    ipcMain.emit(renderDispatchDispose, {}, "win1", 12);
+    expect(mainClientCallback.handleRendererDispatchDispose).toHaveBeenCalledWith("win1", 12);
 
     ipcMain.emit(renderRequestStoreName, {}, "win1", ["key1", "key2"]);
     expect(mainClientCallback.handleRequestStores).toHaveBeenLastCalledWith("win1", ["key1", "key2"]);

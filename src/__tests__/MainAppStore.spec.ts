@@ -1,8 +1,9 @@
 import MainAppStore from "../MainAppStore";
-import { declareStore, StoreBase, RecycleStrategy, declareStoreMap } from "event-flux";
+import { declareStore, StoreBase, RecycleStrategy, declareStoreMap, AppStore } from "event-flux";
 import { IMainClient } from "../mainClientTypes";
-import { mainDispatchName, mainReturnName } from "../constants";
+import { mainDispatchName, mainReturnName, mainInvokeName } from "../constants";
 import { declareWinStore } from "../StoreDeclarer";
+import MainClient from "../MainClient";
 
 jest.useFakeTimers();
 
@@ -268,5 +269,35 @@ describe("MainAppStore", () => {
     );
   });
 
-  test("handleRendererDispatch should can dispatch the method invocation", async () => {});
+  test("handleRendererDispatchObserve should observe and dispose store", async () => {
+    let mainAppStore = new MainAppStore([declareStore(StoreBase, [], { stateKey: "todo2", storeKey: "todo2Store" })]);
+    mainAppStore.init();
+
+    mainAppStore.multiWinSaver.addWin({ winId: "win1" });
+    mainAppStore.handleRequestStores("win1", ["todo2Store"]);
+
+    expect(mainAppStore.winObserves).toEqual({ win1: {} });
+    mainAppStore.handleRendererDispatchObserve("win1", "1", { store: "todo2Store", method: "observe" });
+    expect(mainAppStore.winObserves).toEqual({ win1: { 1: mainAppStore.winObserves.win1["1"] } });
+    expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenLastCalledWith(
+      mainAppStore.multiWinSaver.getWinInfo("win1"),
+      mainInvokeName,
+      "1",
+      [{}]
+    );
+
+    mainAppStore.stores.todo2Store.setState({ hello: "world" });
+    expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenLastCalledWith(
+      mainAppStore.multiWinSaver.getWinInfo("win1"),
+      mainInvokeName,
+      "1",
+      [{ hello: "world" }]
+    );
+
+    (mainAppStore.mainClient.sendWinMsg as jest.Mock).mockReset();
+    mainAppStore.handleRendererDispatchDispose("win1", "1");
+    expect(mainAppStore.winObserves).toEqual({ win1: {} });
+    mainAppStore.stores.todo2Store.setState({ hello: "next" });
+    expect(mainAppStore.mainClient.sendWinMsg).not.toHaveBeenCalled();
+  });
 });

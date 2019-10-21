@@ -7,7 +7,6 @@ import {
   mainInvokeName,
 } from "../constants";
 import { ipcRenderer } from "electron";
-import { Log, Logger } from "../utils/loggerApply";
 import { IRendererClientCallback } from "../rendererClientTypes";
 import { decodeQuery } from "../utils/queryHandler";
 

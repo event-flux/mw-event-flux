@@ -45,6 +45,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
   idGenerator = new IDGenerator();
   resolveMap: { [invokeId: string]: { resolve: (data: any) => void; reject: (err: any) => void } } = {};
   mainInvokeMap: { [invokeId: string]: (...args: any[]) => void } = {};
+
   winId: string;
   emitter = new Emitter();
 
@@ -128,7 +129,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
 
   handleMainInvoke(invokeId: string, args: any[]): void {
     let callback = this.mainInvokeMap[invokeId];
-    callback(...args);
+    callback && callback(...args);
   }
 
   // When renderer process receive message

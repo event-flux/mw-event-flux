@@ -1,7 +1,14 @@
 import { ipcRenderer } from "electron";
 import { IRendererClientCallback } from "../../rendererClientTypes";
 import ElectronRendererClient from "../ElectronRendererClient";
-import { initMessageName, mainDispatchName, mainReturnName, messageName, winMessageName } from "../../constants";
+import {
+  initMessageName,
+  mainDispatchName,
+  mainReturnName,
+  messageName,
+  winMessageName,
+  mainInvokeName,
+} from "../../constants";
 
 jest.useFakeTimers();
 
@@ -29,6 +36,9 @@ describe("ElectronRendererClient", () => {
 
     ipcRenderer.emit(mainDispatchName, {}, { hello: "dd" });
     expect(rendererCallback.handleDispatchReturn).toHaveBeenCalledWith({ hello: "dd" });
+
+    ipcRenderer.emit(mainInvokeName, {}, "1", ["hello"]);
+    expect(rendererCallback.handleMainInvoke).toHaveBeenCalledWith("1", ["hello"]);
 
     ipcRenderer.emit(mainReturnName, {}, "invoke1", undefined, "hello");
     expect(rendererCallback.handleInvokeReturn).toHaveBeenCalledWith("invoke1", undefined, "hello");

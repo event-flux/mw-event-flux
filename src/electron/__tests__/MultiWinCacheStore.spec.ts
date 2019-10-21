@@ -110,7 +110,8 @@ describe("MultiWinStore", () => {
     expect(multiWinStore.clientInfoMap.mainClient).toEqual({
       path: "/home",
       winId: "mainClient",
-      parentId: undefined,
+      groups: ["main"],
+      name: "mainClient",
       winState: {
         x: 10,
         y: 0,
@@ -121,7 +122,7 @@ describe("MultiWinStore", () => {
     });
   });
 
-  test.only("create window should behave correctly", () => {
+  test("create window should behave correctly", () => {
     multiWinStore.getStorage()!.set("clients", []);
     multiWinStore.init();
 

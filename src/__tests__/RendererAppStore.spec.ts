@@ -193,4 +193,33 @@ describe("RendererAppStore", () => {
     expect(appStore).not.toBe(originState);
     expect(appStore.state).toEqual({ hello: 3 });
   });
+
+  test("handleDispatchDisposable should dispatch the observer to renderer app store", () => {
+    (window as any).query = {
+      winId: "win1",
+      storeDeclarers: JSON.stringify([
+        {
+          storeType: "Item",
+          storeKey: "mainTodo1Store",
+          stateKey: "main1Todo",
+          depStoreNames: [],
+          _invokers: ["doHello"],
+          _evs: ["onDidUpdate", "observe"],
+        },
+      ]),
+      state: JSON.stringify({ hello: 1, world: 2 }),
+    };
+    let appStore = new RendererAppStore([]);
+    appStore.init();
+
+    let observer = jest.fn();
+    let disposable = appStore.handleDispatchDisposable({ store: "mainTodo1Store", method: "onDidUpdate" }, observer);
+    expect(appStore.mainInvokeMap).toEqual({ 1: observer });
+
+    appStore.handleMainInvoke("1", ["hello", "world"]);
+    expect(observer).toHaveBeenLastCalledWith("hello", "world");
+
+    disposable.dispose();
+    expect(appStore.mainInvokeMap).toEqual({});
+  });
 });

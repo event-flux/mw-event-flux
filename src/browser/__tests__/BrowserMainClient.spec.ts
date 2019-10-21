@@ -7,6 +7,8 @@ import {
   renderRequestStoreName,
   renderReleaseStoreName,
   winMessageName,
+  renderDispatchObserve,
+  renderDispatchDispose,
 } from "../../constants";
 
 declare global {
@@ -64,6 +66,16 @@ describe("BrowserMainClient", () => {
     window.postMessage({ action: renderDispatchName, data: ["win1", 12, "hello"] }, "*");
     await new Promise(resolve => setTimeout(resolve, 0));
     expect(mainClientCallback.handleRendererDispatch).toHaveBeenLastCalledWith("win1", 12, "hello");
+
+    window.postMessage({ action: renderDispatchObserve, data: ["win1", 12, { store: "helloStore" }] }, "*");
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(mainClientCallback.handleRendererDispatchObserve).toHaveBeenLastCalledWith("win1", 12, {
+      store: "helloStore",
+    });
+
+    window.postMessage({ action: renderDispatchDispose, data: ["win1", 12] }, "*");
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(mainClientCallback.handleRendererDispatchDispose).toHaveBeenLastCalledWith("win1", 12);
 
     window.postMessage({ action: renderRequestStoreName, data: ["win1", ["key1", "key2"]] }, "*");
     await new Promise(resolve => setTimeout(resolve, 0));

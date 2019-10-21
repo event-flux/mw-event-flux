@@ -2,7 +2,7 @@ import { StoreBase, invoker } from "event-flux";
 import { declareStore, declareStoreMap, declareStoreList } from "event-flux";
 import storage from "./storage";
 import { declareWinStore } from "../../../src/StoreDeclarer";
-const { Map, List } = require("immutable");
+import { Map, List } from "immutable";
 
 function isDefined(s) {
   return typeof s !== "undefined";
@@ -11,7 +11,7 @@ function isDefined(s) {
 class Todo4Store extends StoreBase<any> {
   constructor(appStore) {
     super(appStore);
-    this.state = { todo4Map: new Map(), todo4List: new List() };
+    this.state = { todo4Map: Map(), todo4List: List() };
   }
 
   addKey(key, val) {

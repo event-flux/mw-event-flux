@@ -1,11 +1,11 @@
-import StoreBase from 'event-flux/lib/StoreBase';
+import { declareStore, StoreBase } from "event-flux";
 
-export default class TodoStore extends StoreBase {
-  constructor(arg) {
-    super();
+class TodoStore extends StoreBase<any> {
+  constructor(appStore) {
+    super(appStore);
     this.state = { count: 0 };
   }
- 
+
   addTodo(num) {
     this.setState({ count: this.state.count + num });
   }
@@ -14,3 +14,5 @@ export default class TodoStore extends StoreBase {
     this.setState({ count: this.state.count - num });
   }
 }
+
+export default declareStore(TodoStore);

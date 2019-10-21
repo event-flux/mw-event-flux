@@ -1,6 +1,6 @@
 {
   "name": "mw-event-flux",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Redux store which synchronizes between instances in multiple process",
   "main": "lib/index.js",
   "scripts": {
@@ -45,6 +45,7 @@
   ],
   "homepage": "https://github.com/event-flux/mw-event-flux#readme",
   "dependencies": {
+    "electron-store": "^5.0.0",
     "event-flux": "^1.0.15",
     "event-kit": "^2.5.3",
     "immutable": "^3.8.2",

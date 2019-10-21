@@ -17,18 +17,10 @@ gulp.task('babel', function() {
 		.pipe(gulp.dest('lib/'));
 });
 
+var tsProject = ts.createProject("tsconfig.json");
 gulp.task('ts', function () {
   var tsResult = gulp.src(['src/**/*.ts', 'src/**/*.tsx'])
-    .pipe(ts({
-      declaration: true,
-      "target": "es5",
-      "module": "commonjs",
-      "jsx": "react",
-      "noImplicitAny": false,
-      "moduleResolution": "node",
-      "lib": ["es2015", "dom"],
-      "downlevelIteration": true
-    }));
+    .pipe(tsProject());
 
   return merge([
     tsResult.dts.pipe(gulp.dest('lib')),

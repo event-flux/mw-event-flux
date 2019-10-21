@@ -15,7 +15,7 @@
     "event-flux": "^0.9.2",
     "mw-event-flux": "^1.0.1",
     "react": "^16.4.0",
-    "react-dom": "^16.4.0",
+    "react-dom": "^16.4.2",
     "source-map-support": "^0.5.5"
   },
   "devDependencies": {

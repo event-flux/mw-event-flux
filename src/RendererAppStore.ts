@@ -22,6 +22,7 @@ import { StoreListProxyDeclarer } from "./storeProxy/StoreListProxy";
 import { StoreMapProxyDeclarer } from "./storeProxy/StoreMapProxy";
 import { Emitter } from "event-kit";
 import WindowProxy from "./WindowProxy";
+import { serialize, deserialize } from "json-immutable-bn";
 
 class IDGenerator {
   count = 0;
@@ -40,6 +41,11 @@ declare global {
   }
 }
 
+export interface IAppStoreOptions {
+  serializer: (value: any) => string;
+  deserializer: (str: string) => any;
+}
+
 export default class RendererAppStore extends AppStore implements IRendererClientCallback, IStoreDispatcher {
   rendererClient: IRendererClient;
   idGenerator = new IDGenerator();
@@ -49,13 +55,18 @@ export default class RendererAppStore extends AppStore implements IRendererClien
   winId: string;
   emitter = new Emitter();
 
-  constructor(storeDeclarers?: AnyStoreDeclarer[] | { [key: string]: any }, initStates?: any) {
+  serializer: (value: any) => string;
+  deserializer: (str: string) => any;
+
+  constructor(storeDeclarers?: AnyStoreDeclarer[], options?: IAppStoreOptions) {
     super();
 
-    if (!Array.isArray(storeDeclarers)) {
-      initStates = storeDeclarers;
+    if (!storeDeclarers) {
       storeDeclarers = [];
     }
+
+    this.serializer = (options && options.serializer) || serialize;
+    this.deserializer = (options && options.deserializer) || deserialize;
 
     this.rendererClient = new RendererClient(this);
 
@@ -101,7 +112,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
 
     this.registerStore(...storeDeclarers);
 
-    initStates = initStates ? { ...initStates, ...JSON.parse(state) } : JSON.parse(state);
+    let initStates = this.deserializer(state);
     if (initStates) {
       this.__initStates__ = initStates;
       this.state = initStates;
@@ -109,7 +120,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
   }
 
   handleDispatchReturn(actionStr: any): void {
-    const { updated, deleted } = JSON.parse(actionStr);
+    const { updated, deleted } = this.deserializer(actionStr);
     this.state = objectMerge(this.state, updated, deleted);
     this.batchUpdater.requestUpdate();
   }
@@ -122,7 +133,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
       return reject(error);
     }
     if (result !== undefined) {
-      result = JSON.parse(result);
+      result = this.deserializer(result);
     }
     resolve(result);
   }
@@ -195,14 +206,14 @@ export default class RendererAppStore extends AppStore implements IRendererClien
 
   handleDispatch(dispatchInfo: IDispatchInfo) {
     let invokeId = this.idGenerator.genID();
-    this.rendererClient.sendMainMsg(renderDispatchName, this.winId, invokeId, JSON.stringify(dispatchInfo));
+    this.rendererClient.sendMainMsg(renderDispatchName, this.winId, invokeId, this.serializer(dispatchInfo));
     return new Promise(
       (thisResolve, thisReject) => (this.resolveMap[invokeId] = { resolve: thisResolve, reject: thisReject })
     );
   }
 
   handleDispatchNoReturn(dispatchInfo: IDispatchInfo) {
-    this.rendererClient.sendMainMsg(renderDispatchNoReturnName, this.winId, JSON.stringify(dispatchInfo));
+    this.rendererClient.sendMainMsg(renderDispatchNoReturnName, this.winId, this.serializer(dispatchInfo));
   }
 
   handleDispatchDisposable(dispatchInfo: IDispatchInfo, callback: (...args: any[]) => void) {

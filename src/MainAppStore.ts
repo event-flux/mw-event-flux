@@ -27,8 +27,7 @@ import filterApply from "./utils/filterApply";
 import MainClient from "./MainClient";
 import filterDifference from "./utils/filterDifference";
 import { DisposableLike } from "event-kit";
-
-const stringifyReplacer = (key: string, value: any) => (typeof value === "undefined" ? null : value);
+import { serialize, deserialize } from "json-immutable-bn";
 
 function getStoreType(storeDeclarer: AnyStoreDeclarer): "Item" | "List" | "Map" {
   if (StoreDeclarer.isStore(storeDeclarer)) {
@@ -77,6 +76,11 @@ interface IWinFilter {
   [storeKey: string]: true | false | IWinFilter;
 }
 
+export interface IAppStoreOptions {
+  serializer: (value: any) => string;
+  deserializer: (str: string) => any;
+}
+
 export default class MainAppStore extends AppStore implements IMainClientCallback {
   multiWinSaver: MultiWinSaver = new MultiWinSaver();
   winFilters: { [winId: string]: IWinFilter } = {};
@@ -87,6 +91,15 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
   winObserves: { [winId: string]: { [invokeId: string]: DisposableLike } } = {};
 
   mainClient: IMainClient = new MainClient(this.multiWinSaver, this);
+
+  serializer: (value: any) => string;
+  deserializer: (str: string) => any;
+
+  constructor(storeDeclarers?: AnyStoreDeclarer[], options?: IAppStoreOptions) {
+    super(storeDeclarers, {});
+    this.serializer = (options && options.serializer) || serialize;
+    this.deserializer = (options && options.deserializer) || deserialize;
+  }
 
   init() {
     super.init();
@@ -220,7 +233,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
   }
 
   async _handleRendererPayload(winId: string, payload: string): Promise<any> {
-    let { store: storeKey, method, index, args } = JSON.parse(payload);
+    let { store: storeKey, method, index, args } = this.deserializer(payload);
     let result = await this._getStoreMethod(storeKey, winId, method, index)(...args);
     return result;
   }
@@ -237,7 +250,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
           mainReturnName,
           invokeId,
           undefined,
-          result !== undefined ? JSON.stringify(result) : result
+          result !== undefined ? this.serializer(result) : result
         );
       },
       err => {
@@ -479,7 +492,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       }
     }
 
-    return JSON.stringify(this._transformWinState(finalState), stringifyReplacer);
+    return this.serializer(this._transformWinState(finalState));
   }
 
   handleWillChange(prevState: any, state: any) {
@@ -506,7 +519,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       // let [updated, deleted] = filterWindowDelta(filterUpdated, filterDeleted, winManagerKey, clientId);
       if (!isEmpty(filterUpdated) || !isEmpty(filterDeleted)) {
         const action = { updated: filterUpdated, deleted: filterDeleted };
-        this.mainClient.sendWinMsg(client, mainDispatchName, JSON.stringify(action, stringifyReplacer));
+        this.mainClient.sendWinMsg(client, mainDispatchName, this.serializer(action));
       }
     });
   }
@@ -520,11 +533,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
 
     if (!isEmpty(updated) || !isEmpty(deleted)) {
       const action = { updated, deleted };
-      this.mainClient.sendWinMsg(
-        this.multiWinSaver.getWinInfo(winId),
-        mainDispatchName,
-        JSON.stringify(action, stringifyReplacer)
-      );
+      this.mainClient.sendWinMsg(this.multiWinSaver.getWinInfo(winId), mainDispatchName, this.serializer(action));
     }
   }
 }

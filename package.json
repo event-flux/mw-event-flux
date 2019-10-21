@@ -49,7 +49,7 @@
     "event-flux": "^1.0.15",
     "event-kit": "^2.5.3",
     "immutable": "^3.8.2",
-    "json-immutable-bn": "^0.4.4",
+    "json-immutable-bn": "^0.4.5",
     "react": "^16.10.2"
   },
   "devDependencies": {

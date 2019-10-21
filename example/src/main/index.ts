@@ -1,22 +1,31 @@
-'use strict'
+"use strict";
 
-import { app, BrowserWindow } from 'electron'
-import * as path from 'path'
-import { format as formatUrl } from 'url'
-import TodoStore from './store';
+import { app, BrowserWindow } from "electron";
+import * as path from "path";
+import { format as formatUrl } from "url";
+import {
+  todoStoreDeclarer,
+  winTodoStoreDeclarer,
+  todo2StoreDeclarer,
+  todo3StoreDeclarer,
+  todo3ListDeclarer,
+  todo3MapDeclarer,
+  todo4StoreDeclarer,
+} from "./store";
 // import MultiWinStore from 'electron-event-flux/lib/MultiWinCacheStore';
 // import buildMultiWinAppStore from 'electron-event-flux/lib/MainAppStore';
-import MultiWinStore from '../../../src/MultiWinCacheStore';
-import buildMultiWinAppStore from '../../../src/MainAppStore';
+import MultiWinStore from "mw-event-flux/lib/electron/MultiWinCacheStore";
+import MainAppStore from "mw-event-flux/lib/MainAppStore";
 // import { winManagerStoreName } from '../../../src/constants';
 // import ElectronWindowState from '../../../src/ElectronWindowState';
-import storage from './storage';
+import storage from "./storage";
+import { declareStore } from "event-flux";
 
-const electron = require('electron');
+const electron = require("electron");
 
-const isDevelopment = process.env.NODE_ENV !== 'production'
+const isDevelopment = process.env.NODE_ENV !== "production";
 
-var appStore;
+let appStore;
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 
@@ -40,7 +49,7 @@ var appStore;
 //   }
 
 //   saveClients(clientIds) {
-//     let clients = clientIds.map(id => ({ 
+//     let clients = clientIds.map(id => ({
 //       clientId: id, url: this.clientUrlMap[id], winState: this.clientStateMap[id],
 //     }));
 //     storage.set('clients', clients);
@@ -55,7 +64,7 @@ var appStore;
 //     let winState = new ElectronWindowState(null, params);
 
 //     let winInfo = createElectronWin(url, clientId, winState.state);
-//     if (!clientId) clientId = winInfo.clientId; 
+//     if (!clientId) clientId = winInfo.clientId;
 //     this.clientIds.push(clientId);
 
 //     this.clientUrlMap[clientId] = url;
@@ -69,7 +78,7 @@ var appStore;
 //     winState.manage(win);
 
 //     this.saveClients(this.clientIds);   // Save clients into Storage
-  
+
 //     win.on('closed', () => {
 //       if (this.willQuit) return;
 //       if (clientId === 'mainClient') {
@@ -92,19 +101,26 @@ class MyMultiWinStore extends MultiWinStore {
   }
 }
 
-appStore = buildMultiWinAppStore({ todo: TodoStore }, { winTodo: TodoStore }, {
-  WinHandleStore: MyMultiWinStore
-}, console.log);
- 
+appStore = new MainAppStore([
+  todoStoreDeclarer,
+  winTodoStoreDeclarer,
+  todo2StoreDeclarer,
+  todo3StoreDeclarer,
+  todo3ListDeclarer,
+  todo3MapDeclarer,
+  todo4StoreDeclarer,
+  declareStore(MultiWinStore),
+]);
+
 // let mainWindow;
 
 // quit application when all windows are closed
-app.on('window-all-closed', () => {
+app.on("window-all-closed", () => {
   // on macOS it is common for applications to stay open until the user explicitly quits
-  if (process.platform !== 'darwin') {
-    app.quit()
+  if (process.platform !== "darwin") {
+    app.quit();
   }
-})
+});
 
 // app.on('activate', () => {
 //   // on macOS it is common to re-create a window even after all windows have been closed

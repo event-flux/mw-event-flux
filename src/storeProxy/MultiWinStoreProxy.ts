@@ -42,24 +42,7 @@ export class ChildWindowProxy {
   }
 }
 
-export class MultiWinStoreProxy extends DispatchItemProxy {
-  appStore: RendererAppStore;
-  storeKey: string;
-
-  constructor(appStore: IStoreDispatcher, storeKey: string) {
-    super();
-    this.appStore = appStore as RendererAppStore;
-    this.storeKey = storeKey;
-    return new Proxy(this, {
-      get(target: MultiWinStoreProxy, property: string, receiver) {
-        if (target[property] != null) {
-          return target[property];
-        }
-        return (...args: any[]) => appStore.handleDispatch({ store: storeKey, method: property, args });
-      },
-    });
-  }
-
+export class MultiWinStoreProxy extends StoreProxy {
   createWin(url: IWinProps | string, parentId: string, params: IWinParams): ChildWindowProxy {
     let result = this.appStore.handleDispatch({
       store: this.storeKey,

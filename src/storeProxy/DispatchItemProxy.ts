@@ -1,16 +1,19 @@
 import { DispatchItem } from "event-flux";
+import { DisposableLike } from "event-kit";
 
 export interface IDispatchInfo {
   store: string;
   index?: string | number;
   method: string;
-  args: any[];
+  args?: any[];
 }
 
 export interface IStoreDispatcher {
   handleDispatch(dispatchInfo: IDispatchInfo): void;
 
   handleDispatchNoReturn(dispatchInfo: IDispatchInfo): void;
+
+  handleDispatchDisposable(dispatchInfo: IDispatchInfo, callback: (...args: any[]) => void): DisposableLike;
 
   handleMainMapRequestStores?(storeName: string, mapKeys: string[]): void;
 

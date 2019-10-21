@@ -11,6 +11,8 @@ import {
   renderDispatchNoReturnName,
   renderMapRequestStoreName,
   renderMapReleaseStoreName,
+  renderDispatchObserve,
+  renderDispatchDispose,
 } from "./constants";
 import RendererClient from "./RendererClient";
 import { StoreProxy, StoreProxyDeclarer } from "./storeProxy/StoreProxy";
@@ -42,6 +44,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
   rendererClient: IRendererClient;
   idGenerator = new IDGenerator();
   resolveMap: { [invokeId: string]: { resolve: (data: any) => void; reject: (err: any) => void } } = {};
+  mainInvokeMap: { [invokeId: string]: (...args: any[]) => void } = {};
   winId: string;
   emitter = new Emitter();
 
@@ -87,6 +90,10 @@ export default class RendererAppStore extends AppStore implements IRendererClien
           stateKey: storeDeclarer.stateKey,
           storeKey: storeDeclarer.storeKey,
           forMain: true,
+          _evs: storeDeclarer._evs,
+          _invokers: storeDeclarer._invokers,
+          _mapEvs: storeDeclarer._mapEvs,
+          _mapInvokers: storeDeclarer._mapInvokers,
         })
       );
     }
@@ -117,6 +124,11 @@ export default class RendererAppStore extends AppStore implements IRendererClien
       result = JSON.parse(result);
     }
     resolve(result);
+  }
+
+  handleMainInvoke(invokeId: string, args: any[]): void {
+    let callback = this.mainInvokeMap[invokeId];
+    callback(...args);
   }
 
   // When renderer process receive message
@@ -190,6 +202,18 @@ export default class RendererAppStore extends AppStore implements IRendererClien
 
   handleDispatchNoReturn(dispatchInfo: IDispatchInfo) {
     this.rendererClient.sendMainMsg(renderDispatchNoReturnName, this.winId, JSON.stringify(dispatchInfo));
+  }
+
+  handleDispatchDisposable(dispatchInfo: IDispatchInfo, callback: (...args: any[]) => void) {
+    let invokeId = this.idGenerator.genID();
+    this.mainInvokeMap[invokeId] = callback;
+    this.rendererClient.sendMainMsg(renderDispatchObserve, this.winId, invokeId, dispatchInfo);
+    return {
+      dispose: () => {
+        this.rendererClient.sendMainMsg(renderDispatchDispose, this.winId, invokeId);
+        delete this.mainInvokeMap[invokeId];
+      },
+    };
   }
 
   /**

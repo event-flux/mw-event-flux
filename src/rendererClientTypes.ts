@@ -9,6 +9,8 @@ export interface IRendererClientCallback {
 
   handleInvokeReturn(invokeId: string, error: any, data: any): void;
 
+  handleMainInvoke(invokeId: string, args: any[]): void;
+
   handleMessage(data: any): void;
 
   handleWinMessage(senderId: string, data: any): void;

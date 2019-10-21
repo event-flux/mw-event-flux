@@ -7,6 +7,7 @@ import {
   StoreMapDeclarer,
   OperateMode,
   StoreMap,
+  StoreList,
 } from "event-flux";
 import {
   mainDispatchName,
@@ -16,6 +17,7 @@ import {
   messageName,
   winMessageName,
   initMessageName,
+  mainInvokeName,
 } from "./constants";
 import MultiWinSaver from "./MultiWinSaver";
 import { IMainClient, IMainClientCallback, IErrorObj, IWinProps, IWinInfo, IOutStoreDeclarer } from "./mainClientTypes";
@@ -24,10 +26,11 @@ import { isEmpty, isObject } from "./utils/objUtils";
 import filterApply from "./utils/filterApply";
 import MainClient from "./MainClient";
 import filterDifference from "./utils/filterDifference";
+import { DisposableLike } from "event-kit";
 
 const stringifyReplacer = (key: string, value: any) => (typeof value === "undefined" ? null : value);
 
-function getStoreType(storeDeclarer: AnyStoreDeclarer) {
+function getStoreType(storeDeclarer: AnyStoreDeclarer): "Item" | "List" | "Map" {
   if (StoreDeclarer.isStore(storeDeclarer)) {
     return "Item";
   } else if (StoreListDeclarer.isStoreList(storeDeclarer)) {
@@ -43,13 +46,29 @@ function genOutStoreDeclarers(appStore: AppStore) {
   let declarers: IOutStoreDeclarer[] = [];
   for (let key in appStore._storeRegisterMap) {
     let storeDeclarer = appStore._storeRegisterMap[key];
-    let { storeKey, stateKey } = storeDeclarer.options!;
-    declarers.push({
+    let options = storeDeclarer.options!;
+    let { storeKey, stateKey } = options;
+    let { _evs, _invokers } = storeDeclarer.Store.prototype;
+    let storeType = getStoreType(storeDeclarer);
+
+    let outDeclarer: IOutStoreDeclarer = {
       storeKey: storeKey!,
       stateKey: stateKey!,
-      storeType: getStoreType(storeDeclarer),
+      storeType,
       depStoreNames: storeDeclarer.depStoreNames,
-    });
+      _evs,
+      _invokers,
+    };
+    if (storeType === "List") {
+      let { _evs: _mapEvs, _invokers: _mapInvokers } = (options.StoreList || StoreList).prototype;
+      outDeclarer._mapEvs = _mapEvs;
+      outDeclarer._mapInvokers = _mapInvokers;
+    } else if (storeType === "Map") {
+      let { _evs: _mapEvs, _invokers: _mapInvokers } = (options.StoreMap || StoreMap).prototype;
+      outDeclarer._mapEvs = _mapEvs;
+      outDeclarer._mapInvokers = _mapInvokers;
+    }
+    declarers.push(outDeclarer);
   }
   return JSON.stringify(declarers);
 }
@@ -65,6 +84,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
   outStoreDeclarers: string = "";
   winHoldStores: { [winId: string]: Set<string> } = {};
   storeMapModes: { [storeMapKey: string]: OperateMode } = {};
+  winObserves: { [winId: string]: { [invokeId: string]: DisposableLike } } = {};
 
   mainClient: IMainClient = new MainClient(this.multiWinSaver, this);
 
@@ -80,6 +100,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     this.multiWinSaver.onDidAddWin((winId: string) => {
       this.winFilters[winId] = {};
       this.winHoldStores[winId] = new Set<string>();
+      this.winObserves[winId] = {};
     });
     this.multiWinSaver.onDidDeleteWin((winId: string) => {
       let winStoreKeys = this.winHoldStores[winId];
@@ -95,6 +116,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       }
       delete this.winHoldStores[winId];
       delete this.winFilters[winId];
+      delete this.winObserves[winId];
     });
 
     if (process.env.NODE_ENV !== "production") {
@@ -177,8 +199,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     delete this.stores[storeKey];
   }
 
-  async _handleRendererPayload(winId: string, payload: string): Promise<any> {
-    let { store: storeKey, method, index, args } = JSON.parse(payload);
+  _getStoreMethod(storeKey: string, winId: string, method: string, index?: string) {
     let store = this.stores[this._getStoreKey(storeKey, winId)];
     if (!store) {
       throw new Error(`The store ${storeKey} for winId ${winId} is not exists`);
@@ -194,8 +215,12 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     if (!(store as any)[method]) {
       throw new Error(`The store ${storeKey}'s method ${method} is not exists`);
     }
+    return (store as any)[method].bind(store);
+  }
 
-    let result = await (store as any)[method](...args);
+  async _handleRendererPayload(winId: string, payload: string): Promise<any> {
+    let { store: storeKey, method, index, args } = JSON.parse(payload);
+    let result = await this._getStoreMethod(storeKey, winId, method, index)(...args);
     return result;
   }
 
@@ -239,6 +264,26 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       return;
     }
     this._handleRendererPayload(winId, stringifiedAction);
+  }
+
+  handleRendererDispatchObserve(winId: string, invokeId: string, action: any) {
+    let { store: storeKey, method, index } = action;
+    let storeMethod = this._getStoreMethod(storeKey, winId, method, index);
+    this.winObserves[winId][invokeId] = storeMethod((...args: any[]) => {
+      let winInfo = this.multiWinSaver.getWinInfo(winId);
+      if (!winInfo) {
+        return;
+      }
+      this.mainClient.sendWinMsg(winInfo, mainInvokeName, invokeId, args);
+    });
+  }
+
+  handleRendererDispatchDispose(winId: string, invokeId: string) {
+    let disposable = this.winObserves[winId][invokeId];
+    if (disposable) {
+      disposable.dispose();
+      delete this.winObserves[winId][invokeId];
+    }
   }
 
   handleWinMessage(senderId: string, targetId: string, data: any) {

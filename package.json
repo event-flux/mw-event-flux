@@ -45,7 +45,7 @@
   ],
   "homepage": "https://github.com/event-flux/mw-event-flux#readme",
   "dependencies": {
-    "event-flux": "^1.0.14",
+    "event-flux": "^1.0.15",
     "event-kit": "^2.5.3",
     "immutable": "^3.8.2",
     "json-immutable-bn": "^0.4.4"

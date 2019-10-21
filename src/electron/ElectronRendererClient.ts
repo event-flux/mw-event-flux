@@ -1,4 +1,11 @@
-import { initMessageName, mainDispatchName, mainReturnName, winMessageName, messageName } from "../constants";
+import {
+  initMessageName,
+  mainDispatchName,
+  mainReturnName,
+  winMessageName,
+  messageName,
+  mainInvokeName,
+} from "../constants";
 import { ipcRenderer } from "electron";
 import { Log, Logger } from "../utils/loggerApply";
 import { IRendererClientCallback } from "../rendererClientTypes";
@@ -19,6 +26,9 @@ export default class ElectronRendererClient {
     });
     ipcRenderer.on(mainReturnName, (event: Event, invokeId: string, error: Error, result: any) => {
       this.rendererCallback.handleInvokeReturn(invokeId, error, result);
+    });
+    ipcRenderer.on(mainInvokeName, (event: Event, invokeId: string, args: any[]) => {
+      this.rendererCallback.handleMainInvoke(invokeId, args);
     });
     ipcRenderer.on(messageName, (event: Event, params: any) => {
       this.rendererCallback.handleMessage(params);

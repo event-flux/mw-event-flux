@@ -1,4 +1,11 @@
-import { mainDispatchName, mainReturnName, winMessageName, messageName, initMessageName } from "../constants";
+import {
+  mainDispatchName,
+  mainReturnName,
+  winMessageName,
+  messageName,
+  initMessageName,
+  mainInvokeName,
+} from "../constants";
 import { IRendererClient, IRendererClientCallback } from "../rendererClientTypes";
 import { decodeQuery } from "../utils/queryHandler";
 
@@ -30,18 +37,27 @@ export default class BrowserRendererClient implements IRendererClient {
   _handleMessage(event: MessageEvent) {
     let { action, data } = event.data || ({} as any);
 
-    if (action === mainDispatchName) {
-      this.rendererCallback.handleDispatchReturn(data[0]);
-    } else if (action === mainReturnName) {
-      let [invokeId, error, result] = data;
-      this.rendererCallback.handleInvokeReturn(invokeId, error, result);
-    } else if (action === messageName) {
-      this.rendererCallback.handleMessage(data[0]);
-    } else if (action === winMessageName) {
-      let [senderId, payload] = data;
-      this.rendererCallback.handleWinMessage(senderId, payload);
-    } else if (action === initMessageName) {
-      this.rendererCallback.handleInit(data[0]);
+    switch (action) {
+      case mainDispatchName:
+        return this.rendererCallback.handleDispatchReturn(data[0]);
+      case mainReturnName: {
+        let [invokeId, error, result] = data;
+        return this.rendererCallback.handleInvokeReturn(invokeId, error, result);
+      }
+      case mainInvokeName: {
+        let [invokeId, args] = data;
+        return this.rendererCallback.handleMainInvoke(invokeId, args);
+      }
+      case messageName: {
+        return this.rendererCallback.handleMessage(data[0]);
+      }
+      case winMessageName: {
+        let [senderId, payload] = data;
+        return this.rendererCallback.handleWinMessage(senderId, payload);
+      }
+      case initMessageName: {
+        return this.rendererCallback.handleInit(data[0]);
+      }
     }
   }
 }

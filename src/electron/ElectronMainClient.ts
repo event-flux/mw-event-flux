@@ -9,6 +9,8 @@ import {
   renderReleaseStoreName,
   renderMapRequestStoreName,
   renderMapReleaseStoreName,
+  renderDispatchObserve,
+  renderDispatchDispose,
 } from "../constants";
 import { ipcMain, WebContents, BrowserWindow, Event } from "electron";
 import MultiWinSaver from "../MultiWinSaver";
@@ -36,6 +38,12 @@ export default class ElectronMainClient implements IMainClient {
     });
     ipcMain.on(renderDispatchNoReturnName, (event: Event, clientId: string, args: string) => {
       this.mainClientCallback.handleRendererDispatchNoReturn(clientId, args);
+    });
+    ipcMain.on(renderDispatchObserve, (event: Event, clientId: string, invokeId: string, method: any) => {
+      this.mainClientCallback.handleRendererDispatchObserve(clientId, invokeId, method);
+    });
+    ipcMain.on(renderDispatchDispose, (event: Event, clientId: string, invokeId: string) => {
+      this.mainClientCallback.handleRendererDispatchDispose(clientId, invokeId);
     });
     ipcMain.on(renderRequestStoreName, (event: Event, clientId: string, storeKeys: string[]) => {
       this.mainClientCallback.handleRequestStores(clientId, storeKeys);

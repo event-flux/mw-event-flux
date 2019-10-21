@@ -12,6 +12,7 @@ describe("ElectronRendererClient", () => {
     rendererCallback = {
       handleDispatchReturn: jest.fn(),
       handleInvokeReturn: jest.fn(),
+      handleMainInvoke: jest.fn(),
       handleWinMessage: jest.fn(),
       handleMessage: jest.fn(),
       handleInit: jest.fn(),

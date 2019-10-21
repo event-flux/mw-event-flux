@@ -22,7 +22,15 @@ describe("MainAppStore", () => {
     let mainAppStore = new MainAppStore([declareStore(StoreBase, [], { stateKey: "todo", storeKey: "todoStore" })]);
     mainAppStore.init();
     expect(mainAppStore.outStoreDeclarers).toEqual(
-      JSON.stringify([{ storeKey: "todoStore", stateKey: "todo", storeType: "Item", depStoreNames: [] }])
+      JSON.stringify([
+        {
+          storeKey: "todoStore",
+          stateKey: "todo",
+          storeType: "Item",
+          depStoreNames: [],
+          _evs: ["onDidUpdate", "onWillUpdate", "observe"],
+        },
+      ])
     );
   });
 
@@ -65,6 +73,7 @@ describe("MainAppStore", () => {
       declareStore(StoreBase, [], { stateKey: "todo1", storeKey: "todo1Store" }),
       declareStoreMap(StoreBase, ["todo1Store"], { stateKey: "todo2", storeKey: "todo2Store" }),
     ]);
+    mainAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
     mainAppStore.init();
 
     mainAppStore.multiWinSaver.addWin({ winId: "win1" });
@@ -258,4 +267,6 @@ describe("MainAppStore", () => {
       undefined
     );
   });
+
+  test("handleRendererDispatch should can dispatch the method invocation", async () => {});
 });

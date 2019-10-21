@@ -4,9 +4,10 @@ import { IStoreDispatcher } from "../DispatchItemProxy";
 
 describe("StoreMapProxy", () => {
   test("should add and delete store proxy", () => {
-    let storeDispatcher = {
+    let storeDispatcher: IStoreDispatcher = {
       handleDispatch: jest.fn(),
       handleDispatchNoReturn: jest.fn(),
+      handleDispatchDisposable: jest.fn(),
     };
     let newStore = new StoreMapProxy(storeDispatcher, "helloStore");
 
@@ -55,9 +56,10 @@ describe("StoreMapProxy", () => {
   });
 
   test("should requestStore and releaseStore store proxy", () => {
-    let storeDispatcher = {
+    let storeDispatcher: IStoreDispatcher = {
       handleDispatch: jest.fn(),
       handleDispatchNoReturn: jest.fn(),
+      handleDispatchDisposable: jest.fn(),
       handleMainMapRequestStores: jest.fn(),
       handleMainMapReleaseStores: jest.fn(),
     };
@@ -65,7 +67,7 @@ describe("StoreMapProxy", () => {
 
     newStore.requestStore("key1");
     expect(storeDispatcher.handleMainMapRequestStores).toHaveBeenLastCalledWith("helloStore", ["key1"]);
-    storeDispatcher.handleMainMapRequestStores.mockReset();
+    (storeDispatcher.handleMainMapRequestStores as jest.Mock).mockReset();
 
     newStore.requestStore("key1");
     expect(storeDispatcher.handleMainMapRequestStores).not.toHaveBeenCalled();

@@ -1,31 +1,36 @@
 import { MultiWinStoreProxy } from "../MultiWinStoreProxy";
 import { Emitter } from "event-kit";
+import { IStoreDispatcher } from "../DispatchItemProxy";
 
 jest.useFakeTimers();
 
 describe("StoreProxy", () => {
   test("should can proxy other methods", async () => {
-    let storeDispatcher = {
-      winId: "curWin",
-      emitter: new Emitter(),
-      handleDispatch: jest.fn(() => {
+    class StoreDispatcher implements IStoreDispatcher {
+      winId = "curWin";
+      emitter = new Emitter();
+      handleDispatch = jest.fn(() => {
         return new Promise((resolve, reject) => {
           setTimeout(() => resolve("childWin"), 0);
         });
-      }),
-      handleDispatchNoReturn: jest.fn(),
+      });
+
+      handleDispatchNoReturn = jest.fn();
+      handleDispatchDisposable = jest.fn();
+      sendWindowMessage = jest.fn();
+
       onDidWinMessage(callback: any) {
-        storeDispatcher.emitter.on("did-message", callback);
-      },
+        this.emitter.on("did-message", callback);
+      }
       sendMsg(senderId: string, data: any) {
-        storeDispatcher.emitter.emit("did-message", { senderId, data });
-      },
-      sendWindowMessage: jest.fn(),
-    };
-    let newStore = new MultiWinStoreProxy(storeDispatcher, "helloStore");
+        this.emitter.emit("did-message", { senderId, data });
+      }
+    }
+    let storeDispatcher = new StoreDispatcher();
+    let newStore = new MultiWinStoreProxy(storeDispatcher, "helloStore", [], []);
 
     newStore.hello("hello");
-    expect(storeDispatcher.handleDispatch).toHaveBeenLastCalledWith({
+    expect(storeDispatcher.handleDispatchNoReturn).toHaveBeenLastCalledWith({
       store: "helloStore",
       method: "hello",
       args: ["hello"],

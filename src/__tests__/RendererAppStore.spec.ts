@@ -4,7 +4,13 @@ import { declareStore, StoreBase, RecycleStrategy } from "event-flux";
 import { encodeQuery } from "../utils/queryHandler";
 import { IOutStoreDeclarer } from "../mainClientTypes";
 import { IRendererClient } from "../rendererClientTypes";
-import { renderRegisterName, renderRequestStoreName, renderReleaseStoreName, renderDispatchName } from "../constants";
+import {
+  renderRegisterName,
+  renderRequestStoreName,
+  renderReleaseStoreName,
+  renderDispatchName,
+  renderDispatchNoReturnName,
+} from "../constants";
 
 jest.mock("../RendererClient", () => {
   class MyRenderClient implements IRendererClient {
@@ -132,7 +138,13 @@ describe("RendererAppStore", () => {
     (window as any).query = {
       winId: "win1",
       storeDeclarers: JSON.stringify([
-        { storeType: "Item", storeKey: "mainTodo1Store", stateKey: "main1Todo", depStoreNames: [] },
+        {
+          storeType: "Item",
+          storeKey: "mainTodo1Store",
+          stateKey: "main1Todo",
+          depStoreNames: [],
+          _invokers: ["doHello"],
+        },
       ]),
       state: JSON.stringify({ hello: 1 }),
     };

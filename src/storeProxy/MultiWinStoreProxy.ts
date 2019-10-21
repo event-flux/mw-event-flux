@@ -1,5 +1,5 @@
 import DispatchItemProxy, { IStoreDispatcher } from "./DispatchItemProxy";
-import { StoreProxy } from "./StoreProxy";
+import { StoreProxy, proxyStore } from "./StoreProxy";
 import { IWinProps, IWinParams } from "../mainClientTypes";
 import RendererAppStore from "../RendererAppStore";
 import { Emitter } from "event-kit";
@@ -42,7 +42,23 @@ export class ChildWindowProxy {
   }
 }
 
-export class MultiWinStoreProxy extends StoreProxy {
+export class MultiWinStoreProxy extends DispatchItemProxy {
+  appStore: RendererAppStore;
+  storeKey: string;
+  evs: Set<string>;
+  invokers: Set<string> = new Set<string>();
+
+  constructor(appStore: IStoreDispatcher, storeKey: string, evs: string[], invokers: string[]) {
+    super();
+
+    this.appStore = appStore as RendererAppStore;
+    this.storeKey = storeKey;
+    this.evs = new Set<string>(evs);
+    this.invokers = new Set<string>(invokers);
+
+    return proxyStore(appStore, this, storeKey);
+  }
+
   createWin(url: IWinProps | string, parentId: string, params: IWinParams): ChildWindowProxy {
     let result = this.appStore.handleDispatch({
       store: this.storeKey,

@@ -1,10 +1,12 @@
 import { StoreListProxy } from "../StoreListProxy";
+import { IStoreDispatcher } from "../DispatchItemProxy";
 
 describe("StoreListProxy", () => {
   test("should can proxy other methods", () => {
-    let storeDispatcher = {
+    let storeDispatcher: IStoreDispatcher = {
       handleDispatch: jest.fn(),
       handleDispatchNoReturn: jest.fn(),
+      handleDispatchDisposable: jest.fn(),
     };
     let newStore = new StoreListProxy(storeDispatcher, "helloStore");
 

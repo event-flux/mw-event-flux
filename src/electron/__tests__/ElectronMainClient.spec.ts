@@ -24,6 +24,8 @@ describe("ElectronMainClient", () => {
     mainClientCallback = {
       handleRendererDispatch: jest.fn(),
       handleRendererDispatchNoReturn: jest.fn(),
+      handleRendererDispatchObserve: jest.fn(),
+      handleRendererDispatchDispose: jest.fn(),
       handleWinMessage: jest.fn(),
       handleRequestStores: jest.fn(),
       handleReleaseStores: jest.fn(),

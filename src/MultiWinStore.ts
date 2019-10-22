@@ -85,15 +85,11 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
     }
   }
 
-  createWin(
-    winProps: IWinProps | string,
-    parentClientId?: string | null | undefined,
-    params?: IWinParams
-  ): string | null {
+  createWin(winProps: IWinProps | string, params?: IWinParams): string | null {
     let clientId = this._genClientId();
 
     // get url from winProps
-    winProps = this._parseWinProps(winProps, parentClientId);
+    winProps = this._parseWinProps(winProps);
 
     this.mainClient!.createWin(clientId, winProps, params || {});
     this._addWinProps(clientId, winProps);
@@ -102,22 +98,17 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
   }
 
   // Create new win if the specific winId is not exists
-  createOrOpenWin(
-    winName: string,
-    url: string | IWinProps,
-    parentClientId: string | null | undefined,
-    params: any
-  ): string | null {
+  createOrOpenWin(winName: string, url: string | IWinProps, params: any): string | null {
     // If the window named winName not exists, then we will create new window
     if (!this.clientNameIdMap[winName]) {
       let winProps: IWinProps = typeof url === "string" ? { path: url, name: winName } : { ...url, name: winName };
-      return this.createWin(winProps, parentClientId, params);
+      return this.createWin(winProps, params);
     } else {
       let clientId = this.clientNameIdMap[winName];
       // this.changeClientAction(clientId, typeof url === "string" ? url : url.path!);
       let winProps: IWinProps = typeof url === "string" ? { path: url } : { ...url };
       winProps.name = winName;
-      winProps.parentId = parentClientId;
+      winProps.parentId = winProps.parentId;
 
       this.mainClient!.changeWin(this.multiWinSaver!.getWinInfo(clientId), winProps, params);
       this.activeWin(clientId);

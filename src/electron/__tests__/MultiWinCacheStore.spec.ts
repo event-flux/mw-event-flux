@@ -128,7 +128,7 @@ describe("MultiWinStore", () => {
 
     appStore.multiWinSaver.getWinInfo("mainClient").window.setBounds({ x: 100, y: 100, width: 1000, height: 700 });
 
-    multiWinStore.createWin({ path: "/hello", name: "hello" }, "mainClient", {});
+    multiWinStore.createWin({ path: "/hello", name: "hello", parentId: "mainClient" }, {});
     let win1Id = multiWinStore.clientIds[1];
     expect(appStore.mainClient.changeWin).toHaveBeenLastCalledWith(
       appStore.multiWinSaver.getWinInfo(win1Id),
@@ -150,7 +150,7 @@ describe("MultiWinStore", () => {
       },
     });
 
-    multiWinStore.createWin({ path: "/hello", name: "hello" }, undefined, {});
+    multiWinStore.createWin({ path: "/hello", name: "hello" }, {});
     expect(appStore.mainClient.changeWin).toHaveBeenLastCalledWith(
       appStore.multiWinSaver.getWinInfo(multiWinStore.clientIds[2]),
       { path: "/hello", parentId: undefined },

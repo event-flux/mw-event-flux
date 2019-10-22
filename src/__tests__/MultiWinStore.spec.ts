@@ -69,14 +69,14 @@ describe("MultiWinStore", () => {
     multiWinStore._genClientId = () => "win1";
     multiWinStore.init();
 
-    multiWinStore.createWin("/home", null, { width: 100, height: 100 });
+    multiWinStore.createWin("/home", { width: 100, height: 100 });
     expect(appStore.mainClient.createWin).toHaveBeenLastCalledWith(
       "win1",
       { path: "/home", groups: ["main"] },
       { width: 100, height: 100 }
     );
 
-    multiWinStore.createWin({ path: "/home", name: "win1" }, "mainClient", { width: 100, height: 100 });
+    multiWinStore.createWin({ path: "/home", name: "win1", parentId: "mainClient" }, { width: 100, height: 100 });
     expect(appStore.mainClient.createWin).toHaveBeenLastCalledWith(
       "win1",
       { path: "/home", name: "win1", groups: ["main"], parentId: "mainClient" },
@@ -92,7 +92,7 @@ describe("MultiWinStore", () => {
     multiWinStore._genClientId = () => "win1";
     multiWinStore.init();
 
-    multiWinStore.createOrOpenWin("win1", "/home", null, { width: 100, height: 100 });
+    multiWinStore.createOrOpenWin("win1", "/home", { width: 100, height: 100 });
     expect(appStore.mainClient.createWin).toHaveBeenLastCalledWith(
       "win1",
       { name: "win1", path: "/home", groups: ["main"] },
@@ -102,16 +102,16 @@ describe("MultiWinStore", () => {
     expect(multiWinStore.clientIdNameMap).toEqual({ win1: "win1" });
     expect(multiWinStore.groupsMap).toEqual({ win1: ["main"] });
 
-    multiWinStore.createOrOpenWin("win1", "/home2", null, { width: 100, height: 200 });
+    multiWinStore.createOrOpenWin("win1", "/home2", { width: 100, height: 200 });
     expect(multiWinStore.clientIds).toEqual(["mainClient", "win1"]);
     expect(appStore.mainClient.changeWin).toHaveBeenLastCalledWith(
       appStore.multiWinSaver.getWinInfo("win1"),
-      { path: "/home2", name: "win1", parentId: null },
+      { path: "/home2", name: "win1" },
       { width: 100, height: 200 }
     );
     expect(multiWinStore.clientIdNameMap).toEqual({ win1: "win1" });
 
-    multiWinStore.createOrOpenWin("win1", { path: "/home2", groups: ["group1"] }, null, { width: 100, height: 200 });
+    multiWinStore.createOrOpenWin("win1", { path: "/home2", groups: ["group1"] }, { width: 100, height: 200 });
     expect(multiWinStore.groupsMap).toEqual({ win1: ["group1"] });
   });
 
@@ -123,7 +123,7 @@ describe("MultiWinStore", () => {
     multiWinStore._genClientId = () => "win1";
     multiWinStore.init();
 
-    multiWinStore.createWin({ name: "myWin", path: "/home", groups: ["myGroup"] }, null, { width: 100, height: 100 });
+    multiWinStore.createWin({ name: "myWin", path: "/home", groups: ["myGroup"] }, { width: 100, height: 100 });
     multiWinStore.closeWin("win1");
     multiWinStore.activeWin("win1");
     multiWinStore.sendWinMsg("win1", "message");
@@ -173,7 +173,7 @@ describe("MultiWinStore", () => {
     multiWinStore._genClientId = () => "win1";
     multiWinStore.init();
 
-    multiWinStore.createWin("/home", null, {});
+    multiWinStore.createWin("/home", {});
     multiWinStore.closeAllWindows();
     expect(appStore.mainClient.closeWin).toHaveBeenCalledTimes(2);
     expect((appStore.mainClient.closeWin as jest.Mock).mock.calls[0][0].winId).toEqual("mainClient");

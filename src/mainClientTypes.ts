@@ -80,9 +80,9 @@ export interface IMainClientCallback {
 
 export interface IMultiWinStore {
   // Create new win if the name is not exists, else will change the window url only
-  createWin(url: IWinProps | string, parentId: string, params: IWinParams): string | null;
+  createWin(url: IWinProps | string, params: IWinParams): string | null;
 
-  createOrOpenWin(winName: string, url: string | IWinProps, parentClientId: string, params: IWinParams): string | null;
+  createOrOpenWin(winName: string, url: string | IWinProps, params: IWinParams): string | null;
 
   closeWin(clientId: string): void;
 

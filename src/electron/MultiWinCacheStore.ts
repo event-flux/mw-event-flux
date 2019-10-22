@@ -4,8 +4,6 @@ import { app, BrowserWindow, screen } from "electron";
 import IStorage from "../storage/IStorage";
 import { IWinProps, IWinParams } from "../mainClientTypes";
 
-const isDevelopment = process.env.NODE_ENV !== "production";
-
 export class WindowManager {
   windows: Array<{ clientId: string; window: BrowserWindow }> = [];
   winHandler: any;
@@ -139,20 +137,14 @@ class MultiWinCacheStore extends MultiWinStore {
     return this._createElectronWin(winProps, clientId, parentClientId, params);
   }
 
-  createWin(
-    winProps: IWinProps | string,
-    parentClientId: string | null | undefined,
-    params: IWinParams
-  ): string | null {
-    return this._createWinForElectron(winProps, parentClientId, params);
+  createWin(winProps: IWinProps | string, params: IWinParams): string | null {
+    return this._createWinForElectron(winProps, params);
   }
 
-  _createWinForElectron(
-    winProps: IWinProps | string,
-    parentClientId: string | null | undefined,
-    params: IWinParams
-  ): string | null {
+  _createWinForElectron(winProps: IWinProps | string, params: IWinParams): string | null {
     winProps = this._parseWinProps(winProps);
+    let parentClientId = winProps.parentId;
+
     if (params && params.x == null && params.y == null) {
       params.width = params.width || 800;
       params.height = params.height || 600;

@@ -59,7 +59,8 @@ export class MultiWinStoreProxy extends DispatchItemProxy {
     return proxyStore(appStore, this, storeKey);
   }
 
-  createWin(url: IWinProps | string, parentId: string, params: IWinParams): ChildWindowProxy {
+  createWin(url: IWinProps | string, params: IWinParams): ChildWindowProxy {
+    let parentId = window.winId;
     let result = this.appStore.handleDispatch({
       store: this.storeKey,
       method: "createWin",
@@ -68,7 +69,8 @@ export class MultiWinStoreProxy extends DispatchItemProxy {
     return new ChildWindowProxy(this.appStore, result);
   }
 
-  createOrOpenWin(winName: string, url: string | IWinProps, parentId: string, params: IWinParams): ChildWindowProxy {
+  createOrOpenWin(winName: string, url: string | IWinProps, params: IWinParams): ChildWindowProxy {
+    let parentId: string = window.winId;
     let result = this.appStore.handleDispatch({
       store: this.storeKey,
       method: "createOrOpenWin",

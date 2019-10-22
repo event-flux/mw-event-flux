@@ -5,6 +5,17 @@ import { IStoreDispatcher } from "../DispatchItemProxy";
 jest.useFakeTimers();
 
 describe("StoreProxy", () => {
+  let originWinId: string;
+
+  beforeEach(() => {
+    originWinId = window.winId;
+    window.winId = "winId2";
+  });
+
+  afterEach(() => {
+    window.winId = originWinId;
+  });
+
   test("should can proxy other methods", async () => {
     class StoreDispatcher implements IStoreDispatcher {
       winId = "curWin";
@@ -26,6 +37,7 @@ describe("StoreProxy", () => {
         this.emitter.emit("did-message", { senderId, data });
       }
     }
+
     let storeDispatcher = new StoreDispatcher();
     let newStore = new MultiWinStoreProxy(storeDispatcher, "helloStore", [], []);
 
@@ -36,7 +48,7 @@ describe("StoreProxy", () => {
       args: ["hello"],
     });
 
-    let childProxy = newStore.createWin("/hello", "winId2", { x: 10, y: 10 });
+    let childProxy = newStore.createWin("/hello", { x: 10, y: 10 });
     expect(storeDispatcher.handleDispatch).toHaveBeenLastCalledWith({
       store: "helloStore",
       method: "createWin",

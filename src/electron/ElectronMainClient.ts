@@ -83,10 +83,11 @@ export default class ElectronMainClient implements IMainClient {
     let storeDeclarers = this.mainClientCallback.getStoreDeclarers();
     let initStates = this.mainClientCallback.getInitStates(winId);
     const window = new BrowserWindow({
+      webPreferences: {
+        nodeIntegration: true,
+      },
       ...winParams,
       show: false,
-      x: Math.floor(winParams.x || 0),
-      y: Math.floor(winParams.y || 0),
     });
 
     let query = { winId, storeDeclarers, state: initStates, ...winProps };

@@ -79,6 +79,7 @@ interface IWinFilter {
 export interface IAppStoreOptions {
   serializer: (value: any) => string;
   deserializer: (str: string) => any;
+  MainClient?: IMainClient;
 }
 
 export default class MainAppStore extends AppStore implements IMainClientCallback {
@@ -90,7 +91,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
   storeMapModes: { [storeMapKey: string]: OperateMode } = {};
   winObserves: { [winId: string]: { [invokeId: string]: DisposableLike } } = {};
 
-  mainClient: IMainClient = new MainClient(this.multiWinSaver, this);
+  mainClient: IMainClient;
 
   serializer: (value: any) => string;
   deserializer: (str: string) => any;
@@ -99,6 +100,9 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     super(storeDeclarers, {});
     this.serializer = (options && options.serializer) || serialize;
     this.deserializer = (options && options.deserializer) || deserialize;
+
+    let ClientClass = options!.MainClient || MainClient;
+    this.mainClient = new ClientClass(this.multiWinSaver, this);
   }
 
   init() {

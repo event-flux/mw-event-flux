@@ -44,6 +44,7 @@ declare global {
 export interface IAppStoreOptions {
   serializer: (value: any) => string;
   deserializer: (str: string) => any;
+  RendererClient?: IRendererClient;
 }
 
 export default class RendererAppStore extends AppStore implements IRendererClientCallback, IStoreDispatcher {
@@ -68,7 +69,8 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     this.serializer = (options && options.serializer) || serialize;
     this.deserializer = (options && options.deserializer) || deserialize;
 
-    this.rendererClient = new RendererClient(this);
+    let ClientClass = options!.RendererClient || RendererClient;
+    this.rendererClient = new ClientClass(this);
 
     let { storeDeclarers: mainDeclarersStr, state, winId: clientId, ...winProps } = this.rendererClient.getQuery();
     if (typeof window === "object") {

@@ -103,6 +103,8 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
 
   init() {
     super.init();
+    // In main process, AppStore will not preload static stores, we need load them there
+    this.preloadStaticStores();
 
     this.outStoreDeclarers = genOutStoreDeclarers(this);
 

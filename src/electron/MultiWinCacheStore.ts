@@ -12,8 +12,8 @@ export class WindowManager {
   constructor(winHandler: MultiWinCacheStore) {
     this.windows = [];
     this.winHandler = winHandler;
-    // app.whenReady().then(() => this.ensureWindows());
-    this.ensureWindows();
+    app.whenReady().then(() => this.ensureWindows());
+    // this.ensureWindows();
   }
 
   genClientId() {
@@ -84,17 +84,15 @@ class MultiWinCacheStore extends MultiWinStore {
       this.windowManager = new WindowManager(this);
     }
 
-    clients.forEach((item: IClientCacheInfo) => {
-      this.createWinForClientId(
-        { path: item.path, groups: item.groups, name: item.name },
-        item.winId,
-        item.parentId,
-        item.winState!
-      );
+    app.whenReady().then(() => {
+      clients.forEach((item: IClientCacheInfo) => {
+        this.createWinForClientId(
+          { path: item.path, groups: item.groups, name: item.name, parentId: item.parentId },
+          item.winId,
+          item.winState!
+        );
+      });
     });
-    // app.whenReady().then(() => {
-
-    // });
   }
 
   saveClients() {
@@ -128,13 +126,8 @@ class MultiWinCacheStore extends MultiWinStore {
     // this.saveClients();
   }
 
-  createWinForClientId(
-    winProps: IWinProps,
-    clientId: string,
-    parentClientId: string | undefined | null,
-    params: IWinParams
-  ): string | null {
-    return this._createElectronWin(winProps, clientId, parentClientId, params);
+  createWinForClientId(winProps: IWinProps, clientId: string, params: IWinParams): string | null {
+    return this._createElectronWin(winProps, clientId, params);
   }
 
   createWin(winProps: IWinProps | string, params: IWinParams): string | null {
@@ -162,24 +155,20 @@ class MultiWinCacheStore extends MultiWinStore {
     }
     let clientId = null;
     try {
-      clientId = this._createElectronWin(winProps, null, parentClientId, params);
+      clientId = this._createElectronWin(winProps, null, params);
     } catch (err) {
       console.error(err, err.stack);
     }
     return clientId;
   }
 
-  _createElectronWin(
-    url: string | IWinProps,
-    clientId: string | null,
-    parentId: string | null | undefined,
-    params: IWinState
-  ): string | null {
+  _createElectronWin(url: string | IWinProps, clientId: string | null, params: IWinState): string | null {
     if (clientId && this.clientIds.indexOf(clientId) !== -1) {
       return null;
     }
-    let winProps = this._parseWinProps(url, parentId);
+    let winProps = this._parseWinProps(url);
     let winState = new ElectronWindowState(null, params, null);
+    let parentId: string | null | undefined = winProps.parentId;
 
     let winInfo = this._getElectronWinFromCache(winProps.path!, clientId, parentId, winState.state);
     if (!clientId) {

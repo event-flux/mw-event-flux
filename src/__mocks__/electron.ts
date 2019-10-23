@@ -129,3 +129,9 @@ export const screen = {
 
 export const Event = function() {};
 export const WebContents = FakeWebContents;
+
+export const app = {
+  whenReady() {
+    return Promise.resolve();
+  },
+};

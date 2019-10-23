@@ -25,8 +25,6 @@ const electron = require("electron");
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-let appStore;
-
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 
 // class MyMultiWinStore extends MultiWinStore {
@@ -101,7 +99,7 @@ class MyMultiWinStore extends MultiWinStore {
   }
 }
 
-appStore = new MainAppStore([
+let appStore = new MainAppStore([
   todoStoreDeclarer,
   winTodoStoreDeclarer,
   todo2StoreDeclarer,
@@ -109,8 +107,8 @@ appStore = new MainAppStore([
   todo3ListDeclarer,
   todo3MapDeclarer,
   todo4StoreDeclarer,
-  declareStore(MultiWinStore),
-]);
+  declareStore(MyMultiWinStore, { lifetime: "static", storeKey: "multiWinStore" }),
+]).init();
 
 // let mainWindow;
 

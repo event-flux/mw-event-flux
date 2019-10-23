@@ -3,7 +3,7 @@ import MultiWinSaver from "../../MultiWinSaver";
 import MainAppStore from "../../MainAppStore";
 import MultiWinCacheStore, { WindowManager } from "../MultiWinCacheStore";
 import IStorage from "../../storage/IStorage";
-import { BrowserWindow } from "electron";
+import { BrowserWindow, app } from "electron";
 
 jest.useFakeTimers();
 
@@ -65,16 +65,20 @@ describe("MultiWinStore", () => {
     multiWinStore.getStorage = () => storage;
   });
 
-  test("loadClients should generate default client when storage not contain clients", () => {
+  test("loadClients should generate default client when storage not contain clients", async () => {
     multiWinStore.getStorage()!.set("clients", []);
     multiWinStore.init();
+
+    await app.whenReady();
     expect(multiWinStore.clientIds).toEqual(["mainClient"]);
     expect(multiWinStore.clientIdNameMap.mainClient).toBe("mainClient");
     expect(multiWinStore.groupsMap.mainClient).toEqual(["main"]);
   });
 
-  test("WindowManager should can get window", () => {
+  test("WindowManager should can get window", async () => {
     let winManager = new WindowManager(multiWinStore);
+    await app.whenReady();
+
     expect(winManager.windows.length).toBe(winManager.winSize);
     let winInfo = winManager.getWin();
     expect(winManager.windows.length).toBe(winManager.winSize);
@@ -83,7 +87,7 @@ describe("MultiWinStore", () => {
     expect(multiWinStore.multiWinSaver.getWinInfos().length).toEqual(1);
   });
 
-  test("loadClients with clients should behave correctly", () => {
+  test("loadClients with clients should behave correctly", async () => {
     multiWinStore
       .getStorage()!
       .set("clients", [
@@ -91,6 +95,8 @@ describe("MultiWinStore", () => {
         { winId: "win1", name: "win1", groups: ["main"], path: "/home2", winState: { y: 20 } },
       ]);
     multiWinStore.init();
+    await app.whenReady();
+
     expect(appStore.mainClient.createWin).toHaveBeenNthCalledWith(
       2,
       "mainClient",
@@ -122,9 +128,10 @@ describe("MultiWinStore", () => {
     });
   });
 
-  test("create window should behave correctly", () => {
+  test("create window should behave correctly", async () => {
     multiWinStore.getStorage()!.set("clients", []);
     multiWinStore.init();
+    await app.whenReady();
 
     appStore.multiWinSaver.getWinInfo("mainClient").window.setBounds({ x: 100, y: 100, width: 1000, height: 700 });
 

@@ -160,7 +160,7 @@ export default class MyView extends React.PureComponent<any, any> {
         return;
       }
       let pos = { midX: event.screenX, midY: event.screenY };
-      if (window.process) {
+      if ((window as any).process) {
         switch (item) {
           case "demo1":
             this.buttons.createDemo1(pos);

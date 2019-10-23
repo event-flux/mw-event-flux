@@ -12,16 +12,16 @@
   "dependencies": {
     "@material-ui/core": "^1.2.1",
     "electron-window-state": "^4.1.1",
-    "event-flux": "^1.2.1",
-    "mw-event-flux": "^1.0.2",
+    "event-flux": "^1.2.3",
+    "mw-event-flux": "^1.0.4",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
-    "react-event-flux": "^1.2.1",
+    "react-event-flux": "^1.2.3",
     "source-map-support": "^0.5.5"
   },
   "devDependencies": {
     "@types/react": "^16.8.5",
-    "electron": "^7.0.0",
+    "electron": "^6.0.12",
     "electron-builder": "^20.29.0",
     "electron-webpack": "^2.1.2",
     "electron-webpack-ts": "^3.1.1",

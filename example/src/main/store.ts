@@ -164,4 +164,4 @@ class TodoStore extends StoreBase<any> {
   }
 }
 export const todoStoreDeclarer = declareStore(TodoStore);
-export const winTodoStoreDeclarer = declareWinStore(TodoStore);
+export const winTodoStoreDeclarer = declareWinStore(TodoStore, { storeKey: "winTodoStore", stateKey: "winTodo" });

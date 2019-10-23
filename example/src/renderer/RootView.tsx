@@ -234,7 +234,7 @@ export default class MyView extends React.PureComponent<any, any> {
               onDragStart={this.handleDragStart("demo4")}
               onDragEnd={this.handleDragEnd("demo4")}
             /> */}
-            <NewButton ref={ref => (this.buttons = ref)} sizes={sizes} />
+            <MyNewButton ref={ref => (this.buttons = ref)} sizes={sizes} />
           </div>
         );
     }

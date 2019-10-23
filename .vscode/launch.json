@@ -23,6 +23,25 @@
             "internalConsoleOptions": "neverOpen",
             "port": 9229,
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch and Debug Example",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "dev"
+            ],
+            "autoAttachChildProcesses": true,
+            "internalConsoleOptions": "openOnFirstSessionStart",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/example",
+            "env": {
+                "ELECTRON_ARGS": "[\"--inspect-brk=21937\"]"
+            },
+            "port": 21937,
+            "timeout": 20000
         }
     ]
 }

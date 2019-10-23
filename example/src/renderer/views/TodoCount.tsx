@@ -84,5 +84,5 @@ const eventFluxArgs = {
 
 export default {
   title: "Todo Count Demo",
-  Component: withStyles(styles)(withEventFlux(eventFluxArgs)(CounterDemo)),
+  Component: withEventFlux(eventFluxArgs)(withStyles(styles)(CounterDemo)),
 };

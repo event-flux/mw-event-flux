@@ -4,7 +4,7 @@ export interface IWinInfo {
 }
 
 export interface IWinProps {
-  path: string;
+  path?: string;
   parentId?: string | null;
   name?: string;
   groups?: string[];
@@ -70,6 +70,8 @@ export interface IMainClientCallback {
   handleMapRequestStores(winId: string, storeKey: string, mapKeys: string[]): void;
 
   handleMapReleaseStores(winId: string, storeKey: string, mapKeys: string[]): void;
+
+  handleRegisterWin(winId: string): void;
 
   initWin(winId: string, params: IWinProps): void;
 

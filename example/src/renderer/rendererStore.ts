@@ -15,4 +15,4 @@ class TodoStore extends StoreBase<any> {
   }
 }
 
-export default declareStore(TodoStore);
+export default declareStore(TodoStore, { storeKey: "rendererTodoStore", stateKey: "rendererTodo" });

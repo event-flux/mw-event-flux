@@ -158,13 +158,18 @@ export default class RendererAppStore extends AppStore implements IRendererClien
   // When renderer process receive init message
   handleInit(data: IWinProps): void {
     if (typeof window === "object") {
+      let { storeDeclarers, state, winId, ...winProps } = data;
       window.eventFluxWin = {
         ...window.eventFluxWin,
-        ...data,
+        ...winProps,
       };
-      if (window.parentId) {
-        window.parentId = window.parentId;
-        window.parentWin.changeWinId(window.parentId);
+      if (winProps.parentId) {
+        window.parentId = winProps.parentId;
+        window.parentWin.changeWinId(winProps.parentId);
+      }
+      if (state) {
+        this.state = { ...this.state, ...state };
+        this._sendUpdate();
       }
       this.emitter.emit("did-init", window.eventFluxWin);
     }

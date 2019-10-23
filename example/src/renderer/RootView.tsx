@@ -121,7 +121,7 @@ class NewButton extends React.PureComponent<any, any> {
   }
 }
 
-const MyNewButton = withEventFlux("multiWinStore");
+const MyNewButton = withEventFlux("multiWinStore")(NewButton);
 
 export default class MyView extends React.PureComponent<any, any> {
   buttons: any;

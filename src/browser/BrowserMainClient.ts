@@ -140,7 +140,7 @@ export default class BrowserMainClient implements IMainClient {
       }
       case renderRegisterName: {
         let [clientId] = payload;
-        this.multiWinSaver.registerWin(clientId);
+        this.mainClientCallback.handleRegisterWin(clientId);
         break;
       }
     }

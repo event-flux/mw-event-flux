@@ -59,7 +59,7 @@ interface IClientCacheInfo {
   winId: string;
   name?: string;
   groups?: string[];
-  path: string;
+  path?: string;
   winState?: IWinState;
   [key: string]: any;
 }

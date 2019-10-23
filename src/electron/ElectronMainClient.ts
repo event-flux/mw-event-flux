@@ -62,7 +62,7 @@ export default class ElectronMainClient implements IMainClient {
     });
 
     ipcMain.on(renderRegisterName, (event: Event, clientId: string) => {
-      this.multiWinSaver.registerWin(clientId);
+      this.mainClientCallback.handleRegisterWin(clientId);
     });
   }
 
@@ -93,7 +93,7 @@ export default class ElectronMainClient implements IMainClient {
     let query = { winId, storeDeclarers, state: initStates, ...winProps };
     if (process.env.NODE_ENV === "development") {
       window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?${encodeQuery(query)}`);
-      // window.webContents.openDevTools();
+      window.webContents.openDevTools();
     } else {
       window.loadURL(
         require("url").format({

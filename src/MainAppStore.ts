@@ -316,6 +316,18 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     });
   }
 
+  handleRegisterWin(winId: string) {
+    // If the winId has registered, that may be hot reload, we need delete the window and add again.
+    if (this.multiWinSaver.isRegister(winId)) {
+      let winInfo = this.multiWinSaver.getWinInfo(winId);
+      this.multiWinSaver.deleteWin(winId);
+      this.multiWinSaver.addWin(winInfo);
+      this.initWin(winId, { state: this.prevState });
+    } else {
+      this.multiWinSaver.registerWin(winId);
+    }
+  }
+
   initWin(winId: string, params: IWinProps) {
     let winInfo = this.multiWinSaver.getWinInfo(winId);
     if (!winInfo) {

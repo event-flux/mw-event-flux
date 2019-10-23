@@ -46,12 +46,6 @@ export default class MultiWinSaver {
   }
 
   registerWin(winId: string) {
-    // If the winId has registered, that may be hot reload, we need delete the window and add again.
-    if (this.registerIds.has(winId)) {
-      let winInfo = this.getWinInfo(winId);
-      this.deleteWin(winId);
-      this.addWin(winInfo);
-    }
     this.registerIds.add(winId);
     this.emitter.emit("did-register", winId);
   }

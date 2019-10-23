@@ -33,6 +33,7 @@ describe("ElectronMainClient", () => {
       handleReleaseStores: jest.fn(),
       handleMapRequestStores: jest.fn(),
       handleMapReleaseStores: jest.fn(),
+      handleRegisterWin: jest.fn(),
       initWin: jest.fn(),
       getStoreDeclarers: jest.fn(),
       getInitStates: jest.fn(),
@@ -49,7 +50,7 @@ describe("ElectronMainClient", () => {
     multiWinSaver.addWin({ winId: "win1", window, webContents: window.webContents });
 
     ipcMain.emit(renderRegisterName, {}, "win1");
-    expect(multiWinSaver.isRegister("win1")).toBeTruthy();
+    expect(mainClientCallback.handleRegisterWin).toHaveBeenLastCalledWith("win1");
 
     ipcMain.emit(renderDispatchName, {}, "win1", 12, "hello");
     expect(mainClientCallback.handleRendererDispatch).toHaveBeenLastCalledWith("win1", 12, "hello");

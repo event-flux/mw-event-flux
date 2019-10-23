@@ -35,6 +35,7 @@ describe("BrowserMainClient", () => {
       handleReleaseStores: jest.fn(),
       handleMapRequestStores: jest.fn(),
       handleMapReleaseStores: jest.fn(),
+      handleRegisterWin: jest.fn(),
       initWin: jest.fn(),
       getStoreDeclarers: jest.fn(),
       getInitStates: jest.fn(),
@@ -57,7 +58,7 @@ describe("BrowserMainClient", () => {
 
     window.postMessage({ action: renderRegisterName, data: ["win1"] }, "*");
     await new Promise(resolve => setTimeout(resolve, 0));
-    expect(multiWinSaver.isRegister("win1")).toBeTruthy();
+    expect(mainClientCallback.handleRegisterWin).toHaveBeenLastCalledWith("win1");
 
     window.postMessage({ action: "close", data: ["win1"] }, "*");
     await new Promise(resolve => setTimeout(resolve, 0));

@@ -40,6 +40,9 @@ class CounterDemo extends React.Component<any, any> {
 
   render() {
     let { todo4, todo, todoStore, todo4Store, classes } = this.props;
+    if (todo == null || todo4 == null) {
+      return null;
+    }
     let { count, isComplete } = todo;
     let { todo4Map, todo4List } = todo4;
     const onClick = () => todoStore.addTodo(1);

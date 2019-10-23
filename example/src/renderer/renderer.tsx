@@ -8,7 +8,7 @@ import * as ReactDOM from "react-dom";
 import MyView from "./RootView";
 import RendererAppStore from "mw-event-flux/lib/RendererAppStore";
 import todoStoreDeclarer from "./rendererStore";
-import { Provider } from "event-flux";
+import { Provider } from "react-event-flux";
 
 const rootElement = document.createElement("div");
 document.body.appendChild(rootElement);

@@ -1,7 +1,7 @@
 import { StoreBase, invoker } from "event-flux";
 import { declareStore, declareStoreMap, declareStoreList } from "event-flux";
 import storage from "./storage";
-import { declareWinStore } from "../../../src/StoreDeclarer";
+import { declareWinStore } from "mw-event-flux/lib/StoreDeclarer";
 import { Map, List } from "immutable";
 
 function isDefined(s) {

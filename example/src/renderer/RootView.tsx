@@ -10,7 +10,7 @@ import TodoCountDemo from "./views/TodoCount";
 import Todo2CountDemo from "./views/Todo2Count";
 import Todo3CountDemo from "./views/Todo3Count";
 import Todo4CountDemo from "./views/Todo4Count";
-import { withEventFlux } from "event-flux";
+import { withEventFlux } from "react-event-flux";
 
 const styleElement = document.createElement("style");
 styleElement.innerHTML = "body { margin: 0; }";
@@ -216,7 +216,7 @@ export default class MyView extends React.PureComponent<any, any> {
               onDragStart={this.handleDragStart("demo1")}
               onDragEnd={this.handleDragEnd("demo1")}
             />
-            <OneDemoView
+            {/* <OneDemoView
               innerRef={this.divGetter("demo2Height")}
               {...Todo2CountDemo}
               onDragStart={this.handleDragStart("demo2")}
@@ -233,7 +233,7 @@ export default class MyView extends React.PureComponent<any, any> {
               {...Todo4CountDemo}
               onDragStart={this.handleDragStart("demo4")}
               onDragEnd={this.handleDragEnd("demo4")}
-            />
+            /> */}
             <NewButton ref={ref => (this.buttons = ref)} sizes={sizes} />
           </div>
         );

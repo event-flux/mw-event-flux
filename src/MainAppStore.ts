@@ -101,7 +101,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     this.serializer = (options && options.serializer) || serialize;
     this.deserializer = (options && options.deserializer) || deserialize;
 
-    let ClientClass = options!.MainClient || MainClient;
+    let ClientClass = (options && options!.MainClient) || MainClient;
     this.mainClient = new ClientClass(this.multiWinSaver, this);
   }
 

@@ -69,7 +69,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     this.serializer = (options && options.serializer) || serialize;
     this.deserializer = (options && options.deserializer) || deserialize;
 
-    let ClientClass = options!.RendererClient || RendererClient;
+    let ClientClass = (options && options!.RendererClient) || RendererClient;
     this.rendererClient = new ClientClass(this);
 
     let { storeDeclarers: mainDeclarersStr, state, winId: clientId, ...winProps } = this.rendererClient.getQuery();

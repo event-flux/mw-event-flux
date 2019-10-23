@@ -91,7 +91,7 @@ describe("ElectronMainClient", () => {
       groups: "hello",
       winId: "win1",
     });
-    expect((newWin as any).props).toEqual({ minWidth: 300, show: false, x: 0, y: 0 });
+    expect((newWin as any).props).toEqual({ minWidth: 300, show: false, webPreferences: { nodeIntegration: true } });
 
     expect(multiWinSaver.winInfos).toEqual([{ winId: "win1", window: newWin, webContents: newWin.webContents }]);
 

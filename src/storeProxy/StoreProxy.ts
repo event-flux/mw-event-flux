@@ -62,8 +62,6 @@ export class StoreProxyDeclarer<T> extends StoreDeclarer<T> {
     if (storeKey === "multiWinStore") {
       return (new MultiWinStoreProxy(appStore, storeKey!, _evs, _invokers) as any) as StoreBase<T>;
     }
-    return (new ((this.Store as any) as StoreProxyConstruct)(appStore, storeKey!, _evs, _invokers) as any) as StoreBase<
-      T
-    >;
+    return (new StoreProxy(appStore, storeKey!, _evs, _invokers) as any) as StoreBase<T>;
   }
 }

@@ -107,13 +107,13 @@ class NewButton extends React.PureComponent<any, any> {
     return (
       <div>
         <Button onClick={this.createNewWindow}>Create New Window</Button>
-        <Button innerRef={this.buttonGet("demo1")} onClick={this.createDemo1}>
+        <Button ref={this.buttonGet("demo1")} onClick={this.createDemo1}>
           Create Demo1
         </Button>
-        <Button innerRef={this.buttonGet("demo2")} onClick={this.createDemo2}>
+        <Button ref={this.buttonGet("demo2")} onClick={this.createDemo2}>
           Create Demo2
         </Button>
-        <Button innerRef={this.buttonGet("demo3")} onClick={this.createDemo3}>
+        <Button ref={this.buttonGet("demo3")} onClick={this.createDemo3}>
           Create Demo3
         </Button>
       </div>

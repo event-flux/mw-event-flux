@@ -1,4 +1,4 @@
-import { DispatchItem } from "event-flux";
+import { DispatchItem, StoreBaseConstructor } from "event-flux";
 import { DisposableLike } from "event-kit";
 
 export interface IDispatchInfo {
@@ -26,7 +26,9 @@ export default class DispatchItemProxy implements DispatchItem {
 
   _init() {}
 
-  _inject(): void {}
+  _inject(StoreBuilder: StoreBaseConstructor<any>, stateKey?: string): void {
+    this._stateKey = stateKey;
+  }
 
   dispose(): void {}
 

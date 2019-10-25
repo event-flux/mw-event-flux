@@ -1,5 +1,6 @@
 import { StoreProxy } from "../StoreProxy";
 import { IStoreDispatcher } from "../DispatchItemProxy";
+import { StoreBase } from "event-flux";
 
 describe("StoreProxy", () => {
   test("should can proxy other methods", () => {
@@ -9,7 +10,12 @@ describe("StoreProxy", () => {
       handleDispatchDisposable: jest.fn(),
     };
     let newStore = new StoreProxy(storeDispatcher, "helloStore", ["onDidUpdate"], ["doInvoke"]);
+    newStore._inject(StoreBase, "stateKey");
+    newStore._init();
+
     newStore._addRef();
+
+    expect(newStore._stateKey).toEqual("stateKey");
     expect(newStore._refCount).toEqual(1);
     expect(newStore.getRefCount()).toBe(1);
 

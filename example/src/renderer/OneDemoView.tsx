@@ -28,7 +28,7 @@ class OneDemoView extends React.PureComponent<any, any> {
     return (
       <div className={classes.root} draggable={true} onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div className={classes.bar} {...otherProps} />
-        <Typography variant="title" color="inherit" className={classes.title}>
+        <Typography variant="inherit" component="h2" color="primary">
           {title}
         </Typography>
         <div className={classes.view}>

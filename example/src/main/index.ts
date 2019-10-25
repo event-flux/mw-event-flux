@@ -6,11 +6,10 @@ import { format as formatUrl } from "url";
 import {
   todoStoreDeclarer,
   winTodoStoreDeclarer,
-  todo2StoreDeclarer,
-  todo3StoreDeclarer,
-  todo3ListDeclarer,
-  todo3MapDeclarer,
-  todo4StoreDeclarer,
+  simpleStoreDeclarer,
+  simpleListDeclarer,
+  simpleMapDeclarer,
+  immutableStoreDeclarer,
 } from "./store";
 // import MultiWinStore from 'electron-event-flux/lib/MultiWinCacheStore';
 // import buildMultiWinAppStore from 'electron-event-flux/lib/MainAppStore';
@@ -102,11 +101,10 @@ class MyMultiWinStore extends MultiWinStore {
 let appStore = new MainAppStore([
   todoStoreDeclarer,
   winTodoStoreDeclarer,
-  todo2StoreDeclarer,
-  todo3StoreDeclarer,
-  todo3ListDeclarer,
-  todo3MapDeclarer,
-  todo4StoreDeclarer,
+  simpleStoreDeclarer,
+  simpleListDeclarer,
+  simpleMapDeclarer,
+  immutableStoreDeclarer,
   declareStore(MyMultiWinStore, { lifetime: "static", storeKey: "multiWinStore" }),
 ]).init();
 

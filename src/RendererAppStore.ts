@@ -168,7 +168,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
         window.parentWin.changeWinId(winProps.parentId);
       }
       if (state) {
-        this.state = { ...this.state, ...state };
+        this.state = { ...this.state, ...this.deserializer(state) };
         this._sendUpdate();
       }
       this.emitter.emit("did-init", window.eventFluxWin);

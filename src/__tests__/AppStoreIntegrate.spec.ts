@@ -18,6 +18,7 @@ import { IRendererClient, IRendererClientCallback } from "../rendererClientTypes
 import MultiWinSaver from "../MultiWinSaver";
 import RendererAppStore from "../RendererAppStore";
 import RendererClient from "../RendererClient";
+import immutable from "immutable";
 
 jest.mock("../MainClient", () => {
   class MyMainClient implements IMainClient {
@@ -218,6 +219,27 @@ describe("For AppStore integration, Main and Renderer app store", () => {
     rendererAppStore.releaseStore("mainTodoStore");
     jest.runAllTimers();
     expect(rendererAppStore.state).toEqual({ mainTodo: undefined });
+  });
+
+  test("should sync messages when register win again", async () => {
+    let [mainAppStore, rendererAppStore] = initAppStore(
+      [declareStore(TodoStore, [], { stateKey: "mainTodo", storeKey: "mainTodoStore" })],
+      [declareStore(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
+    );
+    let mainTodoStore = rendererAppStore.requestStore("mainTodoStore");
+    jest.runAllTimers();
+    expect(rendererAppStore.state).toEqual({ mainTodo: { hello: "hello1" } });
+
+    mainTodoStore.setState({ hello: immutable.Map({ hello: "world" }) });
+    jest.runAllTimers();
+    expect(rendererAppStore.state).toEqual({ mainTodo: { hello: immutable.Map({ hello: "world" }) } });
+
+    mainTodoStore.setState({ hello: immutable.Map({ hello: "world2" }) });
+    jest.runAllTimers();
+
+    // Register this window again
+    rendererAppStore.rendererClient.sendMainMsg(renderRegisterName, "mainClient");
+    expect(rendererAppStore.state).toEqual({ mainTodo: { hello: immutable.Map({ hello: "world2" }) } });
   });
 
   test("should sync store map messages when requestStore and releaseStore", async () => {

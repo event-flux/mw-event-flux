@@ -8,28 +8,28 @@ function isDefined(s) {
   return typeof s !== "undefined";
 }
 
-class Todo4Store extends StoreBase<any> {
+class ImmutableStore extends StoreBase<any> {
   constructor(appStore) {
     super(appStore);
-    this.state = { todo4Map: Map(), todo4List: List() };
+    this.state = { immutableMap: Map(), immutableList: List() };
   }
 
   addKey(key, val) {
-    this.setState({ todo4Map: this.state.todo4Map.set(key, val) });
+    this.setState({ immutableMap: this.state.immutableMap.set(key, val) });
   }
 
   increase() {
-    this.setState({ todo4List: this.state.todo4List.push(1) });
+    this.setState({ immutableList: this.state.immutableList.push(1) });
   }
 
   removeKey(key) {
-    this.setState({ todo4Map: this.state.todo4Map.delete(key) });
+    this.setState({ immutableMap: this.state.immutableMap.delete(key) });
   }
 }
 
-export const todo4StoreDeclarer = declareStore(Todo4Store);
+export const immutableStoreDeclarer = declareStore(ImmutableStore);
 
-class Todo3Store extends StoreBase<any> {
+class SimpleStore extends StoreBase<any> {
   storage: any;
 
   constructor(appStore) {
@@ -37,8 +37,8 @@ class Todo3Store extends StoreBase<any> {
     this.state = { size: 0 };
   }
 
-  willInit() {
-    console.log("todo3, willInit", this.mapKey, this.listIndex);
+  init() {
+    console.log("simpleStore.init", this.mapKey, this.listIndex);
     let storeKey = "todo3";
     if (isDefined(this.mapKey)) {
       storeKey = this.mapKey;
@@ -66,45 +66,15 @@ class Todo3Store extends StoreBase<any> {
   }
 }
 
-export const todo3StoreDeclarer = declareStore(Todo3Store);
-export const todo3ListDeclarer = declareStoreList(Todo3Store, { storeKey: "todo3StoreList", size: 1 });
-export const todo3MapDeclarer = declareStoreMap(Todo3Store, {
-  storeKey: "todo3StoreMap",
+export const simpleStoreDeclarer = declareStore(SimpleStore);
+export const simpleListDeclarer = declareStoreList(SimpleStore, { storeKey: "simpleStoreList", size: 1 });
+export const simpleMapDeclarer = declareStoreMap(SimpleStore, {
+  storeKey: "simpleStoreMap",
   keys: ["myKey"],
 });
 
-class Todo2Store extends StoreBase<any> {
-  parentStore: any;
-  storage: any;
-
-  constructor(appStore) {
-    super(appStore);
-    this.state = { size: 0, todo3List: [], todo3Map: {} };
-  }
-
-  willInit() {
-    console.log("todo2, willInit");
-    this.storage = this.parentStore.storage.getNSStore("todo2");
-    this.setState({
-      size: this.storage.get("size") || 0,
-    });
-  }
-
-  addSize() {
-    this.setState({ size: this.state.size + 1 });
-    this.storage.set("size", this.state.size + 1);
-  }
-
-  decreaseSize() {
-    this.setState({ size: this.state.size - 1 });
-    this.storage.set("size", this.state.size - 1);
-  }
-}
-
-export const todo2StoreDeclarer = declareStore(Todo2Store);
-
 class TodoStore extends StoreBase<any> {
-  clientId: any;
+  winId: any;
   storage: any;
 
   constructor(appStore) {
@@ -113,9 +83,9 @@ class TodoStore extends StoreBase<any> {
   }
 
   init() {
-    let clientId = this.clientId;
-    console.log("clientId:", clientId);
-    this.storage = clientId ? storage.getNSStore(clientId) : storage;
+    let winId = this.winId;
+    console.log("winId:", winId);
+    this.storage = winId ? storage.getNSStore(winId) : storage;
     this.setState({
       count: this.storage.get("count") || 0,
       isComplete: this.storage.get("isComplete"),

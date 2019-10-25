@@ -323,7 +323,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       let winInfo = this.multiWinSaver.getWinInfo(winId);
       this.multiWinSaver.deleteWin(winId);
       this.multiWinSaver.addWin(winInfo);
-      this.initWin(winId, { state: this.prevState });
+      this.initWin(winId, { state: this.serializer(this.prevState) });
     } else {
       this.multiWinSaver.registerWin(winId);
     }

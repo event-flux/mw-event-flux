@@ -39,16 +39,16 @@ class CounterDemo extends React.Component<any, any> {
   };
 
   render() {
-    let { todo4, todo, todoStore, todo4Store, classes } = this.props;
-    if (todo == null || todo4 == null) {
+    let { immutable, todo, todoStore, immutableStore, classes } = this.props;
+    if (todo == null || immutable == null) {
       return null;
     }
     let { count, isComplete } = todo;
-    let { todo4Map, todo4List } = todo4;
+    let { immutableMap, immutableList } = immutable;
     const onClick = () => todoStore.addTodo(1);
     const onClick2 = () => todoStore.setComplete(isComplete ? undefined : true);
-    const onClick3 = () => todo4Store.addKey(Math.random().toString(), 0);
-    const onClick4 = () => todo4Store.increase();
+    const onClick3 = () => immutableStore.addKey(Math.random().toString(), 0);
+    const onClick4 = () => immutableStore.increase();
     return (
       <div className={classes.root}>
         <Button color="primary" variant="contained" onClick={onClick}>
@@ -58,10 +58,10 @@ class CounterDemo extends React.Component<any, any> {
           Complete {isComplete ? "Yes" : "No"}
         </Button>
         <Button color="primary" variant="contained" onClick={onClick3}>
-          Immutable Map {todo4Map && todo4Map.size}
+          Immutable Map {immutableMap && immutableMap.size}
         </Button>
         <Button color="primary" variant="contained" onClick={onClick4}>
-          Immutable List {todo4List && todo4List.size}
+          Immutable List {immutableList && immutableList.size}
         </Button>
         <Button color="primary" variant="contained" onClick={this.onClick5}>
           Return Value {this.state.retObj}
@@ -79,7 +79,7 @@ class CounterDemo extends React.Component<any, any> {
 
 const eventFluxArgs = {
   todoStore: Filter.FA,
-  todo4Store: Filter.FA,
+  immutableStore: Filter.FA,
 };
 
 export default {

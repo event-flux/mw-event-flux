@@ -220,6 +220,8 @@ class MultiWinCacheStore extends MultiWinStore {
         clientId = winInfo.clientId;
         win = winInfo.window;
 
+        // Get window from cache then show this window.
+        params.show = true;
         this.mainClient.changeWin(this.multiWinSaver.getWinInfo(clientId), { path: url, parentId }, params);
       }
     }

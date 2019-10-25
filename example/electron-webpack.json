@@ -1,0 +1,10 @@
+{
+  "title": true,
+  "main": {
+    "webpackConfig": "./base.webpack.js"
+  },
+
+  "renderer": {
+    "webpackConfig": "./base.webpack.js"
+  }
+}

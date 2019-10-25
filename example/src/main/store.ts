@@ -39,13 +39,13 @@ class SimpleStore extends StoreBase<any> {
 
   init() {
     console.log("simpleStore.init", this.mapKey, this.listIndex);
-    let storeKey = "todo3";
+    let storeKey = "simple";
     if (isDefined(this.mapKey)) {
-      storeKey = this.mapKey;
+      storeKey = "simple@" + this.mapKey;
     } else if (isDefined(this.listIndex)) {
-      storeKey = this.listIndex.toString();
+      storeKey = "simple@" + this.listIndex.toString();
     }
-    this.storage = this.parentStore.storage.getNSStore(storeKey);
+    this.storage = storage.getNSStore(storeKey);
     this.setState({
       size: this.storage.get("size") || 0,
     });
@@ -67,9 +67,15 @@ class SimpleStore extends StoreBase<any> {
 }
 
 export const simpleStoreDeclarer = declareStore(SimpleStore);
-export const simpleListDeclarer = declareStoreList(SimpleStore, { storeKey: "simpleStoreList", size: 1 });
+export const simpleListDeclarer = declareStoreList(SimpleStore, {
+  storeKey: "simpleStoreList",
+  stateKey: "simpleList",
+  size: 1,
+});
+
 export const simpleMapDeclarer = declareStoreMap(SimpleStore, {
   storeKey: "simpleStoreMap",
+  stateKey: "simpleMap",
   keys: ["myKey"],
 });
 

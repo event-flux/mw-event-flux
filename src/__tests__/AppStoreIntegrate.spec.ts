@@ -336,4 +336,22 @@ describe("For AppStore integration, Main and Renderer app store", () => {
     mainTodoStore.reflect("new2");
     expect(observer).not.toHaveBeenCalled();
   });
+
+  test("should sync store list size and store map keys to renderer process", async () => {
+    let [mainAppStore, rendererAppStore] = initAppStore(
+      [
+        declareStoreList(TodoStore, [], { stateKey: "todoList", storeKey: "todoListStore", size: 1 }),
+        declareStoreMap(TodoStore, [], { stateKey: "todoMap", storeKey: "todoMapStore", keys: ["key1"] }),
+      ],
+      [declareStore(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
+    );
+
+    let todoListStore = rendererAppStore.requestStore("todoListStore");
+    let todoMapStore = rendererAppStore.requestStore("todoMapStore");
+    jest.runAllTimers();
+    expect(rendererAppStore.state).toEqual({
+      todoList: { 0: { hello: "hello1" } },
+      todoMap: { key1: { hello: "hello1" } },
+    });
+  });
 });

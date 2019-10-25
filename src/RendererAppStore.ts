@@ -86,7 +86,8 @@ export default class RendererAppStore extends AppStore implements IRendererClien
 
     for (let storeDeclarer of mainDeclarers) {
       let ProxyDeclarer: any;
-      switch (storeDeclarer.storeType) {
+      let { storeType, depStoreNames, ...declarerOptions } = storeDeclarer;
+      switch (storeType) {
         case "Item":
           ProxyDeclarer = StoreProxyDeclarer;
           break;
@@ -99,16 +100,9 @@ export default class RendererAppStore extends AppStore implements IRendererClien
         default:
           ProxyDeclarer = StoreProxyDeclarer;
       }
+      declarerOptions.forMain = true;
       storeDeclarers.push(
-        new ProxyDeclarer((StoreProxy as any) as StoreBaseConstructor<any>, storeDeclarer.depStoreNames, {
-          stateKey: storeDeclarer.stateKey,
-          storeKey: storeDeclarer.storeKey,
-          forMain: true,
-          _evs: storeDeclarer._evs,
-          _invokers: storeDeclarer._invokers,
-          _mapEvs: storeDeclarer._mapEvs,
-          _mapInvokers: storeDeclarer._mapInvokers,
-        })
+        new ProxyDeclarer((StoreProxy as any) as StoreBaseConstructor<any>, depStoreNames, declarerOptions)
       );
     }
 

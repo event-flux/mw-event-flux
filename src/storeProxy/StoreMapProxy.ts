@@ -1,4 +1,13 @@
-import { DispatchItem, AppStore, StoreMapDeclarer, StoreMap, OperateMode, OperateModeSwitch } from "event-flux";
+import {
+  DispatchItem,
+  AppStore,
+  StoreMapDeclarer,
+  StoreMap,
+  OperateMode,
+  OperateModeSwitch,
+  StoreBaseConstructor,
+  StoreMapDeclarerOptions,
+} from "event-flux";
 import DispatchItemProxy, { IStoreDispatcher } from "./DispatchItemProxy";
 import { DisposableLike, CompositeDisposable } from "event-kit";
 
@@ -32,6 +41,20 @@ export class StoreMapProxy extends DispatchItemProxy {
     super();
     this._appStore = appStore;
     this._storeKey = storeKey;
+  }
+
+  _inject(
+    StoreBuilder: StoreBaseConstructor<any>,
+    stateKey?: string,
+    depStores?: { [storeKey: string]: DispatchItem },
+    initState?: any,
+    options?: StoreMapDeclarerOptions
+  ) {
+    this._stateKey = stateKey;
+    let keys = options!.keys;
+    if (keys) {
+      this.add(keys);
+    }
   }
 
   _invokeRemoteMethod(method: string, ...args: any[]) {

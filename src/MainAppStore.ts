@@ -59,10 +59,12 @@ function genOutStoreDeclarers(appStore: AppStore) {
       _invokers,
     };
     if (storeType === "List") {
+      outDeclarer.size = options.size;
       let { _evs: _mapEvs, _invokers: _mapInvokers } = (options.StoreList || StoreList).prototype;
       outDeclarer._mapEvs = _mapEvs;
       outDeclarer._mapInvokers = _mapInvokers;
     } else if (storeType === "Map") {
+      outDeclarer.keys = options.keys;
       let { _evs: _mapEvs, _invokers: _mapInvokers } = (options.StoreMap || StoreMap).prototype;
       outDeclarer._mapEvs = _mapEvs;
       outDeclarer._mapInvokers = _mapInvokers;

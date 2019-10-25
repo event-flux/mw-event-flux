@@ -1,4 +1,11 @@
-import { DispatchItem, AppStore, StoreListDeclarer, StoreList } from "event-flux";
+import {
+  DispatchItem,
+  AppStore,
+  StoreListDeclarer,
+  StoreList,
+  StoreBaseConstructor,
+  StoreListDeclarerOptions,
+} from "event-flux";
 import DispatchItemProxy, { IStoreDispatcher } from "./DispatchItemProxy";
 
 class StoreListItemProxy extends DispatchItemProxy {
@@ -27,6 +34,20 @@ export class StoreListProxy extends DispatchItemProxy {
     super();
     this._appStore = appStore;
     this._storeKey = storeKey;
+  }
+
+  _inject(
+    StoreBuilder: StoreBaseConstructor<any>,
+    stateKey?: string,
+    depStores?: { [storeKey: string]: DispatchItem },
+    initState?: any,
+    options?: StoreListDeclarerOptions
+  ) {
+    this._stateKey = stateKey;
+    let size = options!.size || 0;
+    if (size > 0) {
+      this.setSize(size);
+    }
   }
 
   setSize(count: number) {

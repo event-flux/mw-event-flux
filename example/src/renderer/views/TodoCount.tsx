@@ -18,21 +18,21 @@ class CounterDemo extends React.Component<any, any> {
   }
 
   onClick5 = () => {
-    this.props.store.stores.todoStore.getObject().then(obj => {
+    this.props.todoStore.getObject().then(obj => {
       console.log("return obj", obj);
       this.setState({ retObj: obj.clientId });
     });
   };
 
   onClick6 = () => {
-    this.props.store.stores.todoStore.getObjectThrow().catch(err => {
+    this.props.todoStore.getObjectThrow().catch(err => {
       console.log("catch obj", err);
       this.setState({ retErr: err.message });
     });
   };
 
   onClick7 = () => {
-    this.props.store.stores.todoStore.getAsyncObject().then(obj => {
+    this.props.todoStore.getAsyncObject().then(obj => {
       console.log("return obj", obj);
       this.setState({ asyncObj: obj.clientId });
     });
@@ -47,8 +47,8 @@ class CounterDemo extends React.Component<any, any> {
     let { todo4Map, todo4List } = todo4;
     const onClick = () => todoStore.addTodo(1);
     const onClick2 = () => todoStore.setComplete(isComplete ? undefined : true);
-    const onClick3 = () => todoStore.todo2Store.todo4Store.addKey(Math.random().toString(), 0);
-    const onClick4 = () => todoStore.todo2Store.todo4Store.increase();
+    const onClick3 = () => todo4Store.addKey(Math.random().toString(), 0);
+    const onClick4 = () => todo4Store.increase();
     return (
       <div className={classes.root}>
         <Button color="primary" variant="contained" onClick={onClick}>

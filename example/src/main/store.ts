@@ -153,6 +153,7 @@ class TodoStore extends StoreBase<any> {
     });
   }
 
+  @invoker
   getObjectThrow() {
     console.log("will throw object");
     throw new Error("throw object error");

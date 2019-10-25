@@ -17,13 +17,15 @@ export default function objectMerge(origin: any, updated: any, deleted: any) {
       deleteKeys: string[] = [];
     // deleted = isObject(deleted) ? deleted : {};
     merged = origin.withMutations((map: Map<any, any>) => {
-      Object.keys(deleted).forEach((key: string) => {
-        if (deleted[key] === true) {
-          map.delete(JSON.parse(key));
-        } else {
-          deleteKeys.push(key);
-        }
-      });
+      if (isObject(deleted)) {
+        Object.keys(deleted).forEach((key: string) => {
+          if (deleted[key] === true) {
+            map.delete(JSON.parse(key));
+          } else {
+            deleteKeys.push(key);
+          }
+        });
+      }
       let updateKeys = isObject(updated) ? Object.keys(updated) : undefined;
       union(updateKeys, deleteKeys).forEach((key: string) => {
         let originKey = JSON.parse(key);

@@ -20,6 +20,24 @@ test("base merge with undefined value", () => {
   expect(retObj).toEqual(newObj);
 });
 
+test("base merge with undefined immutable value", () => {
+  let sameObj = { hello: "a" };
+  let oldObj = fromJS({ d: "b", same: sameObj, same2: sameObj, p: 1 });
+  let newObj = fromJS({ m: "b", same: {}, same2: { hello: "b" }, p: undefined });
+  let { updated, deleted } = objectDifference(oldObj, newObj);
+  expect(updated).toEqual({
+    [JSON.stringify("m")]: "b",
+    [JSON.stringify("p")]: undefined,
+    [JSON.stringify("same2")]: { [JSON.stringify("hello")]: "b" },
+  });
+  expect(deleted).toEqual({
+    [JSON.stringify("d")]: true,
+    [JSON.stringify("same")]: { [JSON.stringify("hello")]: true },
+  });
+  let retObj = objectMerge(oldObj, updated, deleted);
+  expect(retObj).toEqual(newObj);
+});
+
 test("immutable diff", () => {
   let val1 = Map({ a: 2, b: 3, c: 4 });
   let val2: Map<any, any> = Map({ a: 3, c: 4 });

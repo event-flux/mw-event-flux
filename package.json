@@ -1,6 +1,6 @@
 {
   "name": "mw-event-flux",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Redux store which synchronizes between instances in multiple process",
   "main": "lib/index.js",
   "scripts": {
@@ -70,7 +70,7 @@
     "gulp-babel": "^7.0.1",
     "gulp-sequence": "^1.0.0",
     "gulp-typescript": "^5.0.0-alpha.3",
-    "husky": "^3.0.5",
+    "husky": "^3.0.9",
     "jest": "^23.6.0",
     "lint-staged": "^9.3.0",
     "merge2": "^1.2.3",

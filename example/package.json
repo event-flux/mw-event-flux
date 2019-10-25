@@ -13,7 +13,7 @@
     "@material-ui/core": "^4.5.1",
     "electron-window-state": "^4.1.1",
     "event-flux": "^1.2.3",
-    "mw-event-flux": "^1.0.9",
+    "mw-event-flux": "^1.0.10",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "react-event-flux": "^1.2.3",

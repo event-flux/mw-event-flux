@@ -222,18 +222,18 @@ export default class MyView extends React.PureComponent<any, any> {
               onDragStart={this.handleDragStart("demo2")}
               onDragEnd={this.handleDragEnd("demo2")}
             />
-            {/* <OneDemoView
+            <OneDemoView
               innerRef={this.divGetter("demo3Height")}
               {...Todo3CountDemo}
               onDragStart={this.handleDragStart("demo3")}
               onDragEnd={this.handleDragEnd("demo3")}
-            /> */}
-            {/* <OneDemoView
+            />
+            <OneDemoView
               innerRef={this.divGetter("demo4Height")}
               {...Todo4CountDemo}
               onDragStart={this.handleDragStart("demo4")}
               onDragEnd={this.handleDragEnd("demo4")}
-            /> */}
+            />
             <MyNewButton ref={ref => (this.buttons = ref)} sizes={sizes} />
           </div>
         );

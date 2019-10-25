@@ -223,7 +223,10 @@ describe("For AppStore integration, Main and Renderer app store", () => {
 
   test("should sync messages when register win again", async () => {
     let [mainAppStore, rendererAppStore] = initAppStore(
-      [declareStore(TodoStore, [], { stateKey: "mainTodo", storeKey: "mainTodoStore" })],
+      [
+        declareStore(TodoStore, [], { stateKey: "mainTodo", storeKey: "mainTodoStore" }),
+        declareWinStore(TodoStore, [], { stateKey: "winMainTodo", storeKey: "winMainTodoStore" }),
+      ],
       [declareStore(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
     );
     let mainTodoStore = rendererAppStore.requestStore("mainTodoStore");
@@ -235,11 +238,15 @@ describe("For AppStore integration, Main and Renderer app store", () => {
     expect(rendererAppStore.state).toEqual({ mainTodo: { hello: immutable.Map({ hello: "world" }) } });
 
     mainTodoStore.setState({ hello: immutable.Map({ hello: "world2" }) });
+    let winMainTodoStore = rendererAppStore.requestStore("winMainTodoStore");
     jest.runAllTimers();
 
     // Register this window again
     rendererAppStore.rendererClient.sendMainMsg(renderRegisterName, "mainClient");
-    expect(rendererAppStore.state).toEqual({ mainTodo: { hello: immutable.Map({ hello: "world2" }) } });
+    expect(rendererAppStore.state).toEqual({
+      mainTodo: { hello: immutable.Map({ hello: "world2" }) },
+      winMainTodo: { hello: "hello1" },
+    });
   });
 
   test("should sync store map messages when requestStore and releaseStore", async () => {

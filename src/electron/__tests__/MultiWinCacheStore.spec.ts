@@ -140,7 +140,7 @@ describe("MultiWinStore", () => {
     expect(appStore.mainClient.changeWin).toHaveBeenLastCalledWith(
       appStore.multiWinSaver.getWinInfo(win1Id),
       { path: "/hello", parentId: "mainClient" },
-      { x: 200, y: 150, width: 800, height: 600, useContentSize: false }
+      { x: 200, y: 150, width: 800, height: 600, useContentSize: false, show: true }
     );
     expect(multiWinStore.clientInfoMap[multiWinStore.clientIds[1]]).toEqual({
       path: "/hello",
@@ -154,6 +154,7 @@ describe("MultiWinStore", () => {
         width: 800,
         height: 600,
         useContentSize: false,
+        show: true,
       },
     });
 
@@ -161,7 +162,7 @@ describe("MultiWinStore", () => {
     expect(appStore.mainClient.changeWin).toHaveBeenLastCalledWith(
       appStore.multiWinSaver.getWinInfo(multiWinStore.clientIds[2]),
       { path: "/hello", parentId: undefined },
-      { x: 200, y: 100, width: 800, height: 600, useContentSize: false }
+      { x: 200, y: 100, width: 800, height: 600, useContentSize: false, show: true }
     );
     expect(multiWinStore.getStorage()!.get("clients").length).toEqual(3);
 

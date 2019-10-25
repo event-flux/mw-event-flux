@@ -1,6 +1,6 @@
 {
   "name": "mw-event-flux",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "Redux store which synchronizes between instances in multiple process",
   "main": "lib/index.js",
   "scripts": {

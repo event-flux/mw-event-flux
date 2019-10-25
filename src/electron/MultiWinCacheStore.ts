@@ -68,6 +68,7 @@ class MultiWinCacheStore extends MultiWinStore {
   clientInfoMap: { [winId: string]: IClientCacheInfo } = {};
   willQuit = false;
   windowManager?: WindowManager;
+  _storage?: IStorage;
 
   init() {
     this.loadClients();
@@ -96,6 +97,9 @@ class MultiWinCacheStore extends MultiWinStore {
   }
 
   saveClients() {
+    if (this.willQuit) {
+      return;
+    }
     let clients = this.clientIds.map(id => ({
       winId: id,
       ...this.clientInfoMap[id],
@@ -109,9 +113,13 @@ class MultiWinCacheStore extends MultiWinStore {
     return [{ winId: "mainClient", path: "/", name: "mainClient", groups: ["main"], winState: { isMaximized: true } }];
   }
 
-  getStorage(): IStorage | null {
-    console.error("You need inherit MultiWinCacheStore and implement getStorage");
-    return null;
+  getStorage(): IStorage {
+    // console.error("You need inherit MultiWinCacheStore and implement getStorage");
+    if (!this._storage) {
+      let Storage = require("../storage").default;
+      this._storage = new Storage("1.0");
+    }
+    return this._storage!;
   }
 
   _removeClientId(clientId: string) {
@@ -212,7 +220,6 @@ class MultiWinCacheStore extends MultiWinStore {
         clientId = winInfo.clientId;
         win = winInfo.window;
 
-        // this._appStore.mainClient.sendMessage(win, { action: 'change-props', url, parentId });
         this.mainClient.changeWin(this.multiWinSaver.getWinInfo(clientId), { path: url, parentId }, params);
       }
     }
@@ -250,8 +257,8 @@ class MultiWinCacheStore extends MultiWinStore {
 
   handleClosed(clientId: string) {
     if (clientId === "mainClient") {
-      this.willQuit = true;
       this.saveClients();
+      this.willQuit = true;
     }
     this.handleDidCloseWin && this.handleDidCloseWin(clientId!);
     this._removeClientId(clientId!);
@@ -261,6 +268,11 @@ class MultiWinCacheStore extends MultiWinStore {
     if (clientId === "mainClient") {
       this.closeAllWindows();
     }
+  }
+
+  changeWinProps(clientId: string, winProps: IWinProps): void {
+    this.clientInfoMap[clientId] = { ...this.clientInfoMap[clientId], ...winProps };
+    this.saveClients();
   }
 
   closeAllWindows() {

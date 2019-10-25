@@ -190,6 +190,8 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
     }
   }
 
+  changeWinProps(clientId: string, winProps: IWinProps): void {}
+
   _genClientId(): string {
     let clientId = "win" + Math.floor(Math.random() * 10000);
     if (this.clientIds.indexOf(clientId) !== -1) {

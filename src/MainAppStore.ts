@@ -204,6 +204,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
         throw new Error("The winId parameter is necessary when creating isPerWin store ");
       }
       storeKey = storeKey + "@" + winId;
+      store.winId = winId;
     }
     this.stores[storeKey] = store;
   }

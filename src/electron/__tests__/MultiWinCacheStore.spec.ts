@@ -180,4 +180,18 @@ describe("MultiWinStore", () => {
         .map((item: any) => item.winId)
     ).toEqual(["mainClient", win1Id]);
   });
+
+  test("loadClients with clients should behave correctly", async () => {
+    multiWinStore
+      .getStorage()!
+      .set("clients", [
+        { winId: "mainClient", name: "mainClient", groups: ["main"], path: "/home", winState: { x: 10 } },
+      ]);
+    multiWinStore.init();
+    await app.whenReady();
+    multiWinStore.changeWinProps("mainClient", { path: "/home2" });
+    expect(multiWinStore.getStorage()!.get("clients")).toMatchObject([
+      { winId: "mainClient", path: "/home2", name: "mainClient", groups: ["main"], winState: { x: 10 } },
+    ]);
+  });
 });

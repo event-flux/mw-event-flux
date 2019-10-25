@@ -203,10 +203,6 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     this.rendererClient.sendMainMsg(renderMapReleaseStoreName, this.winId, storeName, mapKeys);
   }
 
-  sendMessage(args: any) {
-    this.rendererClient.sendMainMsg(messageName, args);
-  }
-
   sendWindowMessage(sourceId: string, targetId: string, data: any) {
     this.rendererClient.sendMainMsg(winMessageName, sourceId, targetId, data);
   }

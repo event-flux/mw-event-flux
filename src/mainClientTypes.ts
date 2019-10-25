@@ -103,4 +103,6 @@ export interface IMultiWinStore {
   sendWinMsgByName(name: string, message: any): void;
 
   sendWinMsgByGroup(group: string, message: any): void;
+
+  changeWinProps(clientId: string, winProps: IWinProps): void;
 }

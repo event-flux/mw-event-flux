@@ -166,6 +166,7 @@ describe("MainAppStore", () => {
 
     mainAppStore.requestStore("todo3Store", "win1");
     expect(Object.keys(mainAppStore.stores).sort()).toEqual(["todo1Store@win1", "todo2Store", "todo3Store@win1"]);
+    expect(mainAppStore.stores["todo1Store@win1"].winId).toBe("win1");
     expect(mainAppStore.state).toEqual({ "todo1@win1": {}, todo2: {}, "todo3@win1": {} });
 
     mainAppStore.releaseStore("todo3Store", "win1");

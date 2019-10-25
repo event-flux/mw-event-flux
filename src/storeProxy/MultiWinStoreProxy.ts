@@ -61,20 +61,26 @@ export class MultiWinStoreProxy extends DispatchItemProxy {
 
   createWin(url: IWinProps | string, params: IWinParams): ChildWindowProxy {
     let parentId = window.winId;
+    let winProps: IWinProps = typeof url === "string" ? { path: url } : url;
+    winProps.parentId = parentId;
+
     let result = this.appStore.handleDispatch({
       store: this.storeKey,
       method: "createWin",
-      args: [url, parentId, params],
+      args: [winProps, params],
     }) as Promise<string>;
     return new ChildWindowProxy(this.appStore, result);
   }
 
   createOrOpenWin(winName: string, url: string | IWinProps, params: IWinParams): ChildWindowProxy {
-    let parentId: string = window.winId;
+    let parentId = window.winId;
+    let winProps: IWinProps = typeof url === "string" ? { path: url } : url;
+    winProps.parentId = parentId;
+
     let result = this.appStore.handleDispatch({
       store: this.storeKey,
       method: "createOrOpenWin",
-      args: [winName, url, parentId, params],
+      args: [winName, winProps, params],
     }) as Promise<string>;
     return new ChildWindowProxy(this.appStore, result);
   }

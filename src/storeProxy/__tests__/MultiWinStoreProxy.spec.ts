@@ -52,7 +52,7 @@ describe("StoreProxy", () => {
     expect(storeDispatcher.handleDispatch).toHaveBeenLastCalledWith({
       store: "helloStore",
       method: "createWin",
-      args: ["/hello", "winId2", { x: 10, y: 10 }],
+      args: [{ path: "/hello", parentId: "winId2" }, { x: 10, y: 10 }],
     });
 
     childProxy.send("hello");

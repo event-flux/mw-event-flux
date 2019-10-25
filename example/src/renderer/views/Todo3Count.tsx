@@ -15,16 +15,16 @@ function Todo2Demo({ winTodo, winTodoStore, classes }) {
   if (!winTodo) {
     return null;
   }
-  let { size } = winTodo;
+  let { count } = winTodo;
   const onClick = () => winTodoStore.addTodo(1);
   const onClick2 = () => winTodoStore.decreaseTodo(1);
   return (
     <div className={classes.root}>
       <Button color="primary" variant="contained" onClick={onClick}>
-        Add Size {size}
+        Add Size {count}
       </Button>
       <Button color="primary" variant="contained" onClick={onClick2}>
-        Decrease Size {size}
+        Decrease Size {count}
       </Button>
     </div>
   );

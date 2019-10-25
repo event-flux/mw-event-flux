@@ -22,7 +22,7 @@ export class WindowManager {
   }
 
   createWin(clientId: string) {
-    return this.winHandler.createNativeWindow(clientId);
+    return this.winHandler.createNativeWindow(clientId, "empty", undefined, { show: false });
   }
 
   ensureWindows() {

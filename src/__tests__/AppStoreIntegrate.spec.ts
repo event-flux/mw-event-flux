@@ -365,9 +365,24 @@ describe("For AppStore integration, Main and Renderer app store", () => {
 
   test("should sync recycle strategy to renderer process", async () => {
     let [mainAppStore, rendererAppStore] = initAppStore(
-      [declareStoreList(TodoStore, [], { stateKey: "todoList", storeKey: "todoListStore", size: 1 })],
+      [declareStoreMap(TodoStore, [], { stateKey: "todoMap", storeKey: "todoMapStore", size: 1 })],
       [declareStore(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
     );
     expect(rendererAppStore._recycleStrategy).toBe(RecycleStrategy.Never);
+    mainAppStore.setRecycleStrategy(RecycleStrategy.Urgent);
+    jest.runAllTimers();
+    expect(rendererAppStore._recycleStrategy).toBe(RecycleStrategy.Urgent);
+
+    let todoMapStore = rendererAppStore.requestStore("todoMapStore");
+    jest.runAllTimers();
+
+    mainAppStore.stores["todoMapStore"].setRecycleStrategy(RecycleStrategy.Urgent);
+    jest.runAllTimers();
+    expect(todoMapStore._recycleStrategy).toBe(RecycleStrategy.Urgent);
+
+    mainAppStore.stores["todoMapStore"].setRecycleStrategy(RecycleStrategy.Cache, { cacheLimit: 2 });    
+    jest.runAllTimers();
+    expect(todoMapStore._recycleStrategy).toBe(RecycleStrategy.Cache);
+    expect(todoMapStore._keyCache.limit).toBe(2);
   });
 });

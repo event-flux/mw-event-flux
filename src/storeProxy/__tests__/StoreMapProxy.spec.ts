@@ -110,4 +110,35 @@ describe("StoreMapProxy", () => {
 
     expect(() => newStore.add("key2")).toThrowError();
   });
+
+  test("should request with recycle strategy", () => {
+    let storeDispatcher: IStoreDispatcher = {
+      handleDispatch: jest.fn(),
+      handleDispatchNoReturn: jest.fn(),
+      handleDispatchDisposable: jest.fn(),
+      handleMainMapRequestStores: jest.fn(),
+      handleMainMapReleaseStores: jest.fn(),
+      _recycleStrategy: RecycleStrategy.Urgent,
+    };
+    let newStore = new StoreMapProxy(storeDispatcher, "helloStore");
+    newStore.requestStore("key1");
+    newStore.releaseStore("key1");
+    expect(Array.from(newStore.storeMap.keys())).toEqual([]);
+
+    storeDispatcher._recycleStrategy = RecycleStrategy.Never;
+    newStore.requestStore("key1");
+    newStore.releaseStore("key1");
+    expect(Array.from(newStore.storeMap.keys())).toEqual(["key1"]);
+
+    newStore.setRecycleStrategy(RecycleStrategy.Urgent);
+    expect(Array.from(newStore.storeMap.keys())).toEqual([]);
+
+    newStore.setRecycleStrategy(RecycleStrategy.Cache, { cacheLimit: 2 });
+    ["key1", "key2", "key3"].forEach(name => newStore.requestStore(name));
+    ["key1", "key2", "key3"].forEach(name => newStore.releaseStore(name));
+    expect(Array.from(newStore.storeMap.keys())).toEqual(["key2", "key3"]);
+
+    newStore.requestStore("key2");
+    expect(Object.keys(newStore._keyCache!.cache)).toEqual(["key3"]);
+  });
 });

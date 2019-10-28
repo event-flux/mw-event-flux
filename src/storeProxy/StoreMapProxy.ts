@@ -36,7 +36,7 @@ export class StoreMapProxy extends DispatchItemProxy {
   storeMap: Map<string, StoreMapItemProxy> = new Map();
   _keyRefs: { [key: string]: number } = {};
   _disposables = new CompositeDisposable();
-  
+
   _keyCache: LRU<string> | undefined;
   _recycleStrategy: RecycleStrategy | undefined;
 
@@ -85,7 +85,6 @@ export class StoreMapProxy extends DispatchItemProxy {
           this._deleteOne(removeKey);
         });
       }
-      this._emitter.emit("did-change-rs", recycleStrategy);
     }
   }
 

@@ -81,6 +81,8 @@ export default class ElectronMainClient implements IMainClient {
   createWin(winId: string, winProps: IWinProps, winParams: IWinParams) {
     let storeDeclarers = this.mainClientCallback.getStoreDeclarers();
     let initStates = this.mainClientCallback.getInitStates(winId);
+    let rs = this.mainClientCallback.getRecycleStrategy();
+
     const window = new BrowserWindow({
       webPreferences: {
         nodeIntegration: true,
@@ -89,7 +91,7 @@ export default class ElectronMainClient implements IMainClient {
       show: false,
     });
 
-    let query = { winId, storeDeclarers, state: initStates, ...winProps };
+    let query = { winId, storeDeclarers, state: initStates, rs, ...winProps };
     if (process.env.NODE_ENV === "development") {
       window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?${encodeQuery(query)}`);
       window.webContents.openDevTools();

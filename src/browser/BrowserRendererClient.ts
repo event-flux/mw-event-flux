@@ -4,6 +4,7 @@ import {
   winMessageName,
   messageName,
   initMessageName,
+  mainEmitName,
   mainInvokeName,
 } from "../constants";
 import { IRendererClient, IRendererClientCallback } from "../rendererClientTypes";
@@ -44,9 +45,12 @@ export default class BrowserRendererClient implements IRendererClient {
         let [invokeId, error, result] = data;
         return this.rendererCallback.handleInvokeReturn(invokeId, error, result);
       }
-      case mainInvokeName: {
+      case mainEmitName: {
         let [invokeId, args] = data;
-        return this.rendererCallback.handleMainInvoke(invokeId, args);
+        return this.rendererCallback.handleMainEmit(invokeId, args);
+      }
+      case mainInvokeName: {
+        return this.rendererCallback.handleMainInvoke(data[0]);
       }
       case messageName: {
         return this.rendererCallback.handleMessage(data[0]);

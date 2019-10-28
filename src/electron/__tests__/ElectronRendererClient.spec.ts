@@ -7,7 +7,7 @@ import {
   mainReturnName,
   messageName,
   winMessageName,
-  mainInvokeName,
+  mainEmitName,
 } from "../../constants";
 
 jest.useFakeTimers();
@@ -19,6 +19,7 @@ describe("ElectronRendererClient", () => {
     rendererCallback = {
       handleDispatchReturn: jest.fn(),
       handleInvokeReturn: jest.fn(),
+      handleMainEmit: jest.fn(),
       handleMainInvoke: jest.fn(),
       handleWinMessage: jest.fn(),
       handleMessage: jest.fn(),
@@ -37,8 +38,8 @@ describe("ElectronRendererClient", () => {
     ipcRenderer.emit(mainDispatchName, {}, { hello: "dd" });
     expect(rendererCallback.handleDispatchReturn).toHaveBeenCalledWith({ hello: "dd" });
 
-    ipcRenderer.emit(mainInvokeName, {}, "1", ["hello"]);
-    expect(rendererCallback.handleMainInvoke).toHaveBeenCalledWith("1", ["hello"]);
+    ipcRenderer.emit(mainEmitName, {}, "1", ["hello"]);
+    expect(rendererCallback.handleMainEmit).toHaveBeenCalledWith("1", ["hello"]);
 
     ipcRenderer.emit(mainReturnName, {}, "invoke1", undefined, "hello");
     expect(rendererCallback.handleInvokeReturn).toHaveBeenCalledWith("invoke1", undefined, "hello");

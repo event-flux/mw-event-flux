@@ -20,7 +20,6 @@ import objectMerge from "./utils/objectMerge";
 import { IStoreDispatcher, IDispatchInfo } from "./storeProxy/DispatchItemProxy";
 import { StoreListProxyDeclarer } from "./storeProxy/StoreListProxy";
 import { StoreMapProxyDeclarer } from "./storeProxy/StoreMapProxy";
-import { Emitter } from "event-kit";
 import WindowProxy from "./WindowProxy";
 import { serialize, deserialize } from "json-immutable-bn";
 
@@ -54,7 +53,6 @@ export default class RendererAppStore extends AppStore implements IRendererClien
   mainInvokeMap: { [invokeId: string]: (...args: any[]) => void } = {};
 
   winId: string;
-  emitter = new Emitter();
 
   serializer: (value: any) => string;
   deserializer: (str: string) => any;
@@ -72,7 +70,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     let ClientClass = (options && options!.RendererClient) || RendererClient;
     this.rendererClient = new ClientClass(this);
 
-    let { storeDeclarers: mainDeclarersStr, state, winId: clientId, ...winProps } = this.rendererClient.getQuery();
+    let { storeDeclarers: mainDeclarersStr, state, rs, winId: clientId, ...winProps } = this.rendererClient.getQuery();
     if (typeof window === "object") {
       window.eventFluxWin = winProps as IWinProps;
       window.winId = clientId;
@@ -82,6 +80,7 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     this.winId = clientId;
     this.rendererClient.sendMainMsg(renderRegisterName, clientId);
 
+    this.setRecycleStrategy(rs);
     let mainDeclarers = JSON.parse(mainDeclarersStr) as IOutStoreDeclarer[];
 
     for (let storeDeclarer of mainDeclarers) {
@@ -134,19 +133,25 @@ export default class RendererAppStore extends AppStore implements IRendererClien
     resolve(result);
   }
 
-  handleMainInvoke(invokeId: string, args: any[]): void {
+  handleMainInvoke(dispatchInfo: IDispatchInfo) {
+    let { store: storeKey, method, args} = dispatchInfo;
+    let store: any = storeKey == null ? this : this.stores[storeKey];
+    store && store[method] && store[method](...args);
+  }
+
+  handleMainEmit(invokeId: string, args: any[]): void {
     let callback = this.mainInvokeMap[invokeId];
     callback && callback(...args);
   }
 
   // When renderer process receive message
   handleMessage(data: any): void {
-    this.emitter.emit("did-message", data);
+    this._emitter.emit("did-message", data);
   }
 
   // When renderer process receive win message
   handleWinMessage(senderId: string, data: any): void {
-    this.emitter.emit("did-win-message", { senderId, data });
+    this._emitter.emit("did-win-message", { senderId, data });
   }
 
   // When renderer process receive init message
@@ -165,20 +170,20 @@ export default class RendererAppStore extends AppStore implements IRendererClien
         this.state = { ...this.state, ...this.deserializer(state) };
         this._sendUpdate();
       }
-      this.emitter.emit("did-init", window.eventFluxWin);
+      this._emitter.emit("did-init", window.eventFluxWin);
     }
   }
 
   onDidMessage(callback: (data: any) => void) {
-    return this.emitter.on("did-message", callback);
+    return this._emitter.on("did-message", callback);
   }
 
   onDidWinMessage(callback: (params: { senderId: string; data: any }) => void) {
-    return this.emitter.on("did-win-message", callback);
+    return this._emitter.on("did-win-message", callback);
   }
 
   onDidInit(callback: (params: any) => void) {
-    return this.emitter.on("did-init", callback);
+    return this._emitter.on("did-init", callback);
   }
 
   handleMainRequestStores(storeNames: string[]) {

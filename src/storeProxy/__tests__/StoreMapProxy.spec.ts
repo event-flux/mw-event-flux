@@ -1,5 +1,5 @@
 import { StoreMapProxy } from "../StoreMapProxy";
-import { OperateMode, StoreBase } from "event-flux";
+import { OperateMode, StoreBase, RecycleStrategy } from "event-flux";
 import { IStoreDispatcher } from "../DispatchItemProxy";
 
 describe("StoreMapProxy", () => {
@@ -77,6 +77,7 @@ describe("StoreMapProxy", () => {
       handleDispatchDisposable: jest.fn(),
       handleMainMapRequestStores: jest.fn(),
       handleMainMapReleaseStores: jest.fn(),
+      _recycleStrategy: RecycleStrategy.Urgent,
     };
     let newStore = new StoreMapProxy(storeDispatcher, "helloStore");
 

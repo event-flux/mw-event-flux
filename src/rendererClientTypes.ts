@@ -1,3 +1,5 @@
+import { IDispatchInfo } from "./storeProxy/DispatchItemProxy";
+
 export interface IRendererClient {
   getQuery(): any;
 
@@ -9,7 +11,9 @@ export interface IRendererClientCallback {
 
   handleInvokeReturn(invokeId: string, error: any, data: any): void;
 
-  handleMainInvoke(invokeId: string, args: any[]): void;
+  handleMainInvoke(args: IDispatchInfo): void;
+
+  handleMainEmit(invokeId: string, args: any[]): void;
 
   handleMessage(data: any): void;
 

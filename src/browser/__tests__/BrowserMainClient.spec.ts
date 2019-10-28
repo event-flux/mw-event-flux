@@ -39,6 +39,7 @@ describe("BrowserMainClient", () => {
       initWin: jest.fn(),
       getStoreDeclarers: jest.fn(),
       getInitStates: jest.fn(),
+      getRecycleStrategy: jest.fn(),
     };
     mainClient = new BrowserMainClient(multiWinSaver, mainClientCallback);
   });
@@ -118,8 +119,12 @@ describe("BrowserMainClient", () => {
       { minWidth: 300 }
     );
     expect(mockOpen.mock.calls[0][0]).toBe(
-      `http://localhost/hello?path=%2Fhello&parentId=win2&name=win1&groups=hello&winId=win1&isSlave=1`
+      `http://localhost/hello?winId=win1&path=%2Fhello&parentId=win2&name=win1&groups=hello&isSlave=1`
     );
+    expect(mainClientCallback.getStoreDeclarers).toHaveBeenCalled();
+    expect(mainClientCallback.getInitStates).toHaveBeenCalled();
+    expect(mainClientCallback.getRecycleStrategy).toHaveBeenCalled();
+
     expect(mockOpen.mock.calls[0][2].split(",")[0]).toBe("minWidth=300");
 
     expect(multiWinSaver.winInfos).toEqual([{ winId: "mainClient", window }, { winId: "win1", window: newWin }]);

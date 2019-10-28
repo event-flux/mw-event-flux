@@ -1,3 +1,5 @@
+import { RecycleStrategy } from "event-flux";
+
 export interface IWinInfo {
   winId: string;
   [key: string]: any;
@@ -78,6 +80,8 @@ export interface IMainClientCallback {
   getStoreDeclarers(): string;
 
   getInitStates(clientId: string): any;
+
+  getRecycleStrategy(): RecycleStrategy;
 }
 
 export interface IMultiWinStore {

@@ -37,6 +37,7 @@ describe("ElectronMainClient", () => {
       initWin: jest.fn(),
       getStoreDeclarers: jest.fn(),
       getInitStates: jest.fn(),
+      getRecycleStrategy: jest.fn(),
     };
     mainClient = new ElectronMainClient(multiWinSaver, mainClientCallback);
   });

@@ -4,6 +4,7 @@ import {
   mainReturnName,
   winMessageName,
   messageName,
+  mainEmitName,
   mainInvokeName,
 } from "../constants";
 import { ipcRenderer } from "electron";
@@ -26,8 +27,11 @@ export default class ElectronRendererClient {
     ipcRenderer.on(mainReturnName, (event: Event, invokeId: string, error: Error, result: any) => {
       this.rendererCallback.handleInvokeReturn(invokeId, error, result);
     });
-    ipcRenderer.on(mainInvokeName, (event: Event, invokeId: string, args: any[]) => {
-      this.rendererCallback.handleMainInvoke(invokeId, args);
+    ipcRenderer.on(mainEmitName, (event: Event, invokeId: string, args: any[]) => {
+      this.rendererCallback.handleMainEmit(invokeId, args);
+    });
+    ipcRenderer.on(mainInvokeName, (event: Event, args: any) => {
+      this.rendererCallback.handleMainInvoke(args);
     });
     ipcRenderer.on(messageName, (event: Event, params: any) => {
       this.rendererCallback.handleMessage(params);

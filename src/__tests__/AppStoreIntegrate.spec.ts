@@ -129,6 +129,7 @@ function initAppStore(
   RendererClient.prototype.getQuery = () => ({
     storeDeclarers: mainAppStore.getStoreDeclarers(),
     state: mainAppStore.getInitStates("mainClient"),
+    rs: mainAppStore.getRecycleStrategy(),
     winId: "mainClient",
   });
 
@@ -360,5 +361,13 @@ describe("For AppStore integration, Main and Renderer app store", () => {
       todoList: { 0: { hello: "hello1" } },
       todoMap: { key1: { hello: "hello1" } },
     });
+  });
+
+  test("should sync recycle strategy to renderer process", async () => {
+    let [mainAppStore, rendererAppStore] = initAppStore(
+      [declareStoreList(TodoStore, [], { stateKey: "todoList", storeKey: "todoListStore", size: 1 })],
+      [declareStore(TodoStore, [], { stateKey: "todo", storeKey: "todoStore" })]
+    );
+    expect(rendererAppStore._recycleStrategy).toBe(RecycleStrategy.Never);
   });
 });

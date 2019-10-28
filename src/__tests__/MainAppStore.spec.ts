@@ -1,7 +1,7 @@
 import MainAppStore from "../MainAppStore";
 import { declareStore, StoreBase, RecycleStrategy, declareStoreMap, AppStore } from "event-flux";
 import { IMainClient } from "../mainClientTypes";
-import { mainDispatchName, mainReturnName, mainInvokeName } from "../constants";
+import { mainDispatchName, mainReturnName, mainEmitName } from "../constants";
 import { declareWinStore } from "../StoreDeclarer";
 import MainClient from "../MainClient";
 
@@ -282,7 +282,7 @@ describe("MainAppStore", () => {
     expect(mainAppStore.winObserves).toEqual({ win1: { 1: mainAppStore.winObserves.win1["1"] } });
     expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenLastCalledWith(
       mainAppStore.multiWinSaver.getWinInfo("win1"),
-      mainInvokeName,
+      mainEmitName,
       "1",
       [{}]
     );
@@ -290,7 +290,7 @@ describe("MainAppStore", () => {
     mainAppStore.stores.todo2Store.setState({ hello: "world" });
     expect(mainAppStore.mainClient.sendWinMsg).toHaveBeenLastCalledWith(
       mainAppStore.multiWinSaver.getWinInfo("win1"),
-      mainInvokeName,
+      mainEmitName,
       "1",
       [{ hello: "world" }]
     );

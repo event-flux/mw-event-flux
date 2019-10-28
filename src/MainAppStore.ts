@@ -8,6 +8,7 @@ import {
   OperateMode,
   StoreMap,
   StoreList,
+  RecycleStrategy,
 } from "event-flux";
 import {
   mainDispatchName,
@@ -17,6 +18,7 @@ import {
   messageName,
   winMessageName,
   initMessageName,
+  mainEmitName,
   mainInvokeName,
 } from "./constants";
 import MultiWinSaver from "./MultiWinSaver";
@@ -108,9 +110,11 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
   }
 
   init() {
-    super.init();
-    // In main process, AppStore will not preload static stores, we need load them there
-    this.preloadStaticStores();
+    this.onDidChangeRS((rs: RecycleStrategy) => {
+      this.multiWinSaver.getWinInfos().forEach((winInfo: IWinInfo) => {
+        this.mainClient.sendWinMsg(winInfo, mainInvokeName, { store: null, method: "setRecycleStrategy", args: [rs] });
+      });
+    });
 
     this.outStoreDeclarers = genOutStoreDeclarers(this);
 
@@ -144,7 +148,16 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
     if (process.env.NODE_ENV !== "production") {
       this._checkStoreRegistry();
     }
+
+    super.init();
+    // In main process, AppStore will not preload static stores, we need load them there
+    this.preloadStaticStores();
+
     return this;
+  }
+
+  getRecycleStrategy(): RecycleStrategy {
+    return this._recycleStrategy;
   }
 
   /**
@@ -297,7 +310,7 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       if (!winInfo) {
         return;
       }
-      this.mainClient.sendWinMsg(winInfo, mainInvokeName, invokeId, args);
+      this.mainClient.sendWinMsg(winInfo, mainEmitName, invokeId, args);
     });
   }
 
@@ -379,7 +392,20 @@ export default class MainAppStore extends AppStore implements IMainClientCallbac
       }
       winStores.add(storeKey);
 
-      this.requestStore(storeKey, winId);
+      let store = this.requestStore(storeKey, winId);
+      if (store.observeRS) {
+        store.observeRS((rs: RecycleStrategy) => {
+          let args: any[] = [rs];
+          if (rs === RecycleStrategy.Cache) {
+            args = [rs, { cacheLimit: store._keyCache.limit }]
+          }
+          this.mainClient.sendWinMsg(
+            this.multiWinSaver.getWinInfo(winId), 
+            mainInvokeName, 
+            { store: storeKey, method: "setRecycleStrategy", args: args }
+          );
+        });
+      }
     }
 
     // Update the store's filter for this window

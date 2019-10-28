@@ -216,7 +216,7 @@ describe("RendererAppStore", () => {
     let disposable = appStore.handleDispatchDisposable({ store: "mainTodo1Store", method: "onDidUpdate" }, observer);
     expect(appStore.mainInvokeMap).toEqual({ 1: observer });
 
-    appStore.handleMainInvoke("1", ["hello", "world"]);
+    appStore.handleMainEmit("1", ["hello", "world"]);
     expect(observer).toHaveBeenLastCalledWith("hello", "world");
 
     disposable.dispose();

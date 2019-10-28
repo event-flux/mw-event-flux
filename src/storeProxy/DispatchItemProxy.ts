@@ -18,6 +18,8 @@ export interface IStoreDispatcher {
   handleMainMapRequestStores?(storeName: string, mapKeys: string[]): void;
 
   handleMainMapReleaseStores?(storeName: string, mapKeys: string[]): void;
+
+  [key: string]: any;
 }
 
 export default class DispatchItemProxy implements DispatchItem {

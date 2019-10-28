@@ -62,12 +62,18 @@ export default class BrowserMainClient implements IMainClient {
   activeWin(winInfo: IWinInfo) {}
 
   createWin(winId: string, winProps: IWinProps, winParams: IWinParams) {
+    let storeDeclarers = this.mainClientCallback.getStoreDeclarers();
+    let initStates = this.mainClientCallback.getInitStates(winId);
+    let rs = this.mainClientCallback.getRecycleStrategy();
+
+    let query = { winId, storeDeclarers, state: initStates, rs, ...winProps };
+    
     let featureStr = Object.keys(winParams)
       .map((key: string) => `${key}=${winParams[key]}`)
       .join(",");
 
     let childWin = window.open(
-      genBrowserUrl(winProps.path, winId, winProps),
+      genBrowserUrl(winProps.path, winId, query),
       "newwindow",
       featureStr + ", toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no, status=no, titlebar=no"
     );

@@ -7,9 +7,11 @@ import {
   OperateModeSwitch,
   StoreBaseConstructor,
   StoreMapDeclarerOptions,
+  RecycleStrategy,
 } from "event-flux";
 import DispatchItemProxy, { IStoreDispatcher } from "./DispatchItemProxy";
 import { DisposableLike, CompositeDisposable } from "event-kit";
+import LRU from "event-flux/lib/LRU";
 
 class StoreMapItemProxy extends DispatchItemProxy {
   constructor(appStore: IStoreDispatcher, storeKey: string, indexKey: string) {
@@ -34,6 +36,9 @@ export class StoreMapProxy extends DispatchItemProxy {
   storeMap: Map<string, StoreMapItemProxy> = new Map();
   _keyRefs: { [key: string]: number } = {};
   _disposables = new CompositeDisposable();
+  
+  _keyCache: LRU<string> | undefined;
+  _recycleStrategy: RecycleStrategy | undefined;
 
   operateModeSwitch = new OperateModeSwitch();
 
@@ -55,10 +60,33 @@ export class StoreMapProxy extends DispatchItemProxy {
     if (keys) {
       this.add(keys);
     }
+    if (options && options.recycleStrategy != null) {
+      this.setRecycleStrategy(options.recycleStrategy, { cacheLimit: options.cacheLimit });
+    }
   }
 
   _invokeRemoteMethod(method: string, ...args: any[]) {
     this._appStore.handleDispatchNoReturn({ store: this._storeKey, method, args });
+  }
+
+  _deleteOne(key: string) {
+    this._appStore.handleMainMapReleaseStores!(this._storeKey, [key]);
+    this.storeMap.delete(key);
+  }
+
+  setRecycleStrategy(recycleStrategy: RecycleStrategy, options?: { cacheLimit: number | undefined }) {
+    if (this._recycleStrategy !== recycleStrategy) {
+      this._recycleStrategy = recycleStrategy;
+      this._keyCache = undefined;
+      if (recycleStrategy === RecycleStrategy.Urgent) {
+        this._disposeSubStores();
+      } else if (recycleStrategy === RecycleStrategy.Cache) {
+        this._keyCache = new LRU(options && options.cacheLimit, (removeKey: string) => {
+          this._deleteOne(removeKey);
+        });
+      }
+      this._emitter.emit("did-change-rs", recycleStrategy);
+    }
   }
 
   requestStore(storeKey: string) {
@@ -67,10 +95,14 @@ export class StoreMapProxy extends DispatchItemProxy {
       this._keyRefs[storeKey] += 1;
     } else {
       this._keyRefs[storeKey] = 1;
-      // this.add(storeKey);
-      this._appStore.handleMainMapRequestStores!(this._storeKey, [storeKey]);
-      if (!this.storeMap.has(storeKey)) {
-        this.storeMap.set(storeKey, new StoreMapItemProxy(this._appStore, this._storeKey, storeKey));
+      
+      // If the cache has not this key, then we need create the new store.
+      if (!this._keyCache || !this._keyCache.take(storeKey)) {
+        // this._addOne(storeKey);
+        if (!this.storeMap.has(storeKey)) {
+          this._appStore.handleMainMapRequestStores!(this._storeKey, [storeKey]);
+          this.storeMap.set(storeKey, new StoreMapItemProxy(this._appStore, this._storeKey, storeKey));
+        }
       }
     }
   }
@@ -78,9 +110,16 @@ export class StoreMapProxy extends DispatchItemProxy {
   releaseStore(storeKey: string) {
     this._keyRefs[storeKey] -= 1;
     if (this._keyRefs[storeKey] === 0) {
-      // this.delete(storeKey);
-      this._appStore.handleMainMapReleaseStores!(this._storeKey, [storeKey]);
-      this.storeMap.delete(storeKey);
+      if (
+        this._recycleStrategy === undefined &&
+        (this._appStore as any as AppStore)._recycleStrategy === RecycleStrategy.Urgent
+      ) {
+        this._deleteOne(storeKey);
+      } else if (this._recycleStrategy === RecycleStrategy.Urgent) {
+        this._deleteOne(storeKey);
+      } else if (this._recycleStrategy === RecycleStrategy.Cache) {
+        this._keyCache!.put(storeKey, storeKey);
+      }
     }
   }
 
@@ -100,6 +139,16 @@ export class StoreMapProxy extends DispatchItemProxy {
     };
     this._disposables.add(disposable);
     return disposable;
+  }
+
+  // Dispose all the sub stores that reference count is 0
+  _disposeSubStores() {
+    let keyRefs = this._keyRefs;
+    for (let storeKey in keyRefs) {
+      if (keyRefs[storeKey] === 0 && this.storeMap.has(storeKey)) {
+        this._deleteOne(storeKey);
+      }
+    }
   }
 
   add(keys: string | string[]) {

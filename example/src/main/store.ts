@@ -79,6 +79,11 @@ export const simpleMapDeclarer = declareStoreMap(SimpleStore, {
   keys: ["myKey"],
 });
 
+export const dynamicMapDeclarer = declareStoreMap(SimpleStore, {
+  storeKey: "dynamicStoreMap",
+  stateKey: "dynamicMap",
+});
+
 class TodoStore extends StoreBase<any> {
   winId: any;
   storage: any;

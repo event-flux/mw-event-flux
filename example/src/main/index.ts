@@ -9,6 +9,7 @@ import {
   simpleStoreDeclarer,
   simpleListDeclarer,
   simpleMapDeclarer,
+  dynamicMapDeclarer,
   immutableStoreDeclarer,
 } from "./store";
 // import MultiWinStore from 'electron-event-flux/lib/MultiWinCacheStore';
@@ -104,6 +105,7 @@ let appStore = new MainAppStore([
   simpleStoreDeclarer,
   simpleListDeclarer,
   simpleMapDeclarer,
+  dynamicMapDeclarer,
   immutableStoreDeclarer,
   declareStore(MyMultiWinStore, { lifetime: "static", storeKey: "multiWinStore" }),
 ]).init();

@@ -81,7 +81,7 @@ export class StoreMapProxy extends DispatchItemProxy {
       if (recycleStrategy === RecycleStrategy.Urgent) {
         this._disposeSubStores();
       } else if (recycleStrategy === RecycleStrategy.Cache) {
-        this._keyCache = new LRU(options && options.cacheLimit, (removeKey: string) => {
+        this._keyCache = new LRU<string>(options && options.cacheLimit, (removeKey: string) => {
           this._deleteOne(removeKey);
         });
       }

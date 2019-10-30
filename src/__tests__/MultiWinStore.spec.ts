@@ -23,7 +23,8 @@ jest.mock("../MainClient", () => {
 describe("MultiWinStore", () => {
   test("Init with no window will create a new window", () => {
     let appStore = new MainAppStore();
-    let multiWinStore = new MultiWinStore(appStore);
+    let multiWinStore = new MultiWinStore();
+    multiWinStore._inject(appStore, MultiWinStore);
     multiWinStore.init();
 
     expect(appStore.mainClient.createWin).toHaveBeenLastCalledWith(
@@ -49,7 +50,8 @@ describe("MultiWinStore", () => {
     let appStore = new MainAppStore();
     appStore.multiWinSaver.addWin({ winId: "mainClient" });
 
-    let multiWinStore = new MultiWinStore(appStore);
+    let multiWinStore = new MultiWinStore();
+    multiWinStore._inject(appStore, MultiWinStore);
     multiWinStore.init();
 
     expect(appStore.mainClient.createWin).not.toHaveBeenCalled();
@@ -65,7 +67,8 @@ describe("MultiWinStore", () => {
     let appStore = new MainAppStore();
     appStore.multiWinSaver.addWin({ winId: "mainClient" });
 
-    let multiWinStore = new MultiWinStore(appStore);
+    let multiWinStore = new MultiWinStore();
+    multiWinStore._inject(appStore, MultiWinStore);
     multiWinStore._genClientId = () => "win1";
     multiWinStore.init();
 
@@ -88,7 +91,8 @@ describe("MultiWinStore", () => {
     let appStore = new MainAppStore();
     appStore.multiWinSaver.addWin({ winId: "mainClient" });
 
-    let multiWinStore = new MultiWinStore(appStore);
+    let multiWinStore = new MultiWinStore();
+    multiWinStore._inject(appStore, MultiWinStore);
     multiWinStore._genClientId = () => "win1";
     multiWinStore.init();
 
@@ -119,7 +123,8 @@ describe("MultiWinStore", () => {
     let appStore = new MainAppStore();
     appStore.multiWinSaver.addWin({ winId: "mainClient" });
 
-    let multiWinStore = new MultiWinStore(appStore);
+    let multiWinStore = new MultiWinStore();
+    multiWinStore._inject(appStore, MultiWinStore);
     multiWinStore._genClientId = () => "win1";
     multiWinStore.init();
 
@@ -169,7 +174,8 @@ describe("MultiWinStore", () => {
     appStore.mainClient.closeWin = jest.fn((winInfo: IWinInfo) => appStore.multiWinSaver.deleteWin(winInfo.winId));
     appStore.multiWinSaver.addWin({ winId: "mainClient" });
 
-    let multiWinStore = new MultiWinStore(appStore);
+    let multiWinStore = new MultiWinStore();
+    multiWinStore._inject(appStore, MultiWinStore);
     multiWinStore._genClientId = () => "win1";
     multiWinStore.init();
 

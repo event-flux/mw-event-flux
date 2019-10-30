@@ -1,16 +1,17 @@
 import { StoreMapProxy } from "../StoreMapProxy";
-import { OperateMode, StoreBase, RecycleStrategy } from "event-flux";
+import { OperateMode, StoreBase, RecycleStrategy, DispatchParent } from "event-flux";
 import { IStoreDispatcher } from "../DispatchItemProxy";
 
 describe("StoreMapProxy", () => {
   test("should handle initial keys options", () => {
-    let storeDispatcher: IStoreDispatcher = {
+    let storeDispatcher: IStoreDispatcher & DispatchParent = {
       handleDispatch: jest.fn(),
       handleDispatchNoReturn: jest.fn(),
       handleDispatchDisposable: jest.fn(),
+      setState: jest.fn(),
     };
     let newStore = new StoreMapProxy(storeDispatcher, "helloStore");
-    newStore._inject(StoreBase, "hello", {}, undefined, { keys: ["key1"] });
+    newStore._inject(storeDispatcher, StoreBase, "hello", {}, undefined, { keys: ["key1"] });
     expect(storeDispatcher.handleDispatchNoReturn).toHaveBeenLastCalledWith({
       store: "helloStore",
       method: "add",

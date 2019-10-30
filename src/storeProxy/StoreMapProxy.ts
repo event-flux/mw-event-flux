@@ -8,6 +8,7 @@ import {
   StoreBaseConstructor,
   StoreMapDeclarerOptions,
   RecycleStrategy,
+  DispatchParent,
 } from "event-flux";
 import DispatchItemProxy, { IStoreDispatcher } from "./DispatchItemProxy";
 import { DisposableLike, CompositeDisposable } from "event-kit";
@@ -49,6 +50,7 @@ export class StoreMapProxy extends DispatchItemProxy {
   }
 
   _inject(
+    appStore: DispatchParent,
     StoreBuilder: StoreBaseConstructor<any>,
     stateKey?: string,
     depStores?: { [storeKey: string]: DispatchItem },

@@ -60,7 +60,8 @@ describe("MultiWinStore", () => {
 
   beforeEach(() => {
     appStore = new MainAppStore();
-    multiWinStore = new MultiWinCacheStore(appStore);
+    multiWinStore = new MultiWinCacheStore();
+    multiWinStore._inject(appStore, MultiWinCacheStore);
     let storage = new MyStorage();
     multiWinStore.getStorage = () => storage;
   });
@@ -76,7 +77,9 @@ describe("MultiWinStore", () => {
   });
 
   test("WindowManager should can get window", async () => {
+    multiWinStore.initClient();
     let winManager = new WindowManager(multiWinStore);
+
     await app.whenReady();
 
     expect(winManager.windows.length).toBe(winManager.winSize);

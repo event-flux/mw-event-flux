@@ -14,16 +14,16 @@ export default class MultiWinStore extends StoreBase<any> implements IMultiWinSt
 
   groupsMap: { [clientId: string]: string[] } = {};
 
-  mainClient: IMainClient;
-  multiWinSaver: MultiWinSaver;
-
-  constructor(appStore: MainAppStore) {
-    super(appStore);
+  mainClient!: IMainClient;
+  multiWinSaver!: MultiWinSaver;
+ 
+  initClient() {
     this.multiWinSaver = (this._appStore as MainAppStore).multiWinSaver;
     this.mainClient = (this._appStore as MainAppStore).mainClient;
   }
 
   init() {
+    this.initClient();
     let winInfos = this.multiWinSaver.getWinInfos();
     if (winInfos.length === 0) {
       // this.mainClient.createWin("mainClient", { path: "/", name: "mainClient", groups: ["main"] }, {});

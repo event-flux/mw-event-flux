@@ -1,16 +1,17 @@
 import { StoreProxy } from "../StoreProxy";
 import { IStoreDispatcher } from "../DispatchItemProxy";
-import { StoreBase } from "event-flux";
+import { StoreBase, DispatchParent } from "event-flux";
 
 describe("StoreProxy", () => {
   test("should can proxy other methods", () => {
-    let storeDispatcher: IStoreDispatcher = {
+    let storeDispatcher: IStoreDispatcher & DispatchParent = {
       handleDispatch: jest.fn(),
       handleDispatchNoReturn: jest.fn(),
       handleDispatchDisposable: jest.fn(),
+      setState: jest.fn(),
     };
     let newStore = new StoreProxy(storeDispatcher, "helloStore", ["onDidUpdate"], ["doInvoke"]);
-    newStore._inject(StoreBase, "stateKey");
+    newStore._inject(storeDispatcher, StoreBase, "stateKey");
     newStore._init();
 
     newStore._addRef();

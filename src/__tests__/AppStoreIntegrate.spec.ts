@@ -141,8 +141,8 @@ function initAppStore(
 }
 
 class TodoStore extends StoreBase<{ hello: string }> {
-  constructor(appStore: DispatchParent) {
-    super(appStore);
+  constructor() {
+    super();
     this.state = { hello: "hello1" };
   }
 

@@ -71,6 +71,7 @@ class MultiWinCacheStore extends MultiWinStore {
   _storage?: IStorage;
 
   init() {
+    this.initClient();
     this.loadClients();
   }
 

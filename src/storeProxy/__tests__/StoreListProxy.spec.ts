@@ -1,6 +1,6 @@
 import { StoreListProxy } from "../StoreListProxy";
 import { IStoreDispatcher } from "../DispatchItemProxy";
-import { StoreBase } from "event-flux";
+import { StoreBase, DispatchParent } from "event-flux";
 
 describe("StoreListProxy", () => {
   test("should can proxy other methods", () => {
@@ -29,13 +29,14 @@ describe("StoreListProxy", () => {
   });
 
   test("should handle initial size", () => {
-    let storeDispatcher: IStoreDispatcher = {
+    let storeDispatcher: IStoreDispatcher & DispatchParent = {
       handleDispatch: jest.fn(),
       handleDispatchNoReturn: jest.fn(),
       handleDispatchDisposable: jest.fn(),
+      setState: jest.fn(),
     };
     let newStore = new StoreListProxy(storeDispatcher, "helloStore");
-    newStore._inject(StoreBase, "hello", {}, undefined, { size: 2 });
+    newStore._inject(storeDispatcher, StoreBase, "hello", {}, undefined, { size: 2 });
     expect(storeDispatcher.handleDispatchNoReturn).toHaveBeenLastCalledWith({
       store: "helloStore",
       method: "setSize",

@@ -2,8 +2,8 @@ import { StoreBase, DispatchParent, StoreList } from "event-flux";
 import { declareWinStore, declareWinStoreList, declareWinStoreMap } from "../StoreDeclarer";
 
 class TodoStore extends StoreBase<{ todo2: string }> {
-  constructor(appStore: DispatchParent) {
-    super(appStore);
+  constructor() {
+    super();
     this.state = { todo2: "todo2" };
   }
 }

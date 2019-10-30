@@ -5,6 +5,7 @@ import {
   StoreList,
   StoreBaseConstructor,
   StoreListDeclarerOptions,
+  DispatchParent,
 } from "event-flux";
 import DispatchItemProxy, { IStoreDispatcher } from "./DispatchItemProxy";
 
@@ -37,6 +38,7 @@ export class StoreListProxy extends DispatchItemProxy {
   }
 
   _inject(
+    appStore: DispatchParent,
     StoreBuilder: StoreBaseConstructor<any>,
     stateKey?: string,
     depStores?: { [storeKey: string]: DispatchItem },

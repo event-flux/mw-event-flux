@@ -9,8 +9,8 @@ function isDefined(s) {
 }
 
 class ImmutableStore extends StoreBase<any> {
-  constructor(appStore) {
-    super(appStore);
+  constructor() {
+    super();
     this.state = { immutableMap: Map(), immutableList: List() };
   }
 
@@ -32,8 +32,8 @@ export const immutableStoreDeclarer = declareStore(ImmutableStore);
 class SimpleStore extends StoreBase<any> {
   storage: any;
 
-  constructor(appStore) {
-    super(appStore);
+  constructor() {
+    super();
     this.state = { size: 0 };
   }
 
@@ -88,8 +88,8 @@ class TodoStore extends StoreBase<any> {
   winId: any;
   storage: any;
 
-  constructor(appStore) {
-    super(appStore);
+  constructor() {
+    super();
     this.state = { count: 0 };
   }
 

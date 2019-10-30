@@ -1,8 +1,8 @@
 import { declareStore, StoreBase } from "event-flux";
 
 class TodoStore extends StoreBase<any> {
-  constructor(appStore) {
-    super(appStore);
+  constructor() {
+    super();
     this.state = { count: 0 };
   }
 

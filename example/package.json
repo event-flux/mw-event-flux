@@ -22,7 +22,7 @@
   "devDependencies": {
     "@types/react": "^16.9.10",
     "cross-env": "^6.0.3",
-    "electron": "^6.0.12",
+    "electron": "^18.3.7",
     "electron-builder": "^20.29.0",
     "electron-webpack": "^2.7.4",
     "electron-webpack-ts": "^3.1.1",
